@@ -1,0 +1,19 @@
+2025-03-21 01:05:25,978 - INFO - Server avviato su localhost:5000
+2025-03-21 01:11:57,900 - INFO - Server avviato su localhost:5000
+2025-03-21 01:13:08,635 - INFO - Nuovo client connesso: user1
+2025-03-21 01:13:48,858 - INFO - Nuovo client connesso: user2
+2025-03-21 01:15:14,700 - INFO - Messaggio privato da user2 a user2: ciao
+2025-03-21 01:15:20,195 - INFO - Client disconnesso: user2
+2025-03-21 01:15:49,409 - INFO - Messaggio privato da user1 a user1: ciao
+2025-03-21 01:15:50,641 - INFO - Client disconnesso: user1
+2025-03-21 01:21:37,689 - INFO - Server avviato su localhost:5000
+2025-03-21 01:22:45,652 - INFO - Nuovo client connesso: nell
+2025-03-21 01:22:53,961 - INFO - Broadcast da nell: iciadf
+2025-03-21 01:23:59,229 - INFO - Client disconnesso: nell
+2025-03-21 01:24:35,088 - INFO - Nuovo client connesso: user1
+2025-03-21 01:26:22,724 - INFO - Nuovo client connesso: user2
+2025-03-21 01:27:16,673 - INFO - Broadcast da user2: ciao
+2025-03-21 01:27:23,454 - INFO - Broadcast da user1: ciao
+2025-03-21 01:27:33,465 - INFO - Broadcast da user2: come stai?
+2025-03-21 01:27:57,877 - INFO - Client disconnesso: user2
+2025-03-21 01:28:02,671 - INFO - Client disconnesso: user1
