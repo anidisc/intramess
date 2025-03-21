@@ -24,3 +24,49 @@
 2025-03-21 01:36:18,657 - ERROR - Errore nella gestione del client user1: [Errno 104] Connection reset by peer
 2025-03-21 01:36:18,657 - INFO - Client disconnesso: user1
 2025-03-21 01:36:42,172 - INFO - Client disconnesso: user2
+2025-03-21 01:42:37,696 - INFO - Server avviato su localhost:5000
+2025-03-21 01:43:04,036 - INFO - Nuovo client connesso: user1
+2025-03-21 01:43:32,597 - INFO - Nuovo client connesso: roby
+2025-03-21 01:44:04,890 - INFO - Client disconnesso: roby
+2025-03-21 01:44:22,946 - ERROR - Errore nella gestione del client user1: [Errno 104] Connection reset by peer
+2025-03-21 01:44:22,946 - INFO - Client disconnesso: user1
+2025-03-21 01:49:09,254 - INFO - Server avviato su localhost:5000
+2025-03-21 01:50:04,218 - INFO - Nuovo client connesso: user1
+2025-03-21 01:50:50,349 - INFO - Nuovo client connesso: user3
+2025-03-21 01:50:50,351 - ERROR - Errore nella gestione del client user3: [Errno 104] Connection reset by peer
+2025-03-21 01:50:50,351 - INFO - Client disconnesso: user3
+2025-03-21 01:51:41,032 - ERROR - Errore nel gestore dei comandi: sequence item 0: expected str instance, list found
+2025-03-21 01:56:06,440 - INFO - Server avviato su localhost:5000
+2025-03-21 01:56:51,609 - INFO - Nuovo client connesso: one
+2025-03-21 01:57:02,187 - INFO - Client disconnesso: one
+2025-03-21 01:57:02,189 - INFO - Nuovo client connesso: user1
+2025-03-21 01:57:02,191 - INFO - Client disconnesso: user1
+2025-03-21 01:57:19,587 - INFO - Nuovo client connesso: jsd
+2025-03-21 01:57:27,386 - INFO - Broadcast da jsd: ciao
+2025-03-21 01:58:09,111 - INFO - Nuovo client connesso: hgh
+2025-03-21 01:58:13,522 - INFO - Broadcast da hgh: ciao
+2025-03-21 01:58:23,492 - INFO - Broadcast da jsd: cjas
+2025-03-21 01:58:25,046 - INFO - Broadcast da jsd: dkf
+2025-03-21 01:58:34,701 - INFO - Broadcast da hgh: come va
+2025-03-21 01:58:39,541 - INFO - Broadcast da hgh: molto bene
+2025-03-21 01:58:45,082 - INFO - Broadcast da jsd: grazie bene
+2025-03-21 01:59:00,319 - INFO - Server broadcast: ['ciao']
+2025-03-21 01:59:31,655 - INFO - Broadcast da hgh: come va la situazione
+2025-03-21 02:00:50,222 - INFO - Nuovo client connesso: kikdf
+2025-03-21 02:00:57,116 - INFO - Client disconnesso: kikdf
+2025-03-21 02:00:57,119 - INFO - Nuovo client connesso: xiusd
+2025-03-21 02:01:01,862 - INFO - Client disconnesso: xiusd
+2025-03-21 02:01:01,865 - INFO - Nuovo client connesso: userdf
+2025-03-21 02:01:01,868 - INFO - Client disconnesso: userdf
+2025-03-21 02:01:08,121 - INFO - Nuovo client connesso: sdsf
+2025-03-21 02:01:14,415 - INFO - Client disconnesso: sdsf
+2025-03-21 02:01:14,419 - INFO - Nuovo client connesso: xodf
+2025-03-21 02:01:19,708 - ERROR - Errore nella gestione del client xodf: [Errno 104] Connection reset by peer
+2025-03-21 02:01:19,708 - INFO - Client disconnesso: xodf
+2025-03-21 02:01:19,710 - INFO - Nuovo client connesso: ssd
+2025-03-21 02:01:54,279 - INFO - Server broadcast: ['andate', 'tutti', 'a', 'fare', 'nel', 'culo']
+2025-03-21 02:01:54,280 - INFO - Client disconnesso: ssd
+2025-03-21 02:02:19,623 - INFO - Nuovo client connesso: ssd
+2025-03-21 02:02:31,018 - INFO - Broadcast da ssd: ckdf
+2025-03-21 02:02:37,824 - INFO - Broadcast da hgh: non so che dire
+2025-03-21 02:03:15,469 - INFO - Messaggio privato da ssd a hgh: messaggio privato
