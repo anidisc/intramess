@@ -210,7 +210,16 @@ class Server:
                     data = json.loads(message)
                     
                     if data['type'] == 'disconnect':
-                        break  # Esci dal loop per disconnettere il client
+                        break
+                    elif data['type'] == 'request_users':
+                        # Invia la lista degli utenti solo al client che l'ha richiesta
+                        try:
+                            client_socket.send(json.dumps({
+                                'type': 'user_list',
+                                'users': list(self.clients.values())
+                            }).encode())
+                        except:
+                            break
                     elif data['type'] == 'broadcast':
                         self.broadcast({
                             'type': 'message',

@@ -110,3 +110,20 @@
 2025-03-21 02:30:59,497 - INFO - Nuovo client connesso: hf
 2025-03-21 02:30:59,501 - INFO - Client disconnesso: hf
 2025-03-21 02:31:16,225 - INFO - Client disconnesso: giovanni
+2025-03-21 02:40:03,416 - INFO - Server avviato su localhost:5000
+2025-03-21 02:40:31,230 - INFO - Nuovo client connesso: aniello
+2025-03-21 02:41:10,514 - INFO - Nuovo client connesso: luca
+2025-03-21 02:42:16,177 - INFO - Nuovo client connesso: giorgio
+2025-03-21 02:42:29,387 - INFO - Broadcast da giorgio: prova
+2025-03-21 02:42:50,300 - INFO - Client disconnesso: luca
+2025-03-21 02:43:03,837 - INFO - Nuovo client connesso: valerio
+2025-03-21 02:43:34,172 - INFO - Client disconnesso: giorgio
+2025-03-21 02:44:01,813 - INFO - Nuovo client connesso: cazzo
+2025-03-21 02:46:29,045 - INFO - Broadcast da valerio: dfg
+2025-03-21 02:47:17,428 - INFO - Server broadcast: ['welcome']
+2025-03-21 02:48:07,684 - INFO - Client disconnesso: cazzo
+2025-03-21 02:48:10,197 - INFO - Client disconnesso: valerio
+2025-03-21 02:48:12,578 - INFO - Client disconnesso: aniello
+2025-03-21 02:48:34,117 - INFO - Nuovo client connesso: user1
+2025-03-21 02:48:42,287 - INFO - Nuovo client connesso: user2
+2025-03-21 02:48:57,154 - INFO - Nuovo client connesso: user3

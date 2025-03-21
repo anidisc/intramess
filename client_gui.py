@@ -180,19 +180,29 @@ class ChatWindow(QMainWindow):
         """)
         left_layout.addWidget(self.connect_btn)
 
-        # Aggiungi label per l'username dopo il pulsante di connessione
+        # Miglioriamo lo stile della label dell'username
         self.username_label = QLabel('')
         self.username_label.setStyleSheet("""
             QLabel {
-                color: #333;
-                padding: 4px;
-                background-color: #f8f9fa;
-                border: 1px solid #dee2e6;
+                color: #007bff;
+                padding: 8px;
+                background-color: #e9ecef;
+                border: 2px solid #007bff;
                 border-radius: 4px;
-                margin: 4px 0;
+                margin: 8px 0;
+                font-weight: bold;
+                font-size: 14px;
+                text-align: center;
             }
         """)
+        self.username_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         left_layout.addWidget(self.username_label)
+
+        # Aggiungiamo un separatore visivo
+        separator = QWidget()
+        separator.setFixedHeight(1)
+        separator.setStyleSheet("background-color: #dee2e6;")
+        left_layout.addWidget(separator)
 
         # Lista utenti
         users_label = QLabel('Utenti Online')
@@ -316,8 +326,11 @@ class ChatWindow(QMainWindow):
             self.connect_btn.setText('Disconnetti')
             self.send_btn.setEnabled(True)
             self.chat_area.append('<b>Connesso al server!</b>')
-            # Aggiorna la label con l'username
-            self.username_label.setText(f'Connesso come: {self.client.username}')
+            # Aggiorna la label con l'username in modo più evidente
+            self.username_label.setText(f'👤 {self.client.username}')
+            
+            # Richiedi esplicitamente la lista degli utenti
+            self.client.send_message('request_users')
         else:
             QMessageBox.critical(self, 'Errore', f'Impossibile connettersi: {message}')
             self.try_connect()
