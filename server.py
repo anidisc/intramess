@@ -26,6 +26,18 @@ class Server:
         self.running = True
         logging.info(f"Server avviato su {host}:{port}")
 
+    def broadcast_user_list(self):
+        """Invia la lista degli utenti connessi a tutti i client"""
+        users = list(self.clients.values())
+        for client in self.clients:
+            try:
+                client.send(json.dumps({
+                    'type': 'user_list',
+                    'users': users
+                }).encode())
+            except:
+                self.remove_client(client)
+
     def broadcast(self, message, sender=None):
         """Invia un messaggio a tutti i client connessi"""
         for client in self.clients:
@@ -76,6 +88,9 @@ class Server:
                 'type': 'system',
                 'message': f"{username} si è unito alla chat"
             })
+            
+            # Invia la lista aggiornata degli utenti a tutti
+            self.broadcast_user_list()
 
             while self.running:
                 try:
@@ -116,6 +131,8 @@ class Server:
                 'type': 'system',
                 'message': f"{username} ha lasciato la chat"
             })
+            # Invia la lista aggiornata degli utenti a tutti
+            self.broadcast_user_list()
 
     def start(self):
         """Avvia il server"""

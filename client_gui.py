@@ -46,6 +46,10 @@ class ChatClient:
                 data = json.loads(message)
                 self.signals.message_received.emit(data)
                 
+                # Aggiorna la lista utenti se il server la invia
+                if data['type'] == 'user_list':
+                    self.signals.user_list_updated.emit(data['users'])
+                
             except:
                 break
         
@@ -118,8 +122,18 @@ class ChatWindow(QMainWindow):
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
             }
+            QListWidget::item {
+                padding: 4px;
+            }
+            QListWidget::item:selected {
+                background-color: #007bff;
+                color: white;
+            }
         """)
         left_layout.addWidget(self.users_list)
+        
+        # Aggiungi doppio click sulla lista utenti
+        self.users_list.itemDoubleClicked.connect(self.start_private_message)
         
         layout.addWidget(left_panel, 1)
 
@@ -135,6 +149,7 @@ class ChatWindow(QMainWindow):
                 background-color: #ffffff;
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
+                padding: 8px;
             }
         """)
         right_layout.addWidget(self.chat_area)
@@ -191,6 +206,7 @@ class ChatWindow(QMainWindow):
         # Segnali del client
         self.client.signals.message_received.connect(self.handle_message)
         self.client.signals.connection_lost.connect(self.handle_disconnection)
+        self.client.signals.user_list_updated.connect(self.update_users_list)
 
     def handle_connection(self):
         if not self.client.connected:
@@ -225,6 +241,17 @@ class ChatWindow(QMainWindow):
         self.users_list.clear()
         QMessageBox.warning(self, 'Disconnesso', 'La connessione con il server è stata persa')
 
+    def update_users_list(self, users):
+        self.users_list.clear()
+        for user in users:
+            if user != self.client.username:  # Non mostrare l'utente corrente nella lista
+                self.users_list.addItem(user)
+
+    def start_private_message(self, item):
+        """Avvia un messaggio privato quando si fa doppio click su un utente"""
+        self.message_input.setText(f'@{item.text()} ')
+        self.message_input.setFocus()
+
     def send_message(self):
         message = self.message_input.text().strip()
         if not message:
@@ -236,11 +263,15 @@ class ChatWindow(QMainWindow):
             if len(parts) == 2:
                 recipient, content = parts
                 self.client.send_message('private', to=recipient, message=content)
+                # Mostra il messaggio inviato nella chat
+                self.chat_area.append(f'<b><i>PM a {recipient}</i></b>: {content}')
             else:
                 self.chat_area.append('<span style="color: red"><i>Formato non valido. Usa: @username messaggio</i></span>')
         else:
             # Messaggio broadcast
             self.client.send_message('broadcast', message=message)
+            # Mostra il messaggio inviato nella chat
+            self.chat_area.append(f'<b>Tu</b>: {message}')
         
         self.message_input.clear()
 

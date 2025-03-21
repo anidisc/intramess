@@ -17,3 +17,10 @@
 2025-03-21 01:27:33,465 - INFO - Broadcast da user2: come stai?
 2025-03-21 01:27:57,877 - INFO - Client disconnesso: user2
 2025-03-21 01:28:02,671 - INFO - Client disconnesso: user1
+2025-03-21 01:34:03,513 - INFO - Server avviato su localhost:5000
+2025-03-21 01:34:27,792 - INFO - Nuovo client connesso: user1
+2025-03-21 01:35:26,607 - INFO - Nuovo client connesso: user2
+2025-03-21 01:35:41,197 - INFO - Broadcast da user2: ciao
+2025-03-21 01:36:18,657 - ERROR - Errore nella gestione del client user1: [Errno 104] Connection reset by peer
+2025-03-21 01:36:18,657 - INFO - Client disconnesso: user1
+2025-03-21 01:36:42,172 - INFO - Client disconnesso: user2
