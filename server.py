@@ -156,6 +156,24 @@ class Server:
             # Ricezione username
             username = client_socket.recv(1024).decode()
             
+            # Verifica se l'username è valido
+            if not username or not username.strip():
+                client_socket.send(json.dumps({
+                    'type': 'username_invalid',
+                    'message': 'Username non valido'
+                }).encode())
+                client_socket.close()
+                return
+                
+            # Verifica se l'username contiene caratteri non validi
+            if not all(c.isalnum() or c == '_' for c in username):
+                client_socket.send(json.dumps({
+                    'type': 'username_invalid',
+                    'message': 'Username può contenere solo lettere, numeri e underscore'
+                }).encode())
+                client_socket.close()
+                return
+            
             # Verifica se l'username è già in uso
             if self.is_username_taken(username):
                 client_socket.send(json.dumps({
@@ -191,20 +209,24 @@ class Server:
 
                     data = json.loads(message)
                     
-                    if data['type'] == 'broadcast':
+                    if data['type'] == 'disconnect':
+                        break  # Esci dal loop per disconnettere il client
+                    elif data['type'] == 'broadcast':
                         self.broadcast({
                             'type': 'message',
                             'from': username,
                             'message': data['message']
                         }, client_socket)
                         logging.info(f"Broadcast da {username}: {data['message']}")
-                    
                     elif data['type'] == 'private':
                         self.send_private_message(client_socket, data['to'], data['message'])
                         logging.info(f"Messaggio privato da {username} a {data['to']}: {data['message']}")
 
                 except json.JSONDecodeError:
                     continue
+                except Exception as e:
+                    logging.error(f"Errore nella gestione del messaggio da {username}: {str(e)}")
+                    break
 
         except Exception as e:
             logging.error(f"Errore nella gestione del client {username if 'username' in locals() else 'sconosciuto'}: {str(e)}")

@@ -70,3 +70,43 @@
 2025-03-21 02:02:31,018 - INFO - Broadcast da ssd: ckdf
 2025-03-21 02:02:37,824 - INFO - Broadcast da hgh: non so che dire
 2025-03-21 02:03:15,469 - INFO - Messaggio privato da ssd a hgh: messaggio privato
+2025-03-21 02:11:36,110 - INFO - Server avviato su localhost:5000
+2025-03-21 02:12:13,392 - INFO - Nuovo client connesso: user_1
+2025-03-21 02:12:34,787 - INFO - Broadcast da user_1: ci sono io
+2025-03-21 02:14:00,250 - INFO - Nuovo client connesso: user_2
+2025-03-21 02:14:08,500 - INFO - Broadcast da user_2: ci sono
+2025-03-21 02:14:25,228 - INFO - Broadcast da user_1: molto bene
+2025-03-21 02:14:36,808 - INFO - Broadcast da user_2: grazie com si va?
+2025-03-21 02:15:16,404 - INFO - Nuovo client connesso: user_3
+2025-03-21 02:15:22,055 - INFO - Broadcast da user_3: kjdf
+2025-03-21 02:15:41,947 - INFO - Client disconnesso: user_3
+2025-03-21 02:16:04,505 - INFO - Nuovo client connesso: user_new
+2025-03-21 02:16:40,659 - INFO - Server broadcast: ['benvenuti']
+2025-03-21 02:17:17,058 - INFO - Client disconnesso: user_new
+2025-03-21 02:17:35,651 - INFO - Nuovo client connesso: user_6
+2025-03-21 02:18:06,974 - INFO - Broadcast da user_6: ciao
+2025-03-21 02:18:25,212 - INFO - Messaggio privato da user_6 a user_1: messaggio privato
+2025-03-21 02:19:20,860 - INFO - Messaggio privato da user_6 a user_1: non ti dimenticare la spesa
+2025-03-21 02:20:25,218 - INFO - Messaggio privato da user_1 a user_6: si non mi sono dimenticato
+2025-03-21 02:20:55,583 - INFO - Client disconnesso: user_6
+2025-03-21 02:21:06,295 - INFO - Nuovo client connesso: giovanni
+2025-03-21 02:22:16,740 - INFO - Broadcast da giovanni: buongiorno sono giovanni
+2025-03-21 02:23:09,024 - INFO - Messaggio privato da user_1 a giovanni: ciao giovanni
+2025-03-21 02:24:39,034 - INFO - Client disconnesso: user_1
+2025-03-21 02:25:29,582 - INFO - Messaggio privato da user_2 a user_1: dd
+2025-03-21 02:25:38,399 - INFO - Client disconnesso: user_2
+2025-03-21 02:25:48,280 - INFO - Nuovo client connesso: luigi
+2025-03-21 02:26:09,186 - INFO - Nuovo client connesso: sandro
+2025-03-21 02:26:39,456 - INFO - Client disconnesso: giovanni
+2025-03-21 02:27:00,311 - INFO - Client disconnesso: luigi
+2025-03-21 02:27:07,506 - INFO - Nuovo client connesso: luigi
+2025-03-21 02:27:24,075 - INFO - Nuovo client connesso: giovanni
+2025-03-21 02:28:09,302 - INFO - Nuovo client connesso: aniello
+2025-03-21 02:29:11,519 - INFO - Messaggio privato da luigi a giovanni: we
+2025-03-21 02:29:56,409 - INFO - Messaggio privato da sandro a luigi: non possiamo vedere sempre le stesse cose dobbiamo fare di meglio
+2025-03-21 02:30:30,920 - INFO - Client disconnesso: sandro
+2025-03-21 02:30:45,519 - INFO - Nuovo client connesso: barbara
+2025-03-21 02:30:59,496 - INFO - Client disconnesso: barbara
+2025-03-21 02:30:59,497 - INFO - Nuovo client connesso: hf
+2025-03-21 02:30:59,501 - INFO - Client disconnesso: hf
+2025-03-21 02:31:16,225 - INFO - Client disconnesso: giovanni

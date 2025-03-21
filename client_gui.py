@@ -109,6 +109,15 @@ class ChatClient:
             return False
 
     def disconnect(self):
+        if self.connected:
+            try:
+                # Invia messaggio di disconnessione al server
+                self.socket.send(json.dumps({
+                    'type': 'disconnect',
+                    'message': 'Client disconnesso'
+                }).encode())
+            except:
+                pass
         self.connected = False
         try:
             self.socket.close()
@@ -170,6 +179,20 @@ class ChatWindow(QMainWindow):
             }
         """)
         left_layout.addWidget(self.connect_btn)
+
+        # Aggiungi label per l'username dopo il pulsante di connessione
+        self.username_label = QLabel('')
+        self.username_label.setStyleSheet("""
+            QLabel {
+                color: #333;
+                padding: 4px;
+                background-color: #f8f9fa;
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+                margin: 4px 0;
+            }
+        """)
+        left_layout.addWidget(self.username_label)
 
         # Lista utenti
         users_label = QLabel('Utenti Online')
@@ -278,6 +301,7 @@ class ChatWindow(QMainWindow):
             self.connect_btn.setText('Connetti')
             self.send_btn.setEnabled(False)
             self.users_list.clear()
+            self.username_label.setText('')
             self.chat_area.append('<b>Disconnesso dal server</b>')
 
     def try_connect(self):
@@ -292,9 +316,11 @@ class ChatWindow(QMainWindow):
             self.connect_btn.setText('Disconnetti')
             self.send_btn.setEnabled(True)
             self.chat_area.append('<b>Connesso al server!</b>')
+            # Aggiorna la label con l'username
+            self.username_label.setText(f'Connesso come: {self.client.username}')
         else:
             QMessageBox.critical(self, 'Errore', f'Impossibile connettersi: {message}')
-            self.try_connect()  # Riprova con un nuovo username
+            self.try_connect()
 
     def handle_message(self, data):
         if data['type'] == 'message':
@@ -312,6 +338,8 @@ class ChatWindow(QMainWindow):
         self.connect_btn.setText('Connetti')
         self.send_btn.setEnabled(False)
         self.users_list.clear()
+        # Pulisci la label dell'username
+        self.username_label.setText('')
         QMessageBox.warning(self, 'Disconnesso', 'La connessione con il server è stata persa')
 
     def update_users_list(self, users):
