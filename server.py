@@ -93,8 +93,37 @@ class Server:
 
     def stop_server(self, *args):
         """Arresta il server"""
-        self.running = False
-        print(f"{Fore.RED}Arresto del server...{Style.RESET_ALL}")
+        try:
+            # Invia messaggio di disconnessione a tutti i client
+            for client in list(self.clients.keys()):
+                try:
+                    client.send(json.dumps({
+                        'type': 'server_shutdown',
+                        'message': 'Il server sta per essere arrestato'
+                    }).encode())
+                    client.close()
+                except:
+                    pass
+            
+            # Chiudi il socket del server
+            self.server_socket.close()
+            
+            # Pulisci la lista dei client
+            self.clients.clear()
+            
+            # Imposta il flag di arresto
+            self.running = False
+            
+            print(f"{Fore.RED}Server arrestato correttamente{Style.RESET_ALL}")
+            logging.info("Server arrestato")
+            
+            # Termina il processo
+            import os, signal
+            os.kill(os.getpid(), signal.SIGTERM)
+            
+        except Exception as e:
+            logging.error(f"Errore durante l'arresto del server: {str(e)}")
+        
         return True
 
     def is_username_taken(self, username):
@@ -191,6 +220,15 @@ class Server:
             
             self.clients[client_socket] = username
             logging.info(f"Nuovo client connesso: {username}")
+            
+            # Invia la lista degli utenti al nuovo client
+            try:
+                client_socket.send(json.dumps({
+                    'type': 'user_list',
+                    'users': list(self.clients.values())
+                }).encode())
+            except:
+                logging.error(f"Errore nell'invio della lista utenti a {username}")
             
             # Notifica a tutti i client
             self.broadcast({

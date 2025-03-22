@@ -127,3 +127,92 @@
 2025-03-21 02:48:34,117 - INFO - Nuovo client connesso: user1
 2025-03-21 02:48:42,287 - INFO - Nuovo client connesso: user2
 2025-03-21 02:48:57,154 - INFO - Nuovo client connesso: user3
+2025-03-21 15:02:08,662 - INFO - Server avviato su localhost:5000
+2025-03-21 15:03:08,859 - INFO - Nuovo client connesso: aniello
+2025-03-21 15:04:10,829 - INFO - Nuovo client connesso: davide
+2025-03-21 15:04:19,521 - INFO - Client disconnesso: davide
+2025-03-21 15:04:19,524 - INFO - Nuovo client connesso: luigi
+2025-03-21 15:04:19,526 - INFO - Client disconnesso: luigi
+2025-03-21 15:04:40,033 - INFO - Nuovo client connesso: user2
+2025-03-21 15:04:51,919 - INFO - Broadcast da user2: ciao
+2025-03-21 15:05:00,348 - INFO - Client disconnesso: aniello
+2025-03-21 15:05:06,387 - INFO - Nuovo client connesso: user1
+2025-03-21 15:05:21,877 - INFO - Broadcast da user1: ciao
+2025-03-21 15:05:39,070 - INFO - Broadcast da user1: come vanno le cose?
+2025-03-21 15:05:50,352 - INFO - Messaggio privato da user1 a user2: ehi
+2025-03-21 15:06:26,291 - INFO - Client disconnesso: user2
+2025-03-21 15:06:49,824 - INFO - Nuovo client connesso: user2
+2025-03-21 15:06:49,825 - INFO - Client disconnesso: user2
+2025-03-21 15:06:57,212 - INFO - Nuovo client connesso: user2
+2025-03-21 15:07:08,147 - INFO - Client disconnesso: user2
+2025-03-21 15:07:10,622 - INFO - Client disconnesso: user1
+2025-03-21 15:14:25,162 - INFO - Server avviato su localhost:5000
+2025-03-21 15:15:36,219 - INFO - Nuovo client connesso: user1
+2025-03-21 15:15:45,492 - INFO - Broadcast da user1: salche 
+djdf
+2025-03-21 15:16:13,356 - INFO - Nuovo client connesso: user2
+2025-03-21 15:16:23,454 - INFO - Broadcast da user1: we
+2025-03-21 15:16:31,222 - INFO - Broadcast da user1: molto bebe
+2025-03-21 15:18:34,256 - INFO - Nuovo client connesso: user3
+2025-03-21 15:18:57,864 - INFO - Broadcast da user2: buongiorno a tutti
+2025-03-21 15:19:17,236 - INFO - Broadcast da user3: jddf @user1
+2025-03-21 15:19:31,257 - INFO - Messaggio privato da user3 a user1: cioa tutto bene?
+2025-03-21 15:20:02,442 - INFO - Client disconnesso: user3
+2025-03-21 15:20:14,188 - INFO - Nuovo client connesso: user4
+2025-03-21 15:20:27,270 - INFO - Client disconnesso: user4
+2025-03-21 15:20:27,270 - INFO - Nuovo client connesso: user6
+2025-03-21 15:20:31,936 - INFO - Client disconnesso: user6
+2025-03-21 15:20:31,938 - INFO - Nuovo client connesso: user4
+2025-03-21 15:20:31,939 - INFO - Client disconnesso: user4
+2025-03-21 15:20:40,465 - INFO - Nuovo client connesso: aniello
+2025-03-21 15:27:01,339 - INFO - Server avviato su localhost:5000
+2025-03-21 15:30:13,645 - INFO - Nuovo client connesso: user2
+2025-03-21 15:30:23,262 - INFO - Broadcast da user2: ciao
+2025-03-21 15:30:41,557 - INFO - Nuovo client connesso: usero7
+2025-03-21 15:30:45,656 - ERROR - Errore nella gestione del messaggio da usero7: [Errno 104] Connection reset by peer
+2025-03-21 15:30:45,656 - INFO - Client disconnesso: usero7
+2025-03-21 15:30:51,537 - INFO - Nuovo client connesso: user1
+2025-03-21 16:13:28,344 - INFO - Client disconnesso: user1
+2025-03-21 16:13:33,284 - INFO - Nuovo client connesso: user1
+2025-03-21 16:13:37,197 - INFO - Client disconnesso: user1
+2025-03-21 16:13:54,579 - INFO - Client disconnesso: user2
+2025-03-21 16:14:01,004 - INFO - Nuovo client connesso: ciao
+2025-03-21 16:14:14,800 - INFO - Nuovo client connesso: bello
+2025-03-21 16:34:21,390 - INFO - Client disconnesso: ciao
+2025-03-21 16:34:23,519 - INFO - Client disconnesso: bello
+2025-03-22 04:44:28,207 - INFO - Server avviato su localhost:5000
+2025-03-22 04:45:48,471 - INFO - Nuovo client connesso: nello
+2025-03-22 04:47:29,029 - INFO - Nuovo client connesso: roby
+2025-03-22 04:48:32,844 - INFO - Broadcast da roby: cisd
+2025-03-22 04:48:44,166 - INFO - Broadcast da roby: dimostrami la tua fedelta
+2025-03-22 04:49:54,909 - INFO - Messaggio privato da nello a roby: questo e un messaggio privato
+2025-03-22 04:50:45,081 - INFO - Client disconnesso: roby
+2025-03-22 04:50:59,442 - INFO - Nuovo client connesso: giulio
+2025-03-22 04:51:09,094 - INFO - Client disconnesso: giulio
+2025-03-22 04:51:09,094 - INFO - Nuovo client connesso: giulio
+2025-03-22 04:51:09,095 - INFO - Client disconnesso: giulio
+2025-03-22 04:51:37,869 - INFO - Nuovo client connesso: giulio
+2025-03-22 04:51:51,831 - INFO - Client disconnesso: giulio
+2025-03-22 04:51:51,832 - INFO - Nuovo client connesso: gianni
+2025-03-22 04:55:27,063 - ERROR - Errore nella gestione del messaggio da gianni: [Errno 104] Connection reset by peer
+2025-03-22 04:55:27,063 - INFO - Client disconnesso: gianni
+2025-03-22 04:55:27,064 - INFO - Nuovo client connesso: giulia
+2025-03-22 04:55:27,065 - INFO - Client disconnesso: giulia
+2025-03-22 04:56:14,078 - INFO - Nuovo client connesso: user1
+2025-03-22 04:56:20,575 - INFO - Client disconnesso: user1
+2025-03-22 04:56:20,576 - INFO - Nuovo client connesso: user2
+2025-03-22 04:56:20,578 - INFO - Client disconnesso: user2
+2025-03-22 04:56:34,045 - INFO - Nuovo client connesso: user2
+2025-03-22 04:57:08,676 - INFO - Broadcast da user2: buongiorno
+2025-03-22 04:57:16,587 - INFO - Broadcast da nello: buongiorno
+2025-03-22 04:57:58,296 - INFO - Client disconnesso: user2
+2025-03-22 04:58:37,721 - INFO - Nuovo client connesso: giulia
+2025-03-22 04:59:06,334 - INFO - Client disconnesso: giulia
+2025-03-22 04:59:09,361 - INFO - Client disconnesso: nello
+2025-03-22 04:59:23,364 - INFO - Server arrestato
+2025-03-22 05:00:45,350 - INFO - Server avviato su localhost:5000
+2025-03-22 05:01:00,719 - INFO - Server arrestato
+2025-03-22 05:01:11,573 - INFO - Server avviato su localhost:5000
+2025-03-22 05:01:15,371 - INFO - Server arrestato
+2025-03-22 05:01:18,702 - INFO - Server avviato su localhost:5000
+2025-03-22 05:01:21,939 - INFO - Server arrestato

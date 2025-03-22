@@ -128,28 +128,9 @@ class ChatWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.client = ChatClient()
-        self.user_colors = {}  # Dizionario per memorizzare i colori degli utenti
+        self.user_colors = {}
         self.init_ui()
         self.setup_signals()
-
-    def get_user_color(self, username):
-        """Genera un colore unico per ogni utente basato sul suo username"""
-        if username not in self.user_colors:
-            # Usa l'hash dell'username per generare un colore
-            hash_obj = hashlib.md5(username.encode())
-            hash_hex = hash_obj.hexdigest()
-            
-            # Usa i primi 6 caratteri dell'hash come colore
-            color = f"#{hash_hex[:6]}"
-            
-            # Assicurati che il colore sia leggibile (non troppo chiaro)
-            rgb = tuple(int(color[i:i+2], 16) for i in (1, 3, 5))
-            if sum(rgb) > 600:  # Se il colore è troppo chiaro
-                color = f"#{hash_hex[6:12]}"  # Usa i successivi 6 caratteri
-            
-            self.user_colors[username] = color
-        
-        return self.user_colors[username]
 
     def init_ui(self):
         self.setWindowTitle('IntraMessenger')
@@ -180,7 +161,7 @@ class ChatWindow(QMainWindow):
         """)
         left_layout.addWidget(self.connect_btn)
 
-        # Miglioriamo lo stile della label dell'username
+        # Username label
         self.username_label = QLabel('')
         self.username_label.setStyleSheet("""
             QLabel {
@@ -198,17 +179,38 @@ class ChatWindow(QMainWindow):
         self.username_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         left_layout.addWidget(self.username_label)
 
-        # Aggiungiamo un separatore visivo
+        # Separatore
         separator = QWidget()
         separator.setFixedHeight(1)
         separator.setStyleSheet("background-color: #dee2e6;")
         left_layout.addWidget(separator)
 
-        # Lista utenti
+        # Header lista utenti con pulsante refresh
+        users_header = QHBoxLayout()
         users_label = QLabel('Utenti Online')
         users_label.setStyleSheet('font-weight: bold; color: #333;')
-        left_layout.addWidget(users_label)
+        users_header.addWidget(users_label)
         
+        self.refresh_btn = QPushButton('🔄')
+        self.refresh_btn.setToolTip('Aggiorna lista utenti')
+        self.refresh_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #6c757d;
+                color: white;
+                border: none;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #5a6268;
+            }
+        """)
+        self.refresh_btn.clicked.connect(self.request_users_list)
+        users_header.addWidget(self.refresh_btn)
+        left_layout.addLayout(users_header)
+
+        # Lista utenti
         self.users_list = QListWidget()
         self.users_list.setStyleSheet("""
             QListWidget {
@@ -251,16 +253,22 @@ class ChatWindow(QMainWindow):
         # Area input
         input_layout = QHBoxLayout()
         
-        self.message_input = QLineEdit()
-        self.message_input.setPlaceholderText('Scrivi un messaggio...')
+        self.message_input = QTextEdit()
+        self.message_input.setPlaceholderText('Scrivi un messaggio... (Shift+Invio per andare a capo)')
+        self.message_input.setMaximumHeight(100)  # Altezza massima
         self.message_input.setStyleSheet("""
-            QLineEdit {
+            QTextEdit {
                 padding: 8px;
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
+                font-size: 16px;
+                line-height: 1.4;
             }
         """)
         input_layout.addWidget(self.message_input)
+
+        # Gestiamo l'evento keyPressEvent del QTextEdit
+        self.message_input.keyPressEvent = self.handle_input_keypress
 
         self.send_btn = QPushButton('Invia')
         self.send_btn.setEnabled(False)
@@ -295,7 +303,7 @@ class ChatWindow(QMainWindow):
         # Connessione pulsanti
         self.connect_btn.clicked.connect(self.handle_connection)
         self.send_btn.clicked.connect(self.send_message)
-        self.message_input.returnPressed.connect(self.send_message)
+        self.message_input.keyPressEvent = self.handle_input_keypress
         
         # Segnali del client
         self.client.signals.message_received.connect(self.handle_message)
@@ -336,14 +344,28 @@ class ChatWindow(QMainWindow):
             self.try_connect()
 
     def handle_message(self, data):
-        if data['type'] == 'message':
+        if data['type'] == 'server_shutdown':
+            self.chat_area.append(f'<span style="color: red"><b>{data["message"]}</b></span>')
+            self.client.disconnect()
+            self.connect_btn.setText('Connetti')
+            self.send_btn.setEnabled(False)
+            self.users_list.clear()
+            self.username_label.setText('')
+            QMessageBox.warning(self, 'Server Disconnesso', 'Il server è stato arrestato')
+        elif data['type'] == 'user_list':
+            self.update_users_list(data['users'])
+        elif data['type'] == 'message':
             color = self.get_user_color(data['from'])
-            self.chat_area.append(f'<b style="color: {color}">{data["from"]}</b>: {data["message"]}')
+            formatted_message = data['message'].replace('\n', '<br>')
+            self.chat_area.append(f'<b style="color: {color}">{data["from"]}</b>: {formatted_message}')
         elif data['type'] == 'private':
             color = self.get_user_color(data['from'])
-            self.chat_area.append(f'<b style="color: {color}"><i>PM da {data["from"]}</i></b>: {data["message"]}')
+            formatted_message = data['message'].replace('\n', '<br>')
+            self.chat_area.append(f'<b style="color: {color}"><i>PM da {data["from"]}</i></b>: {formatted_message}')
         elif data['type'] == 'system':
             self.chat_area.append(f'<i style="color: #666666">{data["message"]}</i>')
+            # Richiedi la lista utenti aggiornata dopo ogni messaggio di sistema
+            self.client.send_message('request_users')
         elif data['type'] == 'error':
             self.chat_area.append(f'<span style="color: red"><i>{data["message"]}</i></span>')
 
@@ -363,22 +385,39 @@ class ChatWindow(QMainWindow):
                 # Aggiorna il colore dell'utente nella lista
                 color = self.get_user_color(user)
                 self.users_list.item(self.users_list.count() - 1).setForeground(QColor(color))
+        
+        # Aggiorna la GUI
+        QApplication.processEvents()
 
     def start_private_message(self, item):
         """Avvia un messaggio privato quando si fa doppio click su un utente"""
         self.message_input.setText(f'@{item.text()} ')
         self.message_input.setFocus()
 
+    def handle_input_keypress(self, event):
+        """Gestisce gli eventi della tastiera nell'input dei messaggi"""
+        if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
+            if event.modifiers() == Qt.KeyboardModifier.ShiftModifier:
+                # Shift+Enter: inserisce una nuova riga
+                self.message_input.insertPlainText('\n')
+            else:
+                # Solo Enter: invia il messaggio
+                self.send_message()
+        else:
+            # Per tutti gli altri tasti, usa il comportamento predefinito
+            QTextEdit.keyPressEvent(self.message_input, event)
+
     def send_message(self):
-        message = self.message_input.text().strip()
+        message = self.message_input.toPlainText().strip()
         if not message:
             return
         
         if message.startswith('@'):
             # Messaggio privato
-            parts = message[1:].split(' ', 1)
+            parts = message.split(' ', 1)
             if len(parts) == 2:
-                recipient, content = parts
+                recipient = parts[0][1:]
+                content = parts[1]
                 self.client.send_message('private', to=recipient, message=content)
                 # Mostra il messaggio inviato nella chat
                 color = self.get_user_color(self.client.username)
@@ -388,11 +427,41 @@ class ChatWindow(QMainWindow):
         else:
             # Messaggio broadcast
             self.client.send_message('broadcast', message=message)
-            # Mostra il messaggio inviato nella chat
+            # Mostra il messaggio inviato nella chat preservando la formattazione
             color = self.get_user_color(self.client.username)
-            self.chat_area.append(f'<b style="color: {color}">Tu</b>: {message}')
+            formatted_message = message.replace('\n', '<br>')
+            self.chat_area.append(f'<b style="color: {color}">Tu</b>: {formatted_message}')
         
         self.message_input.clear()
+        self.message_input.setFocus()
+
+    def request_users_list(self):
+        """Richiede la lista aggiornata degli utenti al server"""
+        if self.client.connected:
+            self.client.send_message('request_users')
+
+    def get_user_color(self, username):
+        """Genera un colore unico per ogni utente basato sul suo username"""
+        if username not in self.user_colors:
+            # Usa l'hash dell'username per generare un colore
+            hash_obj = hashlib.md5(username.encode())
+            hash_hex = hash_obj.hexdigest()
+            
+            # Genera colori più scuri per una migliore leggibilità
+            r = int(hash_hex[:2], 16) % 156  # Massimo 156 per evitare colori troppo chiari
+            g = int(hash_hex[2:4], 16) % 156
+            b = int(hash_hex[4:6], 16) % 156
+            
+            # Assicurati che almeno una componente sia sufficientemente scura
+            if max(r, g, b) < 50:
+                max_component = max(r, g, b)
+                if max_component == r: r = 100
+                elif max_component == g: g = 100
+                else: b = 100
+            
+            self.user_colors[username] = f"#{r:02x}{g:02x}{b:02x}"
+        
+        return self.user_colors[username]
 
 def main():
     app = QApplication(sys.argv)
