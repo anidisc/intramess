@@ -115,14 +115,14 @@ class ChatWindow(QMainWindow):
         conn_layout.addWidget(self.connect_btn)
         layout.addLayout(conn_layout)
 
-        # Aggiungi combobox per i gruppi
+        # Area gruppo
         group_layout = QHBoxLayout()
         self.group_combo = QComboBox()
         self.group_combo.addItem('ALL')
         self.group_combo.setEnabled(False)
-        group_layout.addWidget(QLabel('Gruppo:'))
+        group_layout.addWidget(QLabel('Gruppo attivo:'))
         group_layout.addWidget(self.group_combo)
-        layout.insertLayout(1, group_layout)
+        layout.addLayout(group_layout)
 
         # Area chat
         self.chat_area = QTextEdit()
@@ -131,11 +131,31 @@ class ChatWindow(QMainWindow):
 
         # Area input messaggio
         msg_layout = QHBoxLayout()
+        self.writing_label = QLabel('Scrivi in: ALL')
         self.message_input = QLineEdit()
         self.send_btn = QPushButton('Invia')
+        msg_layout.addWidget(self.writing_label)
         msg_layout.addWidget(self.message_input)
         msg_layout.addWidget(self.send_btn)
         layout.addLayout(msg_layout)
+
+        # Imposta stili
+        self.chat_area.setStyleSheet("""
+            QTextEdit {
+                background-color: white;
+                color: black;
+                font-size: 12pt;
+            }
+        """)
+        
+        self.message_input.setStyleSheet("""
+            QLineEdit {
+                background-color: white;
+                color: black;
+                font-size: 12pt;
+                padding: 5px;
+            }
+        """)
 
     def setup_signals(self):
         self.connect_btn.clicked.connect(self.handle_connection)
@@ -187,20 +207,17 @@ class ChatWindow(QMainWindow):
     def send_message(self):
         message = self.message_input.text().strip()
         if message and self.client.socket:
-            if message.startswith('@'):
-                # Messaggio di gruppo
-                parts = message[1:].split(' ', 1)
-                if len(parts) == 2:
-                    group, msg = parts
-                    data = {
-                        'type': 'group_message',
-                        'group': group.upper(),
-                        'message': msg
-                    }
-            else:
-                # Messaggio broadcast
+            if message.startswith('@ALL '):  # Forza invio al gruppo ALL
+                msg = message[5:]
                 data = {
-                    'type': 'broadcast',
+                    'type': 'group_message',
+                    'group': 'ALL',
+                    'message': msg
+                }
+            else:  # Invia al gruppo corrente
+                data = {
+                    'type': 'group_message',
+                    'group': self.current_group,
                     'message': message
                 }
             self.client.send_message(data)
@@ -219,6 +236,7 @@ class ChatWindow(QMainWindow):
                 'group': group
             })
             self.current_group = group
+            self.writing_label.setText(f'Scrivi in: {group}')
 
     def closeEvent(self, event):
         self.client.disconnect()

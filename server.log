@@ -476,3 +476,12 @@ bene
 2025-03-22 16:20:26,061 - INFO - Server avviato su localhost:5000
 2025-03-22 16:20:26,061 - INFO - Server avviato con gruppo predefinito 'ALL'
 2025-03-22 16:20:35,902 - INFO - Nuovo gruppo creato: G1
+2025-03-22 16:29:25,082 - INFO - Server arrestato
+2025-03-22 16:30:33,677 - INFO - Server avviato su localhost:5000
+2025-03-22 16:30:33,677 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 16:30:49,768 - INFO - Nuovo gruppo creato: G1
+2025-03-22 16:41:50,550 - INFO - Server arrestato
+2025-03-22 16:43:15,130 - INFO - Server avviato su localhost:5000
+2025-03-22 16:43:15,130 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 16:43:22,296 - INFO - Nuovo gruppo creato: G1[D
+2025-03-22 16:48:18,389 - INFO - Nuovo gruppo creato: G2
