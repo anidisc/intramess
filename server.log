@@ -235,3 +235,244 @@ bene
 2025-03-22 05:13:49,637 - INFO - Client disconnesso: user1
 2025-03-22 05:13:56,151 - INFO - Client disconnesso: user0
 2025-03-22 05:14:18,076 - INFO - Server arrestato
+2025-03-22 05:17:26,645 - INFO - Server avviato su localhost:5000
+2025-03-22 05:18:23,551 - INFO - Nuovo client connesso: aniello
+2025-03-22 05:18:52,779 - INFO - Broadcast da aniello: ciao
+2025-03-22 05:19:00,751 - INFO - Broadcast da aniello: con chi sto parlando?
+2025-03-22 05:19:33,988 - INFO - Client disconnesso: aniello
+2025-03-22 05:19:55,136 - INFO - Nuovo client connesso: aniello
+2025-03-22 05:20:03,614 - INFO - Broadcast da aniello: salve
+2025-03-22 05:20:16,529 - INFO - Broadcast da aniello: di questo che sappiamo
+2025-03-22 05:20:29,048 - INFO - Client disconnesso: aniello
+2025-03-22 06:11:10,350 - INFO - Server arrestato
+2025-03-22 06:11:12,677 - INFO - Server avviato su localhost:5000
+2025-03-22 06:11:15,369 - INFO - Server arrestato
+2025-03-22 07:56:37,748 - INFO - Server avviato su localhost:5000
+2025-03-22 07:56:37,748 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 07:57:33,499 - ERROR - Errore nel gestore dei comandi: 'list' object has no attribute 'upper'
+2025-03-22 07:58:16,286 - ERROR - Errore nel gestore dei comandi: 'list' object has no attribute 'upper'
+2025-03-22 07:59:14,742 - INFO - Nuovo client connesso: user1 (gruppo: ALL)
+2025-03-22 07:59:26,630 - INFO - Broadcast da user1 al gruppo ALL: ciao
+2025-03-22 07:59:55,990 - INFO - Nuovo client connesso: user2 (gruppo: ALL)
+2025-03-22 08:00:08,322 - INFO - Broadcast da user2 al gruppo ALL: ciao
+2025-03-22 08:00:25,364 - INFO - Broadcast da user1 al gruppo ALL: ciao
+2025-03-22 08:01:08,510 - INFO - Nuovo client connesso: user3 (gruppo: ALL)
+2025-03-22 08:01:17,340 - INFO - Broadcast da user3 al gruppo ALL: ciao
+2025-03-22 08:02:03,805 - INFO - Nuovo client connesso: user4 (gruppo: ALL)
+2025-03-22 08:02:03,811 - INFO - Client disconnesso: user3 (gruppo: ALL)
+2025-03-22 08:02:25,877 - INFO - Messaggio privato da user2 a user4: ciao
+2025-03-22 08:03:15,891 - INFO - Broadcast da user1 al gruppo ALL: ciao
+2025-03-22 08:03:24,179 - INFO - Messaggio da user1 al gruppo ALL: csale
+2025-03-22 08:04:05,280 - INFO - Nuovo client connesso: user10 (gruppo: ALL)
+2025-03-22 08:04:05,282 - INFO - Client disconnesso: user1 (gruppo: ALL)
+2025-03-22 08:04:05,282 - INFO - Client disconnesso: user10 (gruppo: ALL)
+2025-03-22 08:04:20,246 - INFO - Nuovo client connesso: user5 (gruppo: ALL)
+2025-03-22 08:04:20,249 - INFO - Client disconnesso: user5 (gruppo: ALL)
+2025-03-22 08:04:46,267 - INFO - Messaggio privato da user4 a user5: hhyh
+2025-03-22 08:05:37,110 - INFO - Client disconnesso: user2 (gruppo: ALL)
+2025-03-22 08:05:37,111 - INFO - Client disconnesso: user4 (gruppo: ALL)
+2025-03-22 08:07:39,014 - INFO - Server arrestato
+2025-03-22 08:08:41,345 - INFO - Server avviato su localhost:5000
+2025-03-22 08:08:41,345 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 08:08:53,216 - INFO - Nuovo gruppo creato: G1
+2025-03-22 08:10:22,857 - INFO - Nuovo client connesso: aniello (gruppo: ALL)
+2025-03-22 08:12:16,967 - INFO - Client disconnesso: aniello (gruppo: ALL)
+2025-03-22 08:16:18,127 - INFO - Server avviato su localhost:5000
+2025-03-22 08:16:18,127 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 08:16:36,830 - INFO - Nuovo gruppo creato: G1
+2025-03-22 08:22:39,751 - INFO - Nuovo client connesso: user1 (gruppi: ALL)
+2025-03-22 08:22:43,243 - INFO - Nuovo client connesso: aniello (gruppi: ALL)
+2025-03-22 08:22:43,244 - ERROR - Errore nella gestione del client aniello: None
+2025-03-22 08:23:13,344 - INFO - Nuovo client connesso: user1 (gruppi: ALL)
+2025-03-22 08:23:26,048 - INFO - Nuovo client connesso: aasd (gruppi: ALL)
+2025-03-22 08:23:43,209 - INFO - Nuovo client connesso: user2 (gruppi: ALL)
+2025-03-22 08:23:43,209 - ERROR - Errore nella gestione del client user2: dictionary changed size during iteration
+2025-03-22 08:23:56,612 - INFO - Nuovo client connesso: hsdd (gruppi: ALL)
+2025-03-22 08:23:56,612 - ERROR - Errore nella gestione del client hsdd: None
+2025-03-22 08:24:10,056 - INFO - Nuovo client connesso: user1 (gruppi: ALL)
+2025-03-22 08:27:51,139 - INFO - Server arrestato
+2025-03-22 08:28:11,473 - INFO - Server avviato su localhost:5000
+2025-03-22 08:28:11,473 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 08:28:52,855 - INFO - Nuovo gruppo creato: GROUP1
+2025-03-22 08:29:34,138 - INFO - Nuovo client connesso: user1 (gruppi: ALL e GROUP1)
+2025-03-22 08:29:43,265 - INFO - Broadcast da user1 al gruppo GROUP1: ciao
+2025-03-22 08:30:34,197 - INFO - Nuovo client connesso: user2 (gruppi: ALL e GROUP1)
+2025-03-22 08:30:42,481 - INFO - Broadcast da user2 al gruppo GROUP1: ciao
+2025-03-22 08:30:47,918 - INFO - Broadcast da user2 al gruppo GROUP1: come va
+2025-03-22 08:31:02,733 - INFO - Broadcast da user1 al gruppo GROUP1: ciall
+2025-03-22 08:31:09,099 - INFO - Messaggio da user1 al gruppo ALL: ciaol
+2025-03-22 08:31:33,837 - INFO - Messaggio privato da user2 a GROUP1: ciao
+2025-03-22 08:32:00,809 - INFO - Broadcast da user2 al gruppo GROUP1: ehi
+2025-03-22 08:32:03,902 - INFO - Broadcast da user1 al gruppo GROUP1: ehi
+2025-03-22 08:32:07,105 - ERROR - Errore nella gestione del client user2: [Errno 104] Connection reset by peer
+2025-03-22 08:32:07,106 - INFO - Client disconnesso: user2 (gruppo: GROUP1)
+2025-03-22 08:32:09,910 - ERROR - Errore nella gestione del client user1: [Errno 104] Connection reset by peer
+2025-03-22 08:32:09,911 - INFO - Client disconnesso: user1 (gruppo: GROUP1)
+2025-03-22 08:32:55,085 - INFO - Server arrestato
+2025-03-22 08:33:35,396 - INFO - Server avviato su localhost:5000
+2025-03-22 08:33:35,397 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 08:33:46,210 - INFO - Nuovo gruppo creato: G2
+2025-03-22 08:34:12,513 - INFO - Nuovo client connesso: user1 (gruppi: ALL e G2)
+2025-03-22 08:34:40,871 - INFO - Nuovo client connesso: u3 (gruppi: ALL e G2)
+2025-03-22 08:34:44,036 - INFO - Broadcast da u3 al gruppo G2: ddf
+2025-03-22 08:37:06,321 - INFO - Broadcast da user1 al gruppo G2: salve
+2025-03-22 08:37:37,644 - INFO - Messaggio da user1 al gruppo ALL: ciao
+2025-03-22 08:37:59,551 - ERROR - Errore nella gestione del client user1: [Errno 104] Connection reset by peer
+2025-03-22 08:37:59,552 - INFO - Client disconnesso: user1 (gruppo: G2)
+2025-03-22 08:38:00,417 - ERROR - Errore nella gestione del client u3: [Errno 104] Connection reset by peer
+2025-03-22 08:38:00,418 - INFO - Client disconnesso: u3 (gruppo: G2)
+2025-03-22 08:38:09,161 - INFO - Server arrestato
+2025-03-22 08:39:50,244 - INFO - Server avviato su localhost:5000
+2025-03-22 08:39:50,244 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 08:40:00,185 - INFO - Nuovo gruppo creato: GX
+2025-03-22 08:40:15,128 - INFO - Nuovo client connesso: u1 (gruppi: ALL e GX)
+2025-03-22 08:40:22,812 - INFO - Broadcast da u1 a ALL: ciao
+2025-03-22 08:42:38,896 - INFO - Nuovo client connesso: u2 (gruppi: ALL e GX)
+2025-03-22 08:42:50,517 - INFO - Broadcast da u2 a ALL: ciao
+2025-03-22 08:42:54,256 - INFO - Broadcast da u1 a ALL: sddf
+2025-03-22 08:43:00,523 - INFO - Broadcast da u2 a ALL: xkjjf
+2025-03-22 08:43:28,004 - ERROR - Errore nella gestione del client u2: [Errno 104] Connection reset by peer
+2025-03-22 08:43:28,005 - INFO - Client disconnesso: u2 (gruppo: GX)
+2025-03-22 08:43:34,986 - INFO - Broadcast da u1 a ALL: dffg
+2025-03-22 08:43:39,557 - ERROR - Errore nella gestione del client u1: [Errno 104] Connection reset by peer
+2025-03-22 08:43:39,557 - INFO - Client disconnesso: u1 (gruppo: GX)
+2025-03-22 08:46:21,078 - INFO - Server arrestato
+2025-03-22 08:46:23,890 - INFO - Server avviato su localhost:5000
+2025-03-22 08:46:23,890 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 08:46:37,881 - INFO - Nuovo client connesso: nell (gruppi: ALL)
+2025-03-22 08:46:46,245 - INFO - Broadcast da nell a ALL: djfg
+2025-03-22 08:46:54,946 - INFO - Nuovo client connesso: iss (gruppi: ALL)
+2025-03-22 08:47:01,280 - INFO - Broadcast da iss a ALL: dffg
+2025-03-22 08:47:06,135 - INFO - Broadcast da nell a ALL: sksjdf
+2025-03-22 08:47:12,144 - INFO - Broadcast da nell a ALL: ssdfghg
+2025-03-22 08:47:19,251 - INFO - Broadcast da iss a ALL: parliamo da soli
+2025-03-22 08:47:51,740 - INFO - Messaggio privato da nell a ISS: cioa
+2025-03-22 08:47:57,670 - INFO - Messaggio privato da nell a DFF: isss
+2025-03-22 08:48:06,089 - ERROR - Errore nella gestione del client nell: [Errno 104] Connection reset by peer
+2025-03-22 08:48:06,956 - ERROR - Errore nella gestione del client iss: [Errno 104] Connection reset by peer
+2025-03-22 08:48:19,531 - INFO - Server arrestato
+2025-03-22 08:50:59,025 - INFO - Server avviato su localhost:5000
+2025-03-22 08:50:59,025 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 08:51:11,272 - INFO - Nuovo client connesso: a1 (gruppi: ALL)
+2025-03-22 08:51:21,239 - INFO - Nuovo client connesso: a2 (gruppi: ALL)
+2025-03-22 08:51:27,423 - INFO - Broadcast da a2: ciid
+2025-03-22 08:51:47,599 - INFO - Broadcast da a1: sdjf
+2025-03-22 08:52:01,488 - INFO - Broadcast da a1: ddjjsjdf
+2025-03-22 08:52:09,959 - INFO - Broadcast da a2: sdsffjjjeer
+2025-03-22 08:52:16,648 - INFO - Broadcast da a1: sdkdjf
+2025-03-22 08:52:33,430 - INFO - Broadcast da a1: sdkkkfg
+2025-03-22 08:54:46,959 - ERROR - Errore nella gestione del client a2: [Errno 104] Connection reset by peer
+2025-03-22 08:54:48,768 - ERROR - Errore nella gestione del client a1: [Errno 104] Connection reset by peer
+2025-03-22 08:54:53,892 - INFO - Server arrestato
+2025-03-22 08:55:19,750 - INFO - Server avviato su localhost:5000
+2025-03-22 08:55:19,750 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 08:55:28,254 - INFO - Nuovo gruppo creato: G1
+2025-03-22 08:55:42,843 - INFO - Server arrestato
+2025-03-22 08:57:52,888 - INFO - Server avviato su localhost:5000
+2025-03-22 08:57:52,889 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 08:57:59,324 - INFO - Nuovo gruppo creato: G1
+2025-03-22 08:59:35,358 - INFO - Server arrestato
+2025-03-22 08:59:36,229 - INFO - Server avviato su localhost:5000
+2025-03-22 08:59:36,230 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 08:59:54,025 - INFO - Nuovo client connesso: a1 (gruppo: ALL)
+2025-03-22 09:00:08,381 - INFO - Nuovo client connesso: a2 (gruppo: ALL)
+2025-03-22 09:00:14,402 - INFO - Broadcast da a2: ssdsf
+2025-03-22 09:00:17,713 - INFO - Broadcast da a1: fdfg
+2025-03-22 09:00:24,130 - INFO - Broadcast da a2: fdfdgghh
+2025-03-22 09:00:28,102 - INFO - Broadcast da a1: fgfgfhfhh
+2025-03-22 09:00:35,944 - INFO - Broadcast da a1: fgfgfhjhjkkl
+2025-03-22 09:00:42,662 - INFO - Broadcast da a2: dfjjjfdfghhj
+2025-03-22 09:01:00,213 - INFO - Broadcast da a1: cskkddffg
+2025-03-22 09:01:41,270 - INFO - Broadcast da a2: ehi questo sdf
+2025-03-22 09:01:45,457 - INFO - Messaggio da a2 al gruppo ALL: ddfg
+2025-03-22 09:02:00,639 - INFO - Broadcast da a1: sdfffgghhhj
+2025-03-22 09:02:07,241 - ERROR - Errore nella gestione del client a2: [Errno 104] Connection reset by peer
+2025-03-22 09:02:07,241 - INFO - Client disconnesso: a2 (gruppo: ALL)
+2025-03-22 09:03:00,351 - INFO - Nuovo client connesso: a3 (gruppo: ALL)
+2025-03-22 09:03:00,352 - INFO - Client disconnesso: a3 (gruppo: ALL)
+2025-03-22 09:03:00,352 - ERROR - Errore nella gestione del client a3: dictionary changed size during iteration
+2025-03-22 09:03:39,118 - INFO - Server arrestato
+2025-03-22 09:06:55,724 - INFO - Server avviato su localhost:5000
+2025-03-22 09:06:55,724 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 09:07:14,144 - INFO - Nuovo client connesso: as (gruppo: ALL)
+2025-03-22 09:07:24,609 - INFO - Nuovo client connesso: asd (gruppo: ALL)
+2025-03-22 09:07:29,614 - INFO - Broadcast da as: cdlf
+2025-03-22 09:07:33,296 - INFO - Broadcast da as: sdffg
+2025-03-22 09:07:37,969 - INFO - Broadcast da asd: ssjkjdf
+2025-03-22 09:07:56,959 - INFO - Broadcast da asd: kkdjf
+2025-03-22 09:10:23,601 - ERROR - Errore nella gestione del client as: [Errno 104] Connection reset by peer
+2025-03-22 09:10:23,602 - INFO - Client disconnesso: as (gruppo: ALL)
+2025-03-22 09:10:24,617 - ERROR - Errore nella gestione del client asd: [Errno 104] Connection reset by peer
+2025-03-22 09:10:24,618 - INFO - Client disconnesso: asd (gruppo: ALL)
+2025-03-22 09:10:28,360 - INFO - Server arrestato
+2025-03-22 09:10:29,877 - INFO - Server avviato su localhost:5000
+2025-03-22 09:10:29,877 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 09:10:38,864 - INFO - Nuovo gruppo creato: GGG\
+2025-03-22 09:10:57,451 - INFO - Nuovo client connesso: ssd (gruppo: GGG\)
+2025-03-22 09:11:02,119 - INFO - Broadcast da ssd: ssd
+2025-03-22 09:11:14,232 - INFO - Nuovo client connesso: aaaa (gruppo: GGG\)
+2025-03-22 09:11:18,312 - INFO - Broadcast da aaaa: ddf
+2025-03-22 09:11:22,371 - INFO - Broadcast da ssd: sdsdsf
+2025-03-22 09:11:29,080 - INFO - Broadcast da ssd: @all ddffg
+2025-03-22 09:14:48,261 - INFO - Broadcast da ssd: @all df
+2025-03-22 09:14:59,309 - INFO - Broadcast da ssd: aasasa
+2025-03-22 09:15:13,040 - INFO - Broadcast da aaaa: sasadd
+2025-03-22 09:18:53,552 - INFO - Broadcast da aaaa: sjsd
+2025-03-22 09:18:59,268 - INFO - Broadcast da aaaa: testo
+2025-03-22 09:19:05,963 - INFO - Broadcast da aaaa: @ggg sdfg
+2025-03-22 09:19:27,134 - ERROR - Errore nella gestione del client ssd: [Errno 104] Connection reset by peer
+2025-03-22 09:19:27,135 - INFO - Client disconnesso: ssd (gruppo: GGG\)
+2025-03-22 09:19:28,014 - ERROR - Errore nella gestione del client aaaa: [Errno 104] Connection reset by peer
+2025-03-22 09:19:28,014 - INFO - Client disconnesso: aaaa (gruppo: GGG\)
+2025-03-22 09:24:34,466 - INFO - Server arrestato
+2025-03-22 09:24:35,547 - INFO - Server avviato su localhost:5000
+2025-03-22 09:24:35,547 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 09:25:59,790 - INFO - Nuovo client connesso: user1 (gruppo: ALL)
+2025-03-22 09:26:30,447 - INFO - Nuovo client connesso: username3 (gruppo: ALL)
+2025-03-22 09:26:30,451 - INFO - Client disconnesso: username3 (gruppo: ALL)
+2025-03-22 09:26:34,878 - INFO - Broadcast da user1: ciao
+2025-03-22 09:26:40,211 - INFO - Broadcast da user1: sdsdf
+2025-03-22 09:26:54,434 - INFO - Nuovo client connesso: username3 (gruppo: ALL)
+2025-03-22 09:27:01,224 - INFO - Broadcast da username3: cioioa
+2025-03-22 09:27:07,801 - INFO - Broadcast da username3: kksjsjdf
+2025-03-22 09:27:14,277 - INFO - Broadcast da username3: ssdfg
+2025-03-22 09:27:24,070 - INFO - Broadcast da user1: akkksd
+2025-03-22 09:27:38,838 - INFO - Broadcast da username3: kksjjdf
+2025-03-22 09:27:48,010 - INFO - Broadcast da username3: hhsdf
+2025-03-22 09:27:59,547 - INFO - Broadcast da username3: llllsdfg
+2025-03-22 09:28:08,172 - INFO - Client disconnesso: user1 (gruppo: ALL)
+2025-03-22 09:28:08,173 - INFO - Client disconnesso: username3 (gruppo: ALL)
+2025-03-22 09:29:03,724 - INFO - Server arrestato
+2025-03-22 09:30:06,325 - INFO - Server avviato su localhost:5000
+2025-03-22 09:30:06,325 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 09:30:49,164 - INFO - Nuovo client connesso: user2 (gruppo: ALL)
+2025-03-22 09:30:49,167 - INFO - Client disconnesso: user2 (gruppo: ALL)
+2025-03-22 09:30:52,645 - INFO - Nuovo client connesso: user1 (gruppo: ALL)
+2025-03-22 09:30:52,648 - INFO - Client disconnesso: user1 (gruppo: ALL)
+2025-03-22 09:31:09,168 - INFO - Nuovo client connesso: user1 (gruppo: ALL)
+2025-03-22 09:31:09,170 - INFO - Client disconnesso: user1 (gruppo: ALL)
+2025-03-22 09:31:21,330 - INFO - Nuovo client connesso: user2 (gruppo: ALL)
+2025-03-22 09:31:21,333 - INFO - Client disconnesso: user2 (gruppo: ALL)
+2025-03-22 09:31:45,950 - INFO - Nuovo client connesso: user1 (gruppo: ALL)
+2025-03-22 09:31:45,954 - INFO - Client disconnesso: user1 (gruppo: ALL)
+2025-03-22 09:31:49,998 - INFO - Nuovo client connesso: user2sdfd (gruppo: ALL)
+2025-03-22 09:31:49,999 - INFO - Client disconnesso: user2sdfd (gruppo: ALL)
+2025-03-22 09:31:49,999 - ERROR - Errore nella gestione del client user2sdfd: dictionary changed size during iteration
+2025-03-22 09:32:10,195 - INFO - Nuovo client connesso: d23 (gruppo: ALL)
+2025-03-22 09:32:10,198 - INFO - Client disconnesso: d23 (gruppo: ALL)
+2025-03-22 09:33:56,448 - INFO - Server arrestato
+2025-03-22 09:33:57,868 - INFO - Server avviato su localhost:5000
+2025-03-22 09:33:57,868 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 09:35:32,448 - INFO - Client disconnesso: assd (gruppo: ALL)
+2025-03-22 09:35:33,498 - INFO - Client disconnesso: ass (gruppo: ALL)
+2025-03-22 16:05:32,757 - INFO - Server avviato su localhost:5000
+2025-03-22 16:05:32,757 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 16:07:15,950 - INFO - Nuovo gruppo creato: G1
+2025-03-22 16:16:38,150 - INFO - Client disconnesso: user1 (gruppo: ALL)
+2025-03-22 16:17:33,391 - INFO - Client disconnesso: user3 (gruppo: ALL)
+2025-03-22 16:17:38,573 - INFO - Client disconnesso: user4 (gruppo: G1)
+2025-03-22 16:17:38,573 - INFO - Client disconnesso: user2 (gruppo: G1)
+2025-03-22 16:20:23,962 - INFO - Server arrestato
+2025-03-22 16:20:26,061 - INFO - Server avviato su localhost:5000
+2025-03-22 16:20:26,061 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 16:20:35,902 - INFO - Nuovo gruppo creato: G1
