@@ -39,6 +39,9 @@ class ChatClient(QObject):
                 
             self.signals.message_received.emit(response)
             
+            # Richiedi lista utenti
+            self.request_user_list()
+            
             # Avvia thread ricezione
             self.running = True
             self.receiver_thread = threading.Thread(target=self.receive_messages)
@@ -49,6 +52,15 @@ class ChatClient(QObject):
         except Exception as e:
             print(f"Errore connessione: {e}")
             return False
+
+    def request_user_list(self):
+        if self.socket:
+            try:
+                self.socket.send(json.dumps({
+                    'type': 'request_users'
+                }).encode() + b'\n')
+            except Exception as e:
+                print(f"Errore richiesta lista utenti: {e}")
 
     def receive_messages(self):
         while self.running and self.socket:
@@ -104,8 +116,13 @@ class ChatWindow(QMainWindow):
         # Widget centrale
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        layout = QVBoxLayout(central_widget)
-
+        
+        # Layout principale orizzontale
+        main_layout = QHBoxLayout(central_widget)
+        
+        # Layout sinistro per chat e input
+        left_layout = QVBoxLayout()
+        
         # Area connessione
         conn_layout = QHBoxLayout()
         self.username_input = QLineEdit()
@@ -113,7 +130,7 @@ class ChatWindow(QMainWindow):
         self.connect_btn = QPushButton('Connetti')
         conn_layout.addWidget(self.username_input)
         conn_layout.addWidget(self.connect_btn)
-        layout.addLayout(conn_layout)
+        left_layout.addLayout(conn_layout)
 
         # Area gruppo
         group_layout = QHBoxLayout()
@@ -122,12 +139,12 @@ class ChatWindow(QMainWindow):
         self.group_combo.setEnabled(False)
         group_layout.addWidget(QLabel('Gruppo attivo:'))
         group_layout.addWidget(self.group_combo)
-        layout.addLayout(group_layout)
+        left_layout.addLayout(group_layout)
 
         # Area chat
         self.chat_area = QTextEdit()
         self.chat_area.setReadOnly(True)
-        layout.addWidget(self.chat_area)
+        left_layout.addWidget(self.chat_area)
 
         # Area input messaggio
         msg_layout = QHBoxLayout()
@@ -137,7 +154,24 @@ class ChatWindow(QMainWindow):
         msg_layout.addWidget(self.writing_label)
         msg_layout.addWidget(self.message_input)
         msg_layout.addWidget(self.send_btn)
-        layout.addLayout(msg_layout)
+        left_layout.addLayout(msg_layout)
+
+        # Layout destro per lista utenti
+        right_layout = QVBoxLayout()
+        
+        # Label utenti online
+        users_label = QLabel('Utenti Online:')
+        right_layout.addWidget(users_label)
+        
+        # Lista utenti
+        self.users_list = QListWidget()
+        self.users_list.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.users_list.customContextMenuRequested.connect(self.show_user_context_menu)
+        right_layout.addWidget(self.users_list)
+
+        # Aggiungi i layout al layout principale
+        main_layout.addLayout(left_layout, stretch=7)  # 70% dello spazio
+        main_layout.addLayout(right_layout, stretch=3)  # 30% dello spazio
 
         # Imposta stili
         self.chat_area.setStyleSheet("""
@@ -156,6 +190,15 @@ class ChatWindow(QMainWindow):
                 padding: 5px;
             }
         """)
+        
+        self.users_list.setStyleSheet("""
+            QListWidget {
+                background-color: white;
+                color: black;
+                font-size: 11pt;
+                padding: 5px;
+            }
+        """)
 
     def setup_signals(self):
         self.connect_btn.clicked.connect(self.handle_connection)
@@ -164,13 +207,20 @@ class ChatWindow(QMainWindow):
         
         self.client.signals.message_received.connect(self.handle_message)
         self.client.signals.connection_lost.connect(self.handle_disconnection)
+        self.client.signals.user_list_updated.connect(self.update_users_list)
         self.group_combo.currentTextChanged.connect(self.change_group)
+        self.users_list.itemDoubleClicked.connect(self.start_private_chat)
 
     def handle_connection(self):
         if self.client.socket:
             self.client.disconnect()
             self.connect_btn.setText('Connetti')
             self.username_input.setEnabled(True)
+            self.group_combo.setEnabled(False)  # Disabilita il combo box alla disconnessione
+            self.group_combo.clear()
+            self.group_combo.addItem('ALL')
+            self.current_group = 'ALL'
+            self.writing_label.setText('Scrivi in: ALL')
             self.chat_area.append('<i>Disconnesso dal server</i>')
         else:
             username = self.username_input.text().strip()
@@ -178,65 +228,170 @@ class ChatWindow(QMainWindow):
                 if self.client.connect_to_server('localhost', 5000, username):
                     self.connect_btn.setText('Disconnetti')
                     self.username_input.setEnabled(False)
-                    self.chat_area.append('<i>Connesso al server</i>')
+                    # Il combo box verrà abilitato quando riceviamo la conferma della connessione
                 else:
                     self.chat_area.append('<span style="color: red">Errore di connessione</span>')
 
     def handle_message(self, data):
         try:
             print(f"DEBUG GUI - Gestione messaggio: {data}")
-            if data['type'] == 'message':
+            if data['type'] == 'connection_accepted':
+                # Abilita il combo box e popola i gruppi
+                self.group_combo.setEnabled(True)
+                self.group_combo.clear()
+                self.group_combo.addItems(data['groups'])
+                self.chat_area.append('<i style="color: green">Connesso al server</i>')
+                
+            elif data['type'] == 'message':
                 sender = data.get('from', 'Unknown')
                 message = data.get('message', '')
                 group = data.get('group', 'ALL')
                 group_info = f" → {group}" if group != 'ALL' else ""
                 self.chat_area.append(f'<b>{sender}{group_info}</b>: {message}')
+            
+            elif data['type'] == 'private':
+                sender = data.get('from', '')
+                to = data.get('to', '')
+                if sender:
+                    self.chat_area.append(f'<i style="color: purple"><b>PM da {sender}</b>: {data["message"]}</i>')
+                else:
+                    self.chat_area.append(f'<i style="color: purple"><b>PM a {to}</b>: {data["message"]}</i>')
+            
             elif data['type'] == 'system':
-                self.chat_area.append(f'<i>{data["message"]}</i>')
-            elif data['type'] == 'connection_accepted':
-                self.group_combo.clear()
-                self.group_combo.addItems(data['groups'])
-                self.group_combo.setEnabled(True)
+                self.chat_area.append(f'<i style="color: gray">{data["message"]}</i>')
+            
+            elif data['type'] == 'error':
+                self.chat_area.append(f'<span style="color: red"><i>{data["message"]}</i></span>')
+            
+            elif data['type'] == 'user_list':
+                self.update_users_list(data.get('users', []))
             
             self.chat_area.verticalScrollBar().setValue(
                 self.chat_area.verticalScrollBar().maximum()
             )
+            QApplication.processEvents()
+            
         except Exception as e:
             print(f"Errore gestione messaggio: {e}")
 
     def send_message(self):
         message = self.message_input.text().strip()
         if message and self.client.socket:
-            if message.startswith('@ALL '):  # Forza invio al gruppo ALL
-                msg = message[5:]
-                data = {
-                    'type': 'group_message',
-                    'group': 'ALL',
-                    'message': msg
-                }
-            else:  # Invia al gruppo corrente
+            if message.startswith('@'):
+                # Controlla se è un messaggio privato o di gruppo
+                parts = message[1:].split(' ', 1)
+                if len(parts) == 2:
+                    target, msg = parts
+                    # Verifica se il target è uno username (rimuovi eventuali [gruppo])
+                    target = target.split('[')[0].strip()
+                    
+                    # Controlla se il target è un utente nella lista
+                    users_in_list = [self.users_list.item(i).text().split('[')[0].strip() 
+                                   for i in range(self.users_list.count())]
+                    
+                    if target in users_in_list:
+                        # Messaggio privato
+                        data = {
+                            'type': 'private_message',
+                            'to': target,
+                            'message': msg
+                        }
+                    else:
+                        # Messaggio di gruppo
+                        data = {
+                            'type': 'group_message',
+                            'group': target.upper(),
+                            'message': msg
+                        }
+                else:
+                    return
+            else:
+                # Messaggio nel gruppo corrente
                 data = {
                     'type': 'group_message',
                     'group': self.current_group,
                     'message': message
                 }
+            
+            print(f"DEBUG: Invio messaggio: {data}")  # Debug
             self.client.send_message(data)
             self.message_input.clear()
 
     def handle_disconnection(self):
         self.connect_btn.setText('Connetti')
         self.username_input.setEnabled(True)
+        self.group_combo.setEnabled(False)  # Disabilita il combo box alla disconnessione
+        self.group_combo.clear()
+        self.group_combo.addItem('ALL')
+        self.current_group = 'ALL'
+        self.writing_label.setText('Scrivi in: ALL')
         self.chat_area.append('<i>Connessione persa</i>')
         self.client.socket = None
 
     def change_group(self, group):
-        if group != self.current_group:
+        if group and group != self.current_group:
+            print(f"DEBUG: Cambio gruppo da {self.current_group} a {group}")  # Debug
             self.client.send_message({
                 'type': 'join_group',
                 'group': group
             })
             self.current_group = group
             self.writing_label.setText(f'Scrivi in: {group}')
+
+    def show_user_context_menu(self, position):
+        menu = QMenu()
+        item = self.users_list.itemAt(position)
+        
+        if item:
+            # Estrai il nome utente dalla stringa (rimuovi il gruppo se presente)
+            username = item.text().split('[')[0].strip()
+            
+            if username != self.client.username:
+                private_msg_action = menu.addAction(f"Messaggio privato a {username}")
+                action = menu.exec_(self.users_list.mapToGlobal(position))
+                
+                if action == private_msg_action:
+                    self.start_private_chat(item)
+
+    def start_private_chat(self, item):
+        if isinstance(item, str):
+            username = item
+        else:
+            # Se riceviamo un QListWidgetItem, estraiamo lo username
+            username = item.text().split('[')[0].strip()
+        
+        if username != self.client.username:
+            current_text = self.message_input.text()
+            self.message_input.setText(f"@{username} {current_text}")
+            self.message_input.setFocus()
+
+    def update_users_list(self, users_data):
+        print(f"DEBUG: Aggiornamento lista utenti: {users_data}")  # Debug
+        self.users_list.clear()
+        
+        # Ordina gli utenti alfabeticamente
+        sorted_users = sorted(users_data.items(), key=lambda x: x[0])
+        
+        for username, user_info in sorted_users:
+            # Crea l'item con il nome utente e il suo gruppo
+            display_text = f"{username}"
+            if user_info['group'] != 'ALL':
+                display_text += f" [{user_info['group']}]"
+            
+            item = QListWidgetItem(display_text)
+            
+            # Stile per l'utente corrente
+            if username == self.client.username:
+                item.setForeground(QColor('blue'))
+                font = item.font()
+                font.setBold(True)
+                item.setFont(font)
+            
+            # Colore diverso per utenti in gruppi diversi da ALL
+            elif user_info['group'] != 'ALL':
+                item.setForeground(QColor('green'))
+            
+            self.users_list.addItem(item)
 
     def closeEvent(self, event):
         self.client.disconnect()

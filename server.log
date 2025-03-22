@@ -485,3 +485,40 @@ bene
 2025-03-22 16:43:15,130 - INFO - Server avviato con gruppo predefinito 'ALL'
 2025-03-22 16:43:22,296 - INFO - Nuovo gruppo creato: G1[D
 2025-03-22 16:48:18,389 - INFO - Nuovo gruppo creato: G2
+2025-03-22 17:01:41,344 - INFO - Server avviato su localhost:5000
+2025-03-22 17:01:41,344 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 17:01:53,199 - INFO - Nuovo gruppo creato: G1
+2025-03-22 17:02:04,371 - INFO - Nuovo gruppo creato: G2
+2025-03-22 17:06:35,357 - INFO - Server arrestato
+2025-03-22 17:08:00,538 - INFO - Server avviato su localhost:5000
+2025-03-22 17:08:00,539 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 17:14:27,860 - INFO - Server arrestato
+2025-03-22 17:17:18,052 - INFO - Server avviato su localhost:5000
+2025-03-22 17:17:18,052 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 17:17:28,296 - INFO - Nuovo gruppo creato: G1
+2025-03-22 17:23:48,958 - INFO - Server arrestato
+2025-03-22 17:24:23,552 - INFO - Server avviato su localhost:5000
+2025-03-22 17:24:23,552 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 17:24:57,126 - INFO - Nuovo gruppo creato: G1
+2025-03-22 17:28:50,967 - INFO - Server arrestato
+2025-03-22 17:56:17,732 - INFO - Server avviato su localhost:5000
+2025-03-22 17:56:17,732 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 18:01:03,317 - INFO - Nuovo gruppo creato: G2
+2025-03-22 18:07:58,490 - INFO - Server arrestato
+2025-03-22 18:09:07,991 - INFO - Server avviato su localhost:5000
+2025-03-22 18:09:07,991 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 18:11:03,773 - INFO - Nuovo gruppo creato: CASA
+2025-03-22 18:14:54,853 - INFO - Server arrestato
+2025-03-22 18:19:29,778 - INFO - Server avviato su localhost:5000
+2025-03-22 18:19:29,778 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 18:20:33,820 - INFO - Nuovo gruppo creato: CASA
+2025-03-22 18:24:05,186 - INFO - Server broadcast: ['messaggio', 'del', 'server']
+2025-03-22 18:28:56,891 - INFO - Server arrestato
+2025-03-22 18:34:05,841 - INFO - Server avviato su localhost:5000
+2025-03-22 18:34:05,841 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 18:34:12,056 - INFO - Nuovo gruppo creato: CASA
+2025-03-22 18:34:19,828 - INFO - Nuovo gruppo creato: NEGOZIO
+2025-03-22 18:41:54,845 - INFO - Server arrestato
+2025-03-22 18:41:55,922 - INFO - Server avviato su localhost:5000
+2025-03-22 18:41:55,922 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 18:42:01,249 - INFO - Nuovo gruppo creato: CASA
