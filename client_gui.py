@@ -242,33 +242,39 @@ class ChatWindow(QMainWindow):
         self.chat_area.setReadOnly(True)
         self.chat_area.setStyleSheet("""
             QTextEdit {
-                background-color: #ffffff;
+                background-color: #f8f9fa;
+                color: #212529;
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
                 padding: 8px;
+                font-size: 14px;
+                line-height: 1.5;
             }
         """)
         right_layout.addWidget(self.chat_area)
 
-        # Area input
-        input_layout = QHBoxLayout()
-        
+        # Area input messaggi
         self.message_input = QTextEdit()
         self.message_input.setPlaceholderText('Scrivi un messaggio... (Shift+Invio per andare a capo)')
-        self.message_input.setMaximumHeight(100)  # Altezza massima
+        self.message_input.setMaximumHeight(100)
         self.message_input.setStyleSheet("""
             QTextEdit {
                 padding: 8px;
+                background-color: #f8f9fa;
+                color: #212529;
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
                 font-size: 16px;
                 line-height: 1.4;
             }
+            QTextEdit:focus {
+                border-color: #80bdff;
+                outline: 0;
+                box-shadow: 0 0 0 2px rgba(0,123,255,.25);
+            }
         """)
+        input_layout = QHBoxLayout()
         input_layout.addWidget(self.message_input)
-
-        # Gestiamo l'evento keyPressEvent del QTextEdit
-        self.message_input.keyPressEvent = self.handle_input_keypress
 
         self.send_btn = QPushButton('Invia')
         self.send_btn.setEnabled(False)
