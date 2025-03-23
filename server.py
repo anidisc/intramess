@@ -412,6 +412,10 @@ class ChatServer:
                         data = json.loads(msg)
                         print(f"DEBUG: Ricevuto da {username}: {data}")
 
+                        if data['type'] == 'disconnect':
+                            print(f"DEBUG: Disconnessione richiesta da {username}")
+                            raise ConnectionResetError  # Forza l'uscita dal loop
+                        
                         if data['type'] == 'request_users':
                             client_socket.send((json.dumps({
                                 'type': 'user_list',
@@ -541,20 +545,37 @@ class ChatServer:
                     self.remove_client(client_socket)
 
     def remove_client(self, client_socket):
+        """Rimuove un client e aggiorna tutti gli altri"""
         if client_socket in self.clients:
             username = self.clients[client_socket]
-            # Rimuovi da tutti i gruppi tranne ALL
-            for group in self.groups:
-                if group != 'ALL' and username in self.groups[group]:
-                    self.groups[group].remove(username)
-            # Rimuovi da ALL solo quando il client si disconnette completamente
-            self.groups['ALL'].remove(username)
-            del self.user_groups[username]
+            print(f"DEBUG: Rimozione client {username}")
+            
+            # Rimuovi da tutti i gruppi
+            for group in self.groups.values():
+                group.discard(username)
+            
+            # Rimuovi dal dizionario dei gruppi utente
+            if username in self.user_groups:
+                del self.user_groups[username]
+            
+            # Rimuovi dal dizionario dei client
             del self.clients[client_socket]
+            
+            try:
+                client_socket.close()
+            except:
+                pass
+            
+            # Notifica tutti della disconnessione
             self.broadcast_to_group({
                 'type': 'system',
                 'message': f'{username} ha lasciato la chat'
             })
+            
+            # Aggiorna la lista utenti per tutti
+            self.broadcast_user_list()
+            
+            print(f"DEBUG: Client {username} rimosso con successo")
 
     def handle_command(self, command):
         parts = command.split()

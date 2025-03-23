@@ -333,28 +333,52 @@ class ChatWindow(QMainWindow):
 
     def handle_connection(self):
         if self.client.socket:
+            # Invia messaggio di disconnessione al server
+            try:
+                self.client.send_message({
+                    'type': 'disconnect',
+                    'username': self.client.username
+                })
+            except:
+                pass  # Se la connessione è già interrotta, ignora l'errore
+            
+            # Disconnetti il client
             self.client.disconnect()
+            
+            # Resetta l'interfaccia
             self.connect_btn.setText('Connetti')
             self.username_input.setEnabled(True)
-            self.group_combo.setEnabled(False)  # Disabilita il combo box alla disconnessione
+            self.group_combo.setEnabled(False)
             self.group_combo.clear()
             self.group_combo.addItem('ALL')
             self.current_group = 'ALL'
             self.writing_label.setText('Scrivi in: ALL')
             self.chat_area.append('<i>Disconnesso dal server</i>')
+            
+            # Pulisci la lista task
+            self.task_list.clear()
+            self.task_group_filter.clear()
+            self.task_group_filter.addItem("Tutti i gruppi")
+            
+            # Pulisci la lista utenti
+            self.users_list.clear()
         else:
             username = self.username_input.text().strip()
             if username:
                 if self.client.connect_to_server('localhost', 5000, username):
                     self.connect_btn.setText('Disconnetti')
                     self.username_input.setEnabled(False)
-                    # Il combo box verrà abilitato quando riceviamo la conferma della connessione
                 else:
                     self.chat_area.append('<span style="color: red">Errore di connessione</span>')
 
     def handle_message(self, data):
         try:
             print(f"DEBUG GUI - Gestione messaggio: {data}")
+            
+            if data['type'] == 'task_list':
+                # Non cambiare il filtro quando riceviamo un aggiornamento
+                self.update_task_list(data['tasks'])
+                return
             
             # Se siamo nella tab Task e arriva un messaggio, incrementa il contatore
             if self.tab_widget.currentIndex() == self.task_tab_index and data['type'] in ['message', 'private']:
@@ -400,10 +424,6 @@ class ChatWindow(QMainWindow):
             
             elif data['type'] == 'user_list':
                 self.update_users_list(data.get('users', []))
-            
-            elif data['type'] == 'task_list':
-                print(f"DEBUG: Ricevuto aggiornamento task: {data['tasks']}")  # Debug
-                self.update_task_list(data['tasks'])
             
             self.chat_area.verticalScrollBar().setValue(
                 self.chat_area.verticalScrollBar().maximum()
@@ -541,7 +561,17 @@ class ChatWindow(QMainWindow):
             self.users_list.addItem(item)
 
     def closeEvent(self, event):
-        self.client.disconnect()
+        """Gestisce la chiusura della finestra"""
+        if self.client.socket:
+            # Invia messaggio di disconnessione al server
+            try:
+                self.client.send_message({
+                    'type': 'disconnect',
+                    'username': self.client.username
+                })
+            except:
+                pass
+            self.client.disconnect()
         event.accept()
 
     def create_task(self):
@@ -576,6 +606,9 @@ class ChatWindow(QMainWindow):
 
     def update_task_list(self, tasks):
         print(f"DEBUG: Aggiornamento lista task nella GUI")
+        # Salva il filtro corrente
+        current_filter = self.task_group_filter.currentText()
+        
         self.task_list.clear()
         
         for task in tasks:
@@ -625,6 +658,10 @@ class ChatWindow(QMainWindow):
             })
             
             self.task_list.addTopLevelItem(item)
+            
+            # Nascondi l'item se non corrisponde al filtro corrente
+            if current_filter != "Tutti i gruppi" and task['group'] != current_filter:
+                item.setHidden(True)
         
         # Adatta le colonne al contenuto
         for i in range(8):

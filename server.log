@@ -611,3 +611,16 @@ bene
 2025-03-23 15:55:06,485 - INFO - Nuovo gruppo creato: CASA
 2025-03-23 15:55:17,649 - INFO - Nuovo gruppo creato: MARCO
 2025-03-23 15:55:29,911 - INFO - Nuovo gruppo creato: NEGOZIO
+2025-03-23 17:19:18,702 - INFO - Server arrestato
+2025-03-23 17:19:18,702 - INFO - Server arrestato
+2025-03-23 17:19:22,059 - INFO - Server avviato su localhost:5000
+2025-03-23 17:19:22,059 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-23 17:19:25,537 - INFO - Nuovo gruppo creato: CASA
+2025-03-23 17:19:28,576 - INFO - Nuovo gruppo creato: NEGOZIO
+2025-03-23 17:19:42,589 - INFO - Nuovo gruppo creato: BARCA
+2025-03-23 17:33:47,324 - ERROR - Errore comando: dictionary changed size during iteration
+2025-03-23 17:35:18,298 - INFO - Server arrestato
+2025-03-23 17:35:18,298 - INFO - Server arrestato
+2025-03-23 17:38:29,676 - INFO - Server avviato su localhost:5000
+2025-03-23 17:38:29,676 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-23 17:38:50,372 - INFO - Nuovo gruppo creato: CASA
