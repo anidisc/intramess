@@ -182,10 +182,34 @@ class ChatWindow(QMainWindow):
         create_task_layout.addWidget(self.create_task_btn)
         task_layout.addLayout(create_task_layout)
         
-        # Lista dei task
+        # Lista dei task con stile
         self.task_list = QTreeWidget()
         self.task_list.setHeaderLabels(["Task", "Gruppo", "Creato da", "Data", "Stato"])
         self.task_list.setAlternatingRowColors(True)
+        self.task_list.setStyleSheet("""
+            QTreeWidget {
+                background-color: white;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                font-size: 11pt;
+            }
+            QTreeWidget::item {
+                padding: 4px;
+                border-bottom: 1px solid #eee;
+            }
+            QTreeWidget::item:alternate {
+                background-color: #f8f8f8;
+            }
+            QTreeWidget::item:hover {
+                background-color: #e6f3ff;
+            }
+            QTreeWidget QHeaderView::section {
+                background-color: #f0f0f0;
+                padding: 6px;
+                border: 1px solid #ccc;
+                font-weight: bold;
+            }
+        """)
         task_layout.addWidget(self.task_list)
         
         self.tab_widget.addTab(task_widget, "Task")
@@ -456,20 +480,46 @@ class ChatWindow(QMainWindow):
 
     def handle_task_status_change(self, item, column):
         if column == 4:  # Colonna stato
-            task_id = item.data(0, Qt.UserRole)  # ID task memorizzato nell'item
-            if item.checkState(4) == Qt.Checked:
-                data = {
-                    'type': 'complete_task',
-                    'task_id': task_id
-                }
-                self.client.send_message(data)
+            task_data = item.data(0, Qt.UserRole)
+            if task_data:
+                task_id = task_data['id']
+                group = task_data['group']
+                
+                # Verifica che l'utente sia nel gruppo corretto
+                if group == self.current_group:
+                    is_checked = item.checkState(4) == Qt.Checked
+                    data = {
+                        'type': 'update_task',
+                        'task_id': task_id,
+                        'completed': is_checked
+                    }
+                    print(f"DEBUG: Invio aggiornamento task: {data}")  # Debug
+                    self.client.send_message(data)
+                else:
+                    # Ripristina lo stato precedente se l'utente non ha i permessi
+                    item.setCheckState(4, Qt.Checked if task_data['completed'] else Qt.Unchecked)
 
     def update_task_list(self, tasks):
-        print(f"DEBUG: Aggiornamento lista task nella GUI")  # Debug
+        print(f"DEBUG: Aggiornamento lista task nella GUI")
         self.task_list.clear()
+        
         for task in tasks:
             item = QTreeWidgetItem()
-            item.setText(0, task['text'])
+            
+            # Crea il testo del task con stile HTML e ID
+            task_text = f"#{task['id']} - {task['text']}"
+            
+            if task['completed']:
+                item.setText(0, f"✓ {task_text} (Completato da {task['completed_by']} il {task['completed_date']})")
+                item.setForeground(0, QColor('#666666'))
+                font = item.font(0)
+                font.setStrikeOut(True)
+                item.setFont(0, font)
+            else:
+                item.setText(0, task_text)
+                item.setForeground(0, QColor('#000000'))
+            
+            # Imposta gli altri campi
             item.setText(1, task['group'])
             item.setText(2, task['created_by'])
             item.setText(3, task['date'])
@@ -478,12 +528,21 @@ class ChatWindow(QMainWindow):
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
             item.setCheckState(4, Qt.Checked if task['completed'] else Qt.Unchecked)
             
-            # Memorizza l'ID del task
-            item.setData(0, Qt.UserRole, task['id'])
+            # Memorizza l'ID del task e altre info utili
+            item.setData(0, Qt.UserRole, {
+                'id': task['id'],
+                'group': task['group'],
+                'completed': task['completed']
+            })
             
-            # Disabilita la checkbox se l'utente non è nel gruppo del task
-            if task['group'] != self.client.username:
+            # Gestisci i permessi per la checkbox
+            can_modify = task['group'] == self.current_group
+            if not can_modify:
                 item.setFlags(item.flags() & ~Qt.ItemIsUserCheckable)
+            
+            # Imposta stili
+            if task['group'] == self.current_group:
+                item.setBackground(1, QColor('#e6f3ff'))
             
             self.task_list.addTopLevelItem(item)
         

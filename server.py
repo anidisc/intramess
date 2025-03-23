@@ -16,7 +16,7 @@ class ChatServer:
         self.groups = {'ALL': set()}  # group -> set of usernames
         self.user_groups = {}  # username -> group
         self.tasks = []  # Lista dei task
-        self.task_id_counter = 0
+        self.task_id_counter = 1  # Inizia da 1 invece che 0
         self.running = True
         self.setup_logging()
 
@@ -300,17 +300,20 @@ class ChatServer:
                 self.remove_client(client)
 
     def create_task(self, creator, group, text):
+        """Crea un nuovo task con ID univoco"""
         task = {
-            'id': self.task_id_counter,
+            'id': f"T{self.task_id_counter:04d}",  # Format: T0001, T0002, etc.
             'text': text,
             'group': group,
             'created_by': creator,
             'date': datetime.now().strftime("%Y-%m-%d %H:%M"),
-            'completed': False
+            'completed': False,
+            'completed_by': None,
+            'completed_date': None
         }
         self.tasks.append(task)
         self.task_id_counter += 1
-        print(f"DEBUG: Task creato: {task}")  # Debug
+        print(f"DEBUG: Task creato: {task}")
         self.broadcast_tasks()
         return task
 
@@ -338,6 +341,29 @@ class ChatServer:
             except Exception as e:
                 print(f"DEBUG: Errore invio task a {self.clients[client_socket]}: {e}")  # Debug
                 self.remove_client(client_socket)
+
+    def update_task(self, task_id, username, completed):
+        """Aggiorna lo stato di un task"""
+        for task in self.tasks:
+            if task['id'] == task_id:
+                if username in self.groups[task['group']]:
+                    task['completed'] = completed
+                    if completed:
+                        task['completed_by'] = username
+                        task['completed_date'] = datetime.now().strftime("%Y-%m-%d %H:%M")
+                    else:
+                        task['completed_by'] = None
+                        task['completed_date'] = None
+                    
+                    # Notifica tutti dell'aggiornamento
+                    self.broadcast_to_group({
+                        'type': 'system',
+                        'message': f"Task #{task['id']} '{task['text']}' {'completato' if completed else 'riaperto'} da {username}"
+                    })
+                    
+                    self.broadcast_tasks()
+                    return True
+        return False
 
     def handle_client(self, client_socket):
         try:
@@ -477,6 +503,10 @@ class ChatServer:
                                     'type': 'system',
                                     'message': f'{username} ha completato un task'
                                 })
+
+                        elif data['type'] == 'update_task':
+                            if self.update_task(data['task_id'], username, data['completed']):
+                                print(f"DEBUG: Task {data['task_id']} {'completato' if data['completed'] else 'riaperto'} da {username}")
 
                 except json.JSONDecodeError:
                     continue
