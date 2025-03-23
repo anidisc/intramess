@@ -522,3 +522,57 @@ bene
 2025-03-22 18:41:55,922 - INFO - Server avviato su localhost:5000
 2025-03-22 18:41:55,922 - INFO - Server avviato con gruppo predefinito 'ALL'
 2025-03-22 18:42:01,249 - INFO - Nuovo gruppo creato: CASA
+2025-03-22 18:47:15,229 - INFO - Server arrestato
+2025-03-22 18:59:52,599 - INFO - Server avviato su localhost:5000
+2025-03-22 18:59:52,599 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 19:00:01,615 - INFO - Nuovo gruppo creato: SRL
+2025-03-22 19:00:06,570 - INFO - Nuovo gruppo creato: SNC
+2025-03-22 19:11:45,412 - INFO - Server arrestato
+2025-03-22 19:12:14,200 - INFO - Server avviato su localhost:5000
+2025-03-22 19:12:14,200 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 19:12:47,439 - INFO - Server arrestato
+2025-03-22 19:12:49,128 - INFO - Server avviato su localhost:5000
+2025-03-22 19:12:49,128 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-22 19:12:55,063 - INFO - Nuovo gruppo creato: SRL
+2025-03-22 19:13:03,325 - INFO - Nuovo gruppo creato: SNC
+2025-03-23 06:44:12,651 - INFO - Server avviato su localhost:5000
+2025-03-23 06:44:12,651 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-23 06:45:43,849 - INFO - Server arrestato
+2025-03-23 06:49:45,726 - INFO - Server avviato su localhost:5000
+2025-03-23 06:49:45,726 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-23 06:50:28,563 - INFO - Server arrestato
+2025-03-23 06:50:33,764 - INFO - Server avviato su localhost:5000
+2025-03-23 06:50:33,764 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-23 06:52:25,588 - INFO - Server arrestato
+2025-03-23 06:53:48,548 - INFO - Server avviato su localhost:5000
+2025-03-23 06:53:48,548 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-23 06:53:48,549 - ERROR - Errore avvio server: [Errno 98] Address already in use
+2025-03-23 06:54:22,845 - INFO - Server avviato su localhost:5000
+2025-03-23 06:54:22,846 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-23 06:54:22,846 - ERROR - Errore avvio server: [Errno 98] Address already in use
+2025-03-23 06:54:37,933 - INFO - Server avviato su localhost:5000
+2025-03-23 06:54:37,933 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-23 06:54:37,934 - ERROR - Errore avvio server: [Errno 98] Address already in use
+2025-03-23 06:54:45,625 - INFO - Server avviato su localhost:5000
+2025-03-23 06:54:45,626 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-23 06:54:45,626 - ERROR - Errore avvio server: [Errno 98] Address already in use
+2025-03-23 06:54:50,510 - INFO - Server avviato su localhost:5000
+2025-03-23 06:54:50,510 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-23 06:54:50,511 - ERROR - Errore avvio server: [Errno 98] Address already in use
+2025-03-23 06:57:11,887 - INFO - Server avviato su localhost:5000
+2025-03-23 06:57:11,887 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-23 06:57:29,586 - INFO - Nuovo gruppo creato: C
+2025-03-23 06:57:52,726 - INFO - Nuovo gruppo creato: N
+2025-03-23 06:58:00,760 - INFO - Nuovo gruppo creato: R
+2025-03-23 06:59:58,527 - INFO - Server arrestato
+2025-03-23 06:59:58,529 - INFO - Server arrestato
+2025-03-23 07:02:11,207 - INFO - Server avviato su localhost:5000
+2025-03-23 07:02:11,207 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-23 07:02:20,286 - INFO - Nuovo gruppo creato: CASA
+2025-03-23 07:04:03,005 - INFO - Server arrestato
+2025-03-23 07:04:03,005 - INFO - Server arrestato
+2025-03-23 07:04:07,002 - INFO - Server avviato su localhost:5000
+2025-03-23 07:04:07,002 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-23 07:06:12,542 - INFO - Nuovo gruppo creato: CASA
+2025-03-23 07:13:02,288 - INFO - Server arrestato
+2025-03-23 07:13:02,290 - INFO - Server arrestato

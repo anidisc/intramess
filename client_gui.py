@@ -141,10 +141,16 @@ class ChatWindow(QMainWindow):
         group_layout.addWidget(self.group_combo)
         left_layout.addLayout(group_layout)
 
-        # Area chat
+        # Aggiungiamo un tab widget per separare chat e task
+        self.tab_widget = QTabWidget()
+        left_layout.addWidget(self.tab_widget)
+        
+        # Tab Chat
+        chat_widget = QWidget()
+        chat_layout = QVBoxLayout(chat_widget)
         self.chat_area = QTextEdit()
         self.chat_area.setReadOnly(True)
-        left_layout.addWidget(self.chat_area)
+        chat_layout.addWidget(self.chat_area)
 
         # Area input messaggio
         msg_layout = QHBoxLayout()
@@ -154,7 +160,35 @@ class ChatWindow(QMainWindow):
         msg_layout.addWidget(self.writing_label)
         msg_layout.addWidget(self.message_input)
         msg_layout.addWidget(self.send_btn)
-        left_layout.addLayout(msg_layout)
+        chat_layout.addLayout(msg_layout)
+
+        self.tab_widget.addTab(chat_widget, "Chat")
+        
+        # Tab Task
+        task_widget = QWidget()
+        task_layout = QVBoxLayout(task_widget)
+        
+        # Layout superiore per creazione task
+        create_task_layout = QHBoxLayout()
+        self.task_group_combo = QComboBox()
+        # Inizialmente aggiungiamo solo ALL, verrà aggiornato quando riceviamo la lista gruppi
+        self.task_group_combo.addItem('ALL')
+        self.task_input = QLineEdit()
+        self.task_input.setPlaceholderText("Inserisci nuovo task...")
+        self.create_task_btn = QPushButton("Crea Task")
+        create_task_layout.addWidget(QLabel("Gruppo:"))
+        create_task_layout.addWidget(self.task_group_combo)
+        create_task_layout.addWidget(self.task_input)
+        create_task_layout.addWidget(self.create_task_btn)
+        task_layout.addLayout(create_task_layout)
+        
+        # Lista dei task
+        self.task_list = QTreeWidget()
+        self.task_list.setHeaderLabels(["Task", "Gruppo", "Creato da", "Data", "Stato"])
+        self.task_list.setAlternatingRowColors(True)
+        task_layout.addWidget(self.task_list)
+        
+        self.tab_widget.addTab(task_widget, "Task")
 
         # Layout destro per lista utenti
         right_layout = QVBoxLayout()
@@ -210,6 +244,8 @@ class ChatWindow(QMainWindow):
         self.client.signals.user_list_updated.connect(self.update_users_list)
         self.group_combo.currentTextChanged.connect(self.change_group)
         self.users_list.itemDoubleClicked.connect(self.start_private_chat)
+        self.create_task_btn.clicked.connect(self.create_task)
+        self.task_list.itemChanged.connect(self.handle_task_status_change)
 
     def handle_connection(self):
         if self.client.socket:
@@ -240,6 +276,9 @@ class ChatWindow(QMainWindow):
                 self.group_combo.setEnabled(True)
                 self.group_combo.clear()
                 self.group_combo.addItems(data['groups'])
+                # Aggiorna anche il combo box dei task
+                self.task_group_combo.clear()
+                self.task_group_combo.addItems(data['groups'])
                 self.chat_area.append('<i style="color: green">Connesso al server</i>')
                 
             elif data['type'] == 'message':
@@ -265,6 +304,10 @@ class ChatWindow(QMainWindow):
             
             elif data['type'] == 'user_list':
                 self.update_users_list(data.get('users', []))
+            
+            elif data['type'] == 'task_list':
+                print(f"DEBUG: Ricevuto aggiornamento task: {data['tasks']}")  # Debug
+                self.update_task_list(data['tasks'])
             
             self.chat_area.verticalScrollBar().setValue(
                 self.chat_area.verticalScrollBar().maximum()
@@ -396,6 +439,57 @@ class ChatWindow(QMainWindow):
     def closeEvent(self, event):
         self.client.disconnect()
         event.accept()
+
+    def create_task(self):
+        task_text = self.task_input.text().strip()
+        group = self.task_group_combo.currentText()
+        
+        if task_text and group and group != self.current_group and group != 'ALL':
+            print(f"DEBUG: Creazione task: {task_text} per gruppo {group}")  # Debug
+            data = {
+                'type': 'create_task',
+                'group': group,
+                'text': task_text
+            }
+            self.client.send_message(data)
+            self.task_input.clear()
+
+    def handle_task_status_change(self, item, column):
+        if column == 4:  # Colonna stato
+            task_id = item.data(0, Qt.UserRole)  # ID task memorizzato nell'item
+            if item.checkState(4) == Qt.Checked:
+                data = {
+                    'type': 'complete_task',
+                    'task_id': task_id
+                }
+                self.client.send_message(data)
+
+    def update_task_list(self, tasks):
+        print(f"DEBUG: Aggiornamento lista task nella GUI")  # Debug
+        self.task_list.clear()
+        for task in tasks:
+            item = QTreeWidgetItem()
+            item.setText(0, task['text'])
+            item.setText(1, task['group'])
+            item.setText(2, task['created_by'])
+            item.setText(3, task['date'])
+            
+            # Imposta lo stato con checkbox
+            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            item.setCheckState(4, Qt.Checked if task['completed'] else Qt.Unchecked)
+            
+            # Memorizza l'ID del task
+            item.setData(0, Qt.UserRole, task['id'])
+            
+            # Disabilita la checkbox se l'utente non è nel gruppo del task
+            if task['group'] != self.client.username:
+                item.setFlags(item.flags() & ~Qt.ItemIsUserCheckable)
+            
+            self.task_list.addTopLevelItem(item)
+        
+        # Adatta le colonne al contenuto
+        for i in range(5):
+            self.task_list.resizeColumnToContents(i)
 
 def main():
     app = QApplication([])

@@ -8,37 +8,94 @@ from colorama import init, Fore, Style
 # Inizializzazione colorama per i colori nel terminale
 init()
 
-# Configurazione del logging
-logging.basicConfig(
-    filename='server.log',
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-
-class Server:
+class ChatServer:
     def __init__(self, host='localhost', port=5000):
         self.host = host
         self.port = port
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.bind((self.host, self.port))
-        self.server_socket.listen(5)
-        self.clients = {}  # {client_socket: username}
-        self.groups = {'ALL': set()}  # {group_name: set(usernames)}
-        self.user_groups = {}  # {username: group_name}
+        self.clients = {}  # socket -> username
+        self.groups = {'ALL': set()}  # group -> set of usernames
+        self.user_groups = {}  # username -> group
+        self.tasks = []  # Lista dei task
+        self.task_id_counter = 0
         self.running = True
-        self.commands = {
-            'help': ('Mostra questo messaggio di aiuto', self.show_help),
-            'list': ('Mostra la lista degli utenti connessi', self.list_users),
-            'broadcast': ('Invia un messaggio a tutti gli utenti (uso: broadcast <messaggio>)', self.server_broadcast),
-            'kick': ('Disconnette un utente (uso: kick <username>)', self.kick_user),
-            'log': ('Mostra gli ultimi 10 log del server', self.show_logs),
-            'stop': ('Arresta il server', self.stop_server),
-            'creategroup': ('Crea un nuovo gruppo (uso: creategroup <nome_gruppo>)', self.create_group),
-            'listgroups': ('Mostra tutti i gruppi disponibili', self.list_groups),
-            'deletegroup': ('Elimina un gruppo (uso: deletegroup <nome_gruppo>)', self.delete_group),
-        }
-        logging.info(f"Server avviato su {host}:{port}")
-        logging.info("Server avviato con gruppo predefinito 'ALL'")
+        self.setup_logging()
+
+    def setup_logging(self):
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.FileHandler('server.log'),
+                logging.StreamHandler()
+            ]
+        )
+
+    def start(self):
+        """Avvia il server"""
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        
+        try:
+            self.server_socket.bind((self.host, self.port))
+            self.server_socket.listen(5)
+            logging.info(f"Server avviato su {self.host}:{self.port}")
+            logging.info("Server avviato con gruppo predefinito 'ALL'")
+            
+            # Avvia thread per accettare connessioni
+            accept_thread = threading.Thread(target=self.accept_connections)
+            accept_thread.daemon = True
+            accept_thread.start()
+            
+            # Loop principale per i comandi del server
+            print("Server avviato. Digita 'help' per la lista dei comandi.")
+            while self.running:
+                try:
+                    command = input("Comando server: ").strip()
+                    if command:
+                        if self.handle_command(command):
+                            break
+                except KeyboardInterrupt:
+                    print("\nChiusura server...")
+                    self.stop()
+                    break
+                except Exception as e:
+                    print(f"Errore: {e}")
+            
+        except Exception as e:
+            logging.error(f"Errore avvio server: {e}")
+        finally:
+            self.server_socket.close()
+
+    def accept_connections(self):
+        """Gestisce le connessioni in entrata"""
+        while self.running:
+            try:
+                client_socket, address = self.server_socket.accept()
+                client_thread = threading.Thread(
+                    target=self.handle_client,
+                    args=(client_socket,)
+                )
+                client_thread.daemon = True
+                client_thread.start()
+            except Exception as e:
+                if self.running:
+                    logging.error(f"Errore accettazione connessione: {e}")
+
+    def stop(self):
+        """Arresta il server"""
+        self.running = False
+        # Chiudi tutte le connessioni client
+        for client_socket in list(self.clients.keys()):
+            try:
+                client_socket.close()
+            except:
+                pass
+        # Chiudi il socket del server
+        try:
+            self.server_socket.close()
+        except:
+            pass
+        logging.info("Server arrestato")
 
     def show_help(self, *args):
         """Mostra l'elenco dei comandi disponibili"""
@@ -96,41 +153,6 @@ class Server:
                     print(line.strip())
         except:
             print(f"{Fore.RED}Errore nella lettura del file di log{Style.RESET_ALL}")
-
-    def stop_server(self, *args):
-        """Arresta il server"""
-        try:
-            # Invia messaggio di disconnessione a tutti i client
-            for client in list(self.clients.keys()):
-                try:
-                    client.send(json.dumps({
-                        'type': 'server_shutdown',
-                        'message': 'Il server sta per essere arrestato'
-                    }).encode())
-                    client.close()
-                except:
-                    pass
-            
-            # Chiudi il socket del server
-            self.server_socket.close()
-            
-            # Pulisci la lista dei client
-            self.clients.clear()
-            
-            # Imposta il flag di arresto
-            self.running = False
-            
-            print(f"{Fore.RED}Server arrestato correttamente{Style.RESET_ALL}")
-            logging.info("Server arrestato")
-            
-            # Termina il processo
-            import os, signal
-            os.kill(os.getpid(), signal.SIGTERM)
-            
-        except Exception as e:
-            logging.error(f"Errore durante l'arresto del server: {str(e)}")
-        
-        return True
 
     def is_username_taken(self, username):
         """Verifica se l'username è già in uso"""
@@ -194,31 +216,42 @@ class Server:
                 'message': f"Utente {recipient} non trovato"
             }).encode())
 
-    def create_group(self, args):
+    def create_group(self, group_name):
         """Crea un nuovo gruppo"""
-        if not args or not args[0]:
-            print(f"{Fore.RED}Errore: Specificare un nome per il gruppo{Style.RESET_ALL}")
-            return False
+        # Converti il nome del gruppo in maiuscolo
+        group_name = group_name.upper()
         
-        group_name = args[0].upper()
-        if group_name == 'ALL':
-            print(f"{Fore.RED}Errore: Il nome 'ALL' è riservato{Style.RESET_ALL}")
-            return False
-            
+        # Verifica se il gruppo esiste già
         if group_name in self.groups:
-            print(f"{Fore.RED}Errore: Il gruppo {group_name} esiste già{Style.RESET_ALL}")
+            print(f"DEBUG: Gruppo {group_name} già esistente")  # Debug
             return False
-            
-        self.groups[group_name] = set()
-        print(f"{Fore.GREEN}Gruppo {group_name} creato con successo{Style.RESET_ALL}")
-        logging.info(f"Nuovo gruppo creato: {group_name}")
         
-        # Notifica tutti i client del nuovo gruppo
-        self.broadcast({
-            'type': 'groups_list',
-            'groups': list(self.groups.keys())
-        })
-        return False  # Non terminare il server
+        # Crea il nuovo gruppo
+        try:
+            self.groups[group_name] = set()
+            logging.info(f"Nuovo gruppo creato: {group_name}")
+            print(f"DEBUG: Creato nuovo gruppo {group_name}")  # Debug
+            
+            # Notifica tutti i client del nuovo gruppo
+            self.broadcast_to_group({
+                'type': 'system',
+                'message': f'Nuovo gruppo creato: {group_name}'
+            })
+            
+            # Invia la lista aggiornata dei gruppi a tutti i client
+            for client_socket in self.clients:
+                try:
+                    client_socket.send(json.dumps({
+                        'type': 'connection_accepted',
+                        'groups': list(self.groups.keys())
+                    }).encode() + b'\n')
+                except:
+                    self.remove_client(client_socket)
+                
+            return True
+        except Exception as e:
+            logging.error(f"Errore creazione gruppo {group_name}: {e}")
+            return False
 
     def delete_group(self, *args):
         """Elimina un gruppo"""
@@ -266,6 +299,46 @@ class Server:
             except:
                 self.remove_client(client)
 
+    def create_task(self, creator, group, text):
+        task = {
+            'id': self.task_id_counter,
+            'text': text,
+            'group': group,
+            'created_by': creator,
+            'date': datetime.now().strftime("%Y-%m-%d %H:%M"),
+            'completed': False
+        }
+        self.tasks.append(task)
+        self.task_id_counter += 1
+        print(f"DEBUG: Task creato: {task}")  # Debug
+        self.broadcast_tasks()
+        return task
+
+    def complete_task(self, task_id, username):
+        for task in self.tasks:
+            if task['id'] == task_id:
+                if username in self.groups[task['group']]:
+                    task['completed'] = True
+                    self.broadcast_tasks()
+                    return True
+        return False
+
+    def broadcast_tasks(self):
+        """Invia la lista dei task aggiornata a tutti i client"""
+        print(f"DEBUG: Invio lista task aggiornata: {self.tasks}")  # Debug
+        message = json.dumps({
+            'type': 'task_list',
+            'tasks': self.tasks
+        }) + '\n'
+        
+        for client_socket in self.clients:
+            try:
+                client_socket.send(message.encode())
+                print(f"DEBUG: Lista task inviata a {self.clients[client_socket]}")  # Debug
+            except Exception as e:
+                print(f"DEBUG: Errore invio task a {self.clients[client_socket]}: {e}")  # Debug
+                self.remove_client(client_socket)
+
     def handle_client(self, client_socket):
         try:
             username = client_socket.recv(1024).decode()
@@ -295,6 +368,9 @@ class Server:
 
             # Invia lista utenti a tutti
             self.broadcast_user_list()
+
+            # Invia la lista dei task subito dopo la connessione
+            self.broadcast_tasks()
 
             while self.running:
                 try:
@@ -385,6 +461,23 @@ class Server:
                                 
                                 print(f"DEBUG: Utente {username} entrato nel gruppo {group}")
 
+                        elif data['type'] == 'create_task':
+                            if data['group'] != self.user_groups[username] and data['group'] != 'ALL':
+                                task = self.create_task(username, data['group'], data['text'])
+                                print(f"DEBUG: Nuovo task creato da {username}: {task}")  # Debug
+                                self.broadcast_to_group({
+                                    'type': 'system',
+                                    'message': f'{username} ha creato un nuovo task per il gruppo {data["group"]}'
+                                })
+
+                        elif data['type'] == 'complete_task':
+                            if self.complete_task(data['task_id'], username):
+                                print(f"DEBUG: Task {data['task_id']} completato da {username}")  # Debug
+                                self.broadcast_to_group({
+                                    'type': 'system',
+                                    'message': f'{username} ha completato un task'
+                                })
+
                 except json.JSONDecodeError:
                     continue
                 except Exception as e:
@@ -433,47 +526,136 @@ class Server:
                 'message': f'{username} ha lasciato la chat'
             })
 
-    def start(self):
-        """Avvia il server"""
-        print(f"{Fore.GREEN}Server avviato su {self.host}:{self.port}{Style.RESET_ALL}")
-        print(f"{Fore.YELLOW}Digita 'help' per vedere i comandi disponibili{Style.RESET_ALL}")
-        
-        # Thread per gestire i comandi del server
-        command_thread = threading.Thread(target=self.handle_server_commands)
-        command_thread.daemon = True
-        command_thread.start()
+    def handle_command(self, command):
+        parts = command.split()
+        if not parts:
+            return
 
-        while self.running:
-            try:
-                client_socket, address = self.server_socket.accept()
-                client_thread = threading.Thread(target=self.handle_client, args=(client_socket,))
-                client_thread.daemon = True
-                client_thread.start()
-            except:
-                break
+        cmd = parts[0].lower()
+        args = parts[1:]
 
-    def handle_server_commands(self):
-        """Gestisce i comandi del server"""
-        while self.running:
-            try:
-                command_line = input(f"{Fore.CYAN}Comando server: {Style.RESET_ALL}").strip()
-                if not command_line:
-                    continue
+        # Dizionario dei comandi e loro alias
+        commands = {
+            'creategroup': ['creategroup', 'cg'],
+            'listgroups': ['listgroups', 'lg'],
+            'removegroup': ['removegroup', 'rg'],
+            'kick': ['kick', 'k'],
+            'list': ['list', 'l'],
+            'help': ['help', 'h'],
+            'quit': ['quit', 'q', 'exit']
+        }
 
-                parts = command_line.split(' ')
-                command = parts[0].lower()
-                args = parts[1:] if len(parts) > 1 else []
+        try:
+            # Trova il comando effettivo dall'alias usato
+            actual_command = None
+            for cmd_name, aliases in commands.items():
+                if cmd in aliases:
+                    actual_command = cmd_name
+                    break
 
-                if command in self.commands:
-                    if self.commands[command][1](args):
-                        break
+            if actual_command == 'creategroup':
+                if len(args) != 1:
+                    print("Uso: creategroup|cg <nome_gruppo>")
+                    return
+                # Passa l'intero nome del gruppo, non solo il primo carattere
+                group_name = args[0]
+                if self.create_group(group_name):
+                    print(f"Gruppo {group_name.upper()} creato con successo")
                 else:
-                    print(f"{Fore.RED}Comando non valido. Usa 'help' per vedere i comandi disponibili{Style.RESET_ALL}")
-            
-            except Exception as e:
-                logging.error(f"Errore nel gestore dei comandi: {str(e)}")
-                print(f"{Fore.RED}Errore nell'esecuzione del comando: {str(e)}{Style.RESET_ALL}")
+                    print(f"Gruppo {group_name.upper()} già esistente")
 
-if __name__ == '__main__':
-    server = Server()
-    server.start() 
+            elif actual_command == 'listgroups':
+                print("Gruppi disponibili:")
+                for group, members in self.groups.items():
+                    print(f"- {group}: {len(members)} utenti")
+                    for member in sorted(members):
+                        print(f"  • {member}")
+
+            elif actual_command == 'removegroup':
+                if len(args) != 1:
+                    print("Uso: removegroup|rg <nome_gruppo>")
+                    return
+                group_name = args[0].upper()
+                if group_name == 'ALL':
+                    print("Non puoi rimuovere il gruppo ALL")
+                    return
+                if group_name in self.groups:
+                    del self.groups[group_name]
+                    # Sposta gli utenti nel gruppo ALL
+                    for username, group in self.user_groups.items():
+                        if group == group_name:
+                            self.user_groups[username] = 'ALL'
+                    print(f"Gruppo {group_name} rimosso")
+                else:
+                    print(f"Gruppo {group_name} non trovato")
+
+            elif actual_command == 'kick':
+                if len(args) != 1:
+                    print("Uso: kick|k <username>")
+                    return
+                username = args[0]
+                kicked = False
+                # Trova il socket dell'utente
+                for client_socket, name in list(self.clients.items()):  # Usa una copia della lista
+                    if name == username:
+                        print(f"DEBUG: Trovato utente {username} da espellere")
+                        self.broadcast_to_group({
+                            'type': 'system',
+                            'message': f'{username} è stato espulso dal server'
+                        })
+                        try:
+                            client_socket.send(json.dumps({
+                                'type': 'kicked',
+                                'message': 'Sei stato espulso dal server'
+                            }).encode() + b'\n')
+                            client_socket.close()
+                        except:
+                            pass
+                        self.remove_client(client_socket)
+                        kicked = True
+                        break
+                
+                if kicked:
+                    print(f"Utente {username} espulso con successo")
+                else:
+                    print(f"Utente {username} non trovato")
+
+            elif actual_command == 'list':
+                print("Client connessi:")
+                for username in sorted(self.clients.values()):
+                    print(f"- {username}")
+
+            elif actual_command == 'help':
+                print("Comandi disponibili:")
+                print("- creategroup|cg <nome_gruppo> : Crea un nuovo gruppo")
+                print("- listgroups|lg : Mostra i gruppi e i loro membri")
+                print("- removegroup|rg <nome_gruppo> : Rimuove un gruppo")
+                print("- kick|k <username> : Espelle un utente")
+                print("- list|l : Mostra gli utenti connessi")
+                print("- help|h : Mostra questo messaggio")
+                print("- quit|q|exit : Chiude il server")
+
+            elif actual_command == 'quit':
+                self.stop()
+                return True
+
+            else:
+                print(f"Comando non riconosciuto. Digita 'help' per la lista dei comandi")
+
+        except Exception as e:
+            print(f"Errore nell'esecuzione del comando: {e}")
+            logging.error(f"Errore comando: {e}")
+
+        return False
+
+def main():
+    server = ChatServer()
+    try:
+        server.start()
+    except KeyboardInterrupt:
+        print("\nArresto del server...")
+    finally:
+        server.stop()
+
+if __name__ == "__main__":
+    main() 
