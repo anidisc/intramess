@@ -5,6 +5,15 @@ import socket
 import json
 import threading
 import hashlib
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+import os
+import subprocess
+import platform
+from datetime import datetime
+from PyQt5.QtCore import QTimer
 
 class ChatSignals(QObject):
     message_received = pyqtSignal(dict)
@@ -106,8 +115,13 @@ class ChatWindow(QMainWindow):
         super().__init__()
         self.client = ChatClient()
         self.current_group = 'ALL'
+        self.unread_messages = 0
         self.init_ui()
         self.setup_signals()
+        self.flash_timer = QTimer()
+        self.flash_timer.timeout.connect(self.flash_tab)
+        self.is_flashing = False
+        self.flash_count = 0
 
     def init_ui(self):
         self.setWindowTitle('Chat Client')
@@ -162,11 +176,26 @@ class ChatWindow(QMainWindow):
         msg_layout.addWidget(self.send_btn)
         chat_layout.addLayout(msg_layout)
 
-        self.tab_widget.addTab(chat_widget, "Chat")
+        self.chat_tab_index = self.tab_widget.addTab(chat_widget, "Chat")
         
         # Tab Task
         task_widget = QWidget()
         task_layout = QVBoxLayout(task_widget)
+        
+        # Aggiunta filtro gruppo
+        filter_layout = QHBoxLayout()
+        self.task_group_filter = QComboBox()
+        self.task_group_filter.addItem("Tutti i gruppi")
+        filter_layout.addWidget(QLabel("Visualizza tasks del gruppo:"))
+        filter_layout.addWidget(self.task_group_filter)
+        
+        # Pulsante PDF
+        self.pdf_btn = QPushButton("Esporta in PDF")
+        self.pdf_btn.setEnabled(False)  # Sarà abilitato solo per i gruppi dell'utente
+        filter_layout.addStretch()
+        filter_layout.addWidget(self.pdf_btn)
+        
+        task_layout.addLayout(filter_layout)
         
         # Layout superiore per creazione task
         create_task_layout = QHBoxLayout()
@@ -184,7 +213,7 @@ class ChatWindow(QMainWindow):
         
         # Lista dei task con stile
         self.task_list = QTreeWidget()
-        self.task_list.setHeaderLabels(["Task", "Gruppo", "Creato da", "Data", "Stato"])
+        self.task_list.setHeaderLabels(["Stato", "ID", "Task", "Gruppo", "Creato da", "Data", "Completato da", "Data completamento"])
         self.task_list.setAlternatingRowColors(True)
         self.task_list.setStyleSheet("""
             QTreeWidget {
@@ -200,8 +229,16 @@ class ChatWindow(QMainWindow):
             QTreeWidget::item:alternate {
                 background-color: #f8f8f8;
             }
+            QTreeWidget::item:selected {
+                background-color: #0078d7;
+                color: white;
+            }
             QTreeWidget::item:hover {
                 background-color: #e6f3ff;
+            }
+            QTreeWidget::item:selected:hover {
+                background-color: #0078d7;
+                color: white;
             }
             QTreeWidget QHeaderView::section {
                 background-color: #f0f0f0;
@@ -212,7 +249,7 @@ class ChatWindow(QMainWindow):
         """)
         task_layout.addWidget(self.task_list)
         
-        self.tab_widget.addTab(task_widget, "Task")
+        self.task_tab_index = self.tab_widget.addTab(task_widget, "Task")
 
         # Layout destro per lista utenti
         right_layout = QVBoxLayout()
@@ -258,6 +295,26 @@ class ChatWindow(QMainWindow):
             }
         """)
 
+        # Stile per le tab
+        self.tab_widget.setStyleSheet("""
+            QTabWidget::tab-bar {
+                alignment: left;
+            }
+            QTabBar::tab {
+                padding: 8px;
+                margin-right: 4px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+            }
+            QTabBar::tab:selected {
+                background: #0078d7;
+                color: white;
+            }
+            QTabBar::tab:hover {
+                background: #e6f3ff;
+            }
+        """)
+
     def setup_signals(self):
         self.connect_btn.clicked.connect(self.handle_connection)
         self.send_btn.clicked.connect(self.send_message)
@@ -270,6 +327,9 @@ class ChatWindow(QMainWindow):
         self.users_list.itemDoubleClicked.connect(self.start_private_chat)
         self.create_task_btn.clicked.connect(self.create_task)
         self.task_list.itemChanged.connect(self.handle_task_status_change)
+        self.task_group_filter.currentTextChanged.connect(self.filter_tasks)
+        self.pdf_btn.clicked.connect(self.export_to_pdf)
+        self.tab_widget.currentChanged.connect(self.handle_tab_change)
 
     def handle_connection(self):
         if self.client.socket:
@@ -295,6 +355,15 @@ class ChatWindow(QMainWindow):
     def handle_message(self, data):
         try:
             print(f"DEBUG GUI - Gestione messaggio: {data}")
+            
+            # Se siamo nella tab Task e arriva un messaggio, incrementa il contatore
+            if self.tab_widget.currentIndex() == self.task_tab_index and data['type'] in ['message', 'private']:
+                self.unread_messages += 1
+                self.update_chat_tab()
+                # Avvia l'animazione flash
+                self.flash_count = 0
+                self.flash_timer.start(500)  # Flash ogni 500ms
+            
             if data['type'] == 'connection_accepted':
                 # Abilita il combo box e popola i gruppi
                 self.group_combo.setEnabled(True)
@@ -303,6 +372,9 @@ class ChatWindow(QMainWindow):
                 # Aggiorna anche il combo box dei task
                 self.task_group_combo.clear()
                 self.task_group_combo.addItems(data['groups'])
+                self.task_group_filter.clear()
+                self.task_group_filter.addItem("Tutti i gruppi")
+                self.task_group_filter.addItems(data['groups'])
                 self.chat_area.append('<i style="color: green">Connesso al server</i>')
                 
             elif data['type'] == 'message':
@@ -337,6 +409,8 @@ class ChatWindow(QMainWindow):
                 self.chat_area.verticalScrollBar().maximum()
             )
             QApplication.processEvents()
+            
+            self.update_window_title()
             
         except Exception as e:
             print(f"Errore gestione messaggio: {e}")
@@ -383,6 +457,12 @@ class ChatWindow(QMainWindow):
             print(f"DEBUG: Invio messaggio: {data}")  # Debug
             self.client.send_message(data)
             self.message_input.clear()
+            
+            # Dopo l'invio del messaggio, assicurati di resettare il contatore
+            if self.tab_widget.currentIndex() == self.chat_tab_index:
+                self.unread_messages = 0
+                self.update_chat_tab()
+                self.update_window_title()
 
     def handle_disconnection(self):
         self.connect_btn.setText('Connetti')
@@ -479,25 +559,20 @@ class ChatWindow(QMainWindow):
             self.task_input.clear()
 
     def handle_task_status_change(self, item, column):
-        if column == 4:  # Colonna stato
+        if column == 0:  # Prima colonna (Stato)
             task_data = item.data(0, Qt.UserRole)
-            if task_data:
-                task_id = task_data['id']
-                group = task_data['group']
-                
-                # Verifica che l'utente sia nel gruppo corretto
-                if group == self.current_group:
-                    is_checked = item.checkState(4) == Qt.Checked
-                    data = {
-                        'type': 'update_task',
-                        'task_id': task_id,
-                        'completed': is_checked
-                    }
-                    print(f"DEBUG: Invio aggiornamento task: {data}")  # Debug
-                    self.client.send_message(data)
-                else:
-                    # Ripristina lo stato precedente se l'utente non ha i permessi
-                    item.setCheckState(4, Qt.Checked if task_data['completed'] else Qt.Unchecked)
+            if task_data and task_data['group'] == self.current_group:
+                is_checked = item.checkState(0) == Qt.Checked
+                data = {
+                    'type': 'update_task',
+                    'task_id': task_data['id'],
+                    'completed': is_checked
+                }
+                print(f"DEBUG: Invio aggiornamento task: {data}")
+                self.client.send_message(data)
+            else:
+                # Ripristina lo stato precedente se l'utente non ha i permessi
+                item.setCheckState(0, Qt.Checked if task_data and task_data['completed'] else Qt.Unchecked)
 
     def update_task_list(self, tasks):
         print(f"DEBUG: Aggiornamento lista task nella GUI")
@@ -506,49 +581,216 @@ class ChatWindow(QMainWindow):
         for task in tasks:
             item = QTreeWidgetItem()
             
-            # Crea il testo del task con stile HTML e ID
-            task_text = f"#{task['id']} - {task['text']}"
-            
-            if task['completed']:
-                item.setText(0, f"✓ {task_text} (Completato da {task['completed_by']} il {task['completed_date']})")
-                item.setForeground(0, QColor('#666666'))
-                font = item.font(0)
-                font.setStrikeOut(True)
-                item.setFont(0, font)
-            else:
-                item.setText(0, task_text)
-                item.setForeground(0, QColor('#000000'))
-            
-            # Imposta gli altri campi
-            item.setText(1, task['group'])
-            item.setText(2, task['created_by'])
-            item.setText(3, task['date'])
-            
-            # Imposta lo stato con checkbox
+            # Imposta lo stato con checkbox e permessi
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-            item.setCheckState(4, Qt.Checked if task['completed'] else Qt.Unchecked)
+            if task['group'] == self.current_group:
+                item.setFlags(item.flags() | Qt.ItemIsEnabled)
+            else:
+                item.setFlags(item.flags() & ~Qt.ItemIsEnabled)
             
-            # Memorizza l'ID del task e altre info utili
+            item.setCheckState(0, Qt.Checked if task['completed'] else Qt.Unchecked)
+            
+            # ID (seconda colonna)
+            item.setText(1, str(task['id']))
+            
+            # Testo del task
+            if task['completed']:
+                item.setText(2, f"✓ {task['text']}")
+                item.setForeground(2, QColor('#666666'))
+                font = item.font(2)
+                font.setStrikeOut(True)
+                item.setFont(2, font)
+            else:
+                item.setText(2, task['text'])
+                item.setForeground(2, QColor('#000000'))
+            
+            # Altri campi
+            item.setText(3, task['group'])
+            item.setText(4, task['created_by'])
+            item.setText(5, task['date'])
+            
+            # Informazioni sul completamento
+            if task['completed']:
+                item.setText(6, task['completed_by'])
+                item.setText(7, task['completed_date'])
+            else:
+                item.setText(6, "")
+                item.setText(7, "")
+            
+            # Memorizza i dati del task nell'item
             item.setData(0, Qt.UserRole, {
                 'id': task['id'],
                 'group': task['group'],
                 'completed': task['completed']
             })
             
-            # Gestisci i permessi per la checkbox
-            can_modify = task['group'] == self.current_group
-            if not can_modify:
-                item.setFlags(item.flags() & ~Qt.ItemIsUserCheckable)
-            
-            # Imposta stili
-            if task['group'] == self.current_group:
-                item.setBackground(1, QColor('#e6f3ff'))
-            
             self.task_list.addTopLevelItem(item)
         
         # Adatta le colonne al contenuto
-        for i in range(5):
+        for i in range(8):
             self.task_list.resizeColumnToContents(i)
+
+    def filter_tasks(self):
+        selected_group = self.task_group_filter.currentText()
+        
+        # Abilita/disabilita pulsante PDF
+        can_export = selected_group != "Tutti i gruppi" and selected_group == self.current_group
+        self.pdf_btn.setEnabled(can_export)
+        
+        for i in range(self.task_list.topLevelItemCount()):
+            item = self.task_list.topLevelItem(i)
+            if selected_group == "Tutti i gruppi" or item.text(3) == selected_group:
+                item.setHidden(False)
+            else:
+                item.setHidden(True)
+
+    def export_to_pdf(self):
+        selected_group = self.task_group_filter.currentText()
+        if selected_group != self.current_group:
+            return
+        
+        try:
+            # Crea lista dei task incompleti del gruppo
+            tasks_to_export = []
+            for i in range(self.task_list.topLevelItemCount()):
+                item = self.task_list.topLevelItem(i)
+                if item.text(3) == selected_group and item.checkState(0) == Qt.Unchecked:
+                    tasks_to_export.append({
+                        'id': item.text(1),
+                        'task': item.text(2),
+                        'created_by': item.text(4),
+                        'date': item.text(5)
+                    })
+
+            if not tasks_to_export:
+                self.chat_area.append('<i style="color: blue">Non ci sono task da completare per questo gruppo</i>')
+                return
+
+            # Crea il PDF
+            filename = f"tasks_pending_{selected_group}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            doc = SimpleDocTemplate(filename, pagesize=A4)
+            elements = []
+
+            # Stili
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=16,
+                spaceAfter=30
+            )
+
+            # Titolo
+            elements.append(Paragraph(f"Task da completare - Gruppo {selected_group}", title_style))
+            elements.append(Spacer(1, 20))
+
+            # Dati per la tabella
+            data = [['ID', 'Task', 'Creato da', 'Data creazione']]
+            for task in tasks_to_export:
+                data.append([
+                    task['id'],
+                    task['task'],
+                    task['created_by'],
+                    task['date']
+                ])
+
+            # Crea tabella
+            table = Table(data)
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 10),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            elements.append(table)
+
+            # Aggiungi data e ora di generazione
+            elements.append(Spacer(1, 20))
+            elements.append(Paragraph(
+                f"Report generato il {datetime.now().strftime('%d/%m/%Y alle %H:%M')}",
+                styles['Italic']
+            ))
+
+            # Genera il PDF
+            doc.build(elements)
+
+            # Apri il PDF con l'applicazione predefinita
+            if platform.system() == 'Darwin':       # macOS
+                subprocess.run(['open', filename])
+            elif platform.system() == 'Windows':    # Windows
+                os.startfile(filename)
+            else:                                   # Linux
+                subprocess.run(['xdg-open', filename])
+
+            self.chat_area.append(f'<i style="color: green">PDF dei task pendenti esportato come {filename}</i>')
+
+        except Exception as e:
+            self.chat_area.append(f'<i style="color: red">Errore durante l\'esportazione del PDF: {str(e)}</i>')
+
+    def handle_tab_change(self, index):
+        # Se torniamo alla tab Chat, resetta il contatore
+        if index == self.chat_tab_index:
+            self.unread_messages = 0
+            self.update_chat_tab()
+            self.update_window_title()
+            # Resetta il colore della tab
+            self.tab_widget.tabBar().setTabTextColor(
+                self.chat_tab_index, 
+                QColor('black')
+            )
+
+    def update_chat_tab(self):
+        if self.unread_messages > 0:
+            self.tab_widget.setTabText(self.chat_tab_index, f"Chat ({self.unread_messages})")
+            self.tab_widget.tabBar().setTabTextColor(
+                self.chat_tab_index, 
+                QColor('#0078d7')
+            )
+        else:
+            self.tab_widget.setTabText(self.chat_tab_index, "Chat")
+            self.tab_widget.tabBar().setTabTextColor(
+                self.chat_tab_index, 
+                QColor('black')
+            )
+
+    def update_window_title(self):
+        base_title = "Chat Client"
+        if self.unread_messages > 0:
+            self.setWindowTitle(f"{base_title} ({self.unread_messages})")
+        else:
+            self.setWindowTitle(base_title)
+
+    def flash_tab(self):
+        if self.flash_count < 6:  # Flash per 3 volte (on-off)
+            self.is_flashing = not self.is_flashing
+            if self.is_flashing:
+                self.tab_widget.tabBar().setTabTextColor(
+                    self.chat_tab_index, 
+                    QColor('#0078d7')
+                )
+            else:
+                self.tab_widget.tabBar().setTabTextColor(
+                    self.chat_tab_index, 
+                    QColor('black')
+                )
+            self.flash_count += 1
+        else:
+            self.flash_timer.stop()
+            self.flash_count = 0
+            if self.unread_messages > 0:
+                self.tab_widget.tabBar().setTabTextColor(
+                    self.chat_tab_index, 
+                    QColor('#0078d7')
+                )
 
 def main():
     app = QApplication([])
