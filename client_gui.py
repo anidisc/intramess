@@ -162,19 +162,32 @@ class ChatWindow(QMainWindow):
         # Tab Chat
         chat_widget = QWidget()
         chat_layout = QVBoxLayout(chat_widget)
+        
+        # Area chat con più spazio
         self.chat_area = QTextEdit()
         self.chat_area.setReadOnly(True)
-        chat_layout.addWidget(self.chat_area)
+        chat_layout.addWidget(self.chat_area, stretch=7)  # Diamo più spazio alla chat
 
         # Area input messaggio
-        msg_layout = QHBoxLayout()
+        msg_layout = QVBoxLayout()
+        
+        # Sposta la label "Scrivi in" qui
         self.writing_label = QLabel('Scrivi in: ALL')
-        self.message_input = QLineEdit()
-        self.send_btn = QPushButton('Invia')
         msg_layout.addWidget(self.writing_label)
-        msg_layout.addWidget(self.message_input)
-        msg_layout.addWidget(self.send_btn)
-        chat_layout.addLayout(msg_layout)
+        
+        # Input box più compatto
+        self.message_input = QTextEdit()
+        self.message_input.setPlaceholderText("Scrivi il tuo messaggio...")
+        self.message_input.setFixedHeight(60)  # Altezza fissa per 3 linee circa
+        
+        # Layout orizzontale per input e pulsante
+        input_layout = QHBoxLayout()
+        input_layout.addWidget(self.message_input)
+        self.send_btn = QPushButton('Invia')
+        input_layout.addWidget(self.send_btn)
+        
+        msg_layout.addLayout(input_layout)
+        chat_layout.addLayout(msg_layout, stretch=1)  # Meno spazio per l'area input
 
         self.chat_tab_index = self.tab_widget.addTab(chat_widget, "Chat")
         
@@ -278,11 +291,20 @@ class ChatWindow(QMainWindow):
         """)
         
         self.message_input.setStyleSheet("""
-            QLineEdit {
+            QTextEdit {
                 background-color: white;
                 color: black;
                 font-size: 12pt;
-                padding: 5px;
+                padding: 8px;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                min-height: 60px;
+                max-height: 60px;
+            }
+            
+            QTextEdit:focus {
+                border-color: #3498db;
+                outline: none;
             }
         """)
         
@@ -315,10 +337,255 @@ class ChatWindow(QMainWindow):
             }
         """)
 
+        # Stili comuni per i pulsanti
+        button_style = """
+            QPushButton {
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 11pt;
+                min-width: 80px;
+            }
+            
+            QPushButton:hover {
+                opacity: 0.8;
+            }
+            
+            QPushButton:pressed {
+                opacity: 1;
+            }
+            
+            QPushButton:disabled {
+                background-color: #cccccc;
+                border: none;
+                color: #666666;
+            }
+        """
+
+        # Stile per il pulsante Connetti/Disconnetti
+        connect_button_style = button_style + """
+            QPushButton {
+                background-color: #2ecc71;
+                border: none;
+                color: white;
+            }
+            
+            QPushButton[connected="true"] {
+                background-color: #e74c3c;
+            }
+        """
+
+        # Stile per il pulsante Invia
+        send_button_style = button_style + """
+            QPushButton {
+                background-color: #3498db;
+                border: none;
+                color: white;
+            }
+        """
+
+        # Stile per il pulsante Esporta PDF
+        pdf_button_style = button_style + """
+            QPushButton {
+                background-color: #9b59b6;
+                border: none;
+                color: white;
+            }
+        """
+
+        # Applica gli stili ai pulsanti
+        self.connect_btn.setStyleSheet(connect_button_style)
+        self.send_btn.setStyleSheet(send_button_style)
+        self.pdf_btn.setStyleSheet(pdf_button_style)
+
+        # Stile per i ComboBox
+        combo_style = """
+            QComboBox {
+                padding: 6px 30px 6px 10px;  /* Più spazio a destra per la freccia */
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                background-color: white;
+                font-size: 11pt;
+                min-width: 150px;
+            }
+            
+            QComboBox:hover {
+                border-color: #2ecc71;
+            }
+            
+            QComboBox::drop-down {
+                border: none;
+                width: 30px;
+                background-color: #2ecc71;
+                border-top-right-radius: 4px;
+                border-bottom-right-radius: 4px;
+            }
+            
+            QComboBox::down-arrow {
+                image: none;
+                border-style: solid;
+                border-width: 6px 5px 0 5px;
+                border-color: white transparent transparent transparent;
+                margin-right: 10px;
+            }
+            
+            QComboBox QListView {
+                border: 1px solid #bdc3c7;
+                padding: 4px;
+                background-color: white;
+                outline: 0px;
+                min-width: 150px;
+            }
+            
+            QComboBox::item {
+                padding: 4px;
+                min-height: 25px;
+            }
+            
+            QComboBox::item:selected {
+                background-color: #2ecc71;
+                color: white;
+            }
+            
+            QComboBox::item:hover {
+                background-color: #2ecc71;
+                color: white;
+            }
+            
+            QComboBox:disabled {
+                background-color: #f5f5f5;
+                color: #999999;
+            }
+        """
+        
+        self.group_combo.setStyleSheet(combo_style)
+        self.task_group_filter.setStyleSheet(combo_style)
+
+        # Forza l'aggiornamento dello stile
+        self.group_combo.setView(QListView())
+        self.task_group_filter.setView(QListView())
+
+        # Stile per i campi di input
+        input_style = """
+            QLineEdit, QTextEdit {
+                padding: 8px;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                background-color: white;
+                font-size: 11pt;
+            }
+            
+            QLineEdit:focus, QTextEdit:focus {
+                border-color: #3498db;
+                outline: none;
+            }
+            
+            QLineEdit:disabled {
+                background-color: #f5f5f5;
+                color: #999999;
+            }
+        """
+        
+        self.username_input.setStyleSheet(input_style)
+        self.task_input.setStyleSheet(input_style)
+
+        # Stile per le etichette
+        label_style = """
+            QLabel {
+                font-size: 11pt;
+                color: #2c3e50;
+                padding: 4px 0;
+            }
+        """
+        
+        for label in self.findChildren(QLabel):
+            label.setStyleSheet(label_style)
+
+        # Aggiorna lo stile del QTreeWidget per i task
+        self.task_list.setStyleSheet("""
+            QTreeWidget {
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                background-color: white;
+                font-size: 11pt;
+            }
+            
+            QTreeWidget::item {
+                padding: 6px;
+                border-bottom: 1px solid #ecf0f1;
+            }
+            
+            QTreeWidget::item:selected {
+                background-color: #3498db;
+                color: white;
+            }
+            
+            QTreeWidget::item:hover {
+                background-color: #ecf0f1;
+            }
+            
+            QTreeWidget QHeaderView::section {
+                background-color: #34495e;
+                color: white;
+                padding: 8px;
+                border: none;
+                font-weight: bold;
+            }
+            
+            QTreeWidget::indicator {
+                width: 20px;
+                height: 20px;
+            }
+            
+            QTreeWidget::indicator:unchecked {
+                border: 2px solid #bdc3c7;
+                border-radius: 3px;
+                background-color: white;
+            }
+            
+            QTreeWidget::indicator:checked {
+                border: 2px solid #2ecc71;
+                border-radius: 3px;
+                background-color: #2ecc71;
+                image: url(checkmark.png);
+            }
+        """)
+
+        # Stile per il pulsante Create Task
+        create_task_style = """
+            QPushButton {
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 11pt;
+                min-width: 100px;
+                background-color: #f39c12;  /* Arancione */
+                border: none;
+                color: white;
+            }
+            
+            QPushButton:hover {
+                background-color: #e67e22;  /* Arancione più scuro */
+                transition: background-color 0.3s;
+            }
+            
+            QPushButton:pressed {
+                background-color: #d35400;  /* Ancora più scuro quando premuto */
+            }
+            
+            QPushButton:disabled {
+                background-color: #cccccc;
+                color: #666666;
+            }
+        """
+        
+        # Applica gli stili
+        self.create_task_btn.setStyleSheet(create_task_style)
+
     def setup_signals(self):
         self.connect_btn.clicked.connect(self.handle_connection)
         self.send_btn.clicked.connect(self.send_message)
-        self.message_input.returnPressed.connect(self.send_message)
+        self.message_input.keyPressEvent = self.handle_message_input_keypress
         
         self.client.signals.message_received.connect(self.handle_message)
         self.client.signals.connection_lost.connect(self.handle_disconnection)
@@ -346,6 +613,9 @@ class ChatWindow(QMainWindow):
             self.client.disconnect()
             
             # Resetta l'interfaccia
+            self.connect_btn.setProperty('connected', False)
+            self.connect_btn.style().unpolish(self.connect_btn)
+            self.connect_btn.style().polish(self.connect_btn)
             self.connect_btn.setText('Connetti')
             self.username_input.setEnabled(True)
             self.group_combo.setEnabled(False)
@@ -366,6 +636,9 @@ class ChatWindow(QMainWindow):
             username = self.username_input.text().strip()
             if username:
                 if self.client.connect_to_server('localhost', 5000, username):
+                    self.connect_btn.setProperty('connected', True)
+                    self.connect_btn.style().unpolish(self.connect_btn)
+                    self.connect_btn.style().polish(self.connect_btn)
                     self.connect_btn.setText('Disconnetti')
                     self.username_input.setEnabled(False)
                 else:
@@ -406,7 +679,9 @@ class ChatWindow(QMainWindow):
                 message = data.get('message', '')
                 group = data.get('group', 'ALL')
                 group_info = f" → {group}" if group != 'ALL' else ""
-                self.chat_area.append(f'<b>{sender}{group_info}</b>: {message}')
+                # Sostituisce i newline con <br> per preservare la formattazione
+                formatted_message = message.replace('\n', '<br>')
+                self.chat_area.append(f'<b>{sender}{group_info}</b>: {formatted_message}')
             
             elif data['type'] == 'private':
                 sender = data.get('from', '')
@@ -436,7 +711,7 @@ class ChatWindow(QMainWindow):
             print(f"Errore gestione messaggio: {e}")
 
     def send_message(self):
-        message = self.message_input.text().strip()
+        message = self.message_input.toPlainText().strip()
         if message and self.client.socket:
             if message.startswith('@'):
                 # Controlla se è un messaggio privato o di gruppo
@@ -474,7 +749,7 @@ class ChatWindow(QMainWindow):
                     'message': message
                 }
             
-            print(f"DEBUG: Invio messaggio: {data}")  # Debug
+            print(f"DEBUG: Invio messaggio: {data}")
             self.client.send_message(data)
             self.message_input.clear()
             
@@ -485,6 +760,9 @@ class ChatWindow(QMainWindow):
                 self.update_window_title()
 
     def handle_disconnection(self):
+        self.connect_btn.setProperty('connected', False)
+        self.connect_btn.style().unpolish(self.connect_btn)
+        self.connect_btn.style().polish(self.connect_btn)
         self.connect_btn.setText('Connetti')
         self.username_input.setEnabled(True)
         self.group_combo.setEnabled(False)  # Disabilita il combo box alla disconnessione
@@ -528,8 +806,8 @@ class ChatWindow(QMainWindow):
             username = item.text().split('[')[0].strip()
         
         if username != self.client.username:
-            current_text = self.message_input.text()
-            self.message_input.setText(f"@{username} {current_text}")
+            current_text = self.message_input.toPlainText()
+            self.message_input.setPlainText(f"@{username} {current_text}")
             self.message_input.setFocus()
 
     def update_users_list(self, users_data):
@@ -828,6 +1106,15 @@ class ChatWindow(QMainWindow):
                     self.chat_tab_index, 
                     QColor('#0078d7')
                 )
+
+    def handle_message_input_keypress(self, event):
+        # Invia con Enter, va a capo con Shift+Enter
+        if event.key() == Qt.Key_Return and not event.modifiers() & Qt.ShiftModifier:
+            self.send_message()
+            event.accept()  # Previene il comportamento predefinito
+        else:
+            # Se è Shift+Enter o qualsiasi altro tasto, comportamento normale
+            QTextEdit.keyPressEvent(self.message_input, event)
 
 def main():
     app = QApplication([])

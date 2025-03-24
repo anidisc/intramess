@@ -624,3 +624,14 @@ bene
 2025-03-23 17:38:29,676 - INFO - Server avviato su localhost:5000
 2025-03-23 17:38:29,676 - INFO - Server avviato con gruppo predefinito 'ALL'
 2025-03-23 17:38:50,372 - INFO - Nuovo gruppo creato: CASA
+2025-03-23 18:22:03,239 - INFO - Nuovo gruppo creato: NEGOZIO
+2025-03-23 18:28:23,221 - INFO - Server arrestato
+2025-03-23 18:28:23,221 - INFO - Server arrestato
+2025-03-23 18:29:54,877 - INFO - Server avviato su localhost:5000
+2025-03-23 18:29:54,877 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-23 18:30:00,917 - INFO - Nuovo gruppo creato: CASA
+2025-03-24 05:43:24,236 - INFO - Server avviato su localhost:5000
+2025-03-24 05:43:24,236 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-24 05:45:01,856 - INFO - Nuovo gruppo creato: CASA
+2025-03-24 06:22:01,104 - INFO - Server arrestato
+2025-03-24 06:22:01,105 - INFO - Server arrestato
