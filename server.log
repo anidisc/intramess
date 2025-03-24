@@ -635,3 +635,61 @@ bene
 2025-03-24 05:45:01,856 - INFO - Nuovo gruppo creato: CASA
 2025-03-24 06:22:01,104 - INFO - Server arrestato
 2025-03-24 06:22:01,105 - INFO - Server arrestato
+2025-03-24 22:10:01,555 - INFO - Server avviato su localhost:5000
+2025-03-24 22:10:01,555 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-24 22:11:58,894 - INFO - Nuovo gruppo creato: PARCO
+2025-03-24 22:12:04,588 - INFO - Nuovo gruppo creato: CASA
+2025-03-24 22:12:22,173 - INFO - Nuovo gruppo creato: SPIAGGIA
+2025-03-24 22:29:19,614 - INFO - Server arrestato
+2025-03-24 22:29:19,614 - INFO - Server arrestato
+2025-03-24 22:35:42,541 - INFO - Server avviato su localhost:5000
+2025-03-24 22:35:42,541 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-24 22:36:06,750 - INFO - Nuovo gruppo creato: CASA
+2025-03-24 22:38:04,997 - INFO - Nuovo gruppo creato: NEGOZIO
+2025-03-24 22:40:30,072 - INFO - Server arrestato
+2025-03-24 22:40:30,073 - INFO - Server arrestato
+2025-03-24 22:41:24,318 - INFO - Server avviato su localhost:5000
+2025-03-24 22:41:24,318 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-24 22:41:30,517 - INFO - Nuovo gruppo creato: CASA
+2025-03-24 22:41:36,257 - INFO - Nuovo gruppo creato: NEGOZIO
+2025-03-24 22:41:42,639 - INFO - Nuovo gruppo creato: PALESTRA
+2025-03-24 23:10:40,796 - INFO - Server arrestato
+2025-03-24 23:10:40,797 - INFO - Server arrestato
+2025-03-24 23:11:55,200 - INFO - Server avviato su localhost:5000
+2025-03-24 23:11:55,200 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-24 23:12:37,380 - INFO - Nuovo gruppo creato: CASA
+2025-03-24 23:12:44,647 - INFO - Nuovo gruppo creato: NEGOZIO
+2025-03-24 23:14:39,614 - INFO - Server arrestato
+2025-03-24 23:14:39,615 - INFO - Server arrestato
+2025-03-24 23:16:11,960 - INFO - Server avviato su localhost:5000
+2025-03-24 23:16:11,960 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-24 23:16:14,702 - INFO - Nuovo gruppo creato: CASA
+2025-03-24 23:18:11,454 - INFO - Nuovo gruppo creato: NEGOZIO
+2025-03-24 23:18:11,462 - ERROR - Errore creazione gruppo NEGOZIO: dictionary changed size during iteration
+2025-03-24 23:18:41,894 - INFO - Nuovo gruppo creato: CASA2
+2025-03-24 23:24:12,643 - INFO - Server arrestato
+2025-03-24 23:24:12,643 - INFO - Server arrestato
+2025-03-24 23:24:15,927 - INFO - Server avviato su localhost:5000
+2025-03-24 23:24:15,927 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-24 23:24:24,002 - INFO - Nuovo gruppo creato: CASA
+2025-03-24 23:24:29,392 - INFO - Nuovo gruppo creato: CASA2
+2025-03-24 23:27:16,518 - INFO - Server arrestato
+2025-03-24 23:27:16,518 - INFO - Server arrestato
+2025-03-24 23:27:54,529 - INFO - Server avviato su localhost:5000
+2025-03-24 23:27:54,529 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-24 23:27:59,686 - INFO - Nuovo gruppo creato: PARCO
+2025-03-24 23:28:02,130 - INFO - Nuovo gruppo creato: ROMA
+2025-03-24 23:29:40,383 - INFO - Server arrestato
+2025-03-24 23:29:40,384 - INFO - Server arrestato
+2025-03-24 23:29:42,302 - INFO - Server avviato su localhost:5000
+2025-03-24 23:29:42,302 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-24 23:29:45,997 - INFO - Nuovo gruppo creato: CASA
+2025-03-24 23:29:51,799 - INFO - Nuovo gruppo creato: CITTA
+2025-03-24 23:50:26,398 - INFO - Server arrestato
+2025-03-24 23:50:26,400 - INFO - Server arrestato
+2025-03-24 23:50:41,609 - INFO - Server avviato su localhost:5000
+2025-03-24 23:50:41,609 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-24 23:50:52,732 - INFO - Nuovo gruppo creato: MILANO
+2025-03-24 23:51:27,140 - INFO - Nuovo gruppo creato: NAPOLI
+2025-03-24 23:51:55,019 - INFO - Nuovo gruppo creato: ROMA
+2025-03-24 23:56:58,476 - INFO - Nuovo gruppo creato: FIRENZE

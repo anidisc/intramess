@@ -299,7 +299,7 @@ class ChatServer:
             except:
                 self.remove_client(client)
 
-    def create_task(self, creator, group, text):
+    def create_task(self, creator, group, text, requester_group):
         """Crea un nuovo task con ID univoco"""
         task = {
             'id': f"T{self.task_id_counter:04d}",  # Format: T0001, T0002, etc.
@@ -309,7 +309,8 @@ class ChatServer:
             'date': datetime.now().strftime("%Y-%m-%d %H:%M"),
             'completed': False,
             'completed_by': None,
-            'completed_date': None
+            'completed_date': None,
+            'requester_group': requester_group  # Aggiungi il gruppo richiedente
         }
         self.tasks.append(task)
         self.task_id_counter += 1
@@ -451,14 +452,6 @@ class ChatServer:
                         elif data['type'] == 'group_message':
                             group = data['group'].upper()
                             if group in self.groups:
-                                # Verifica che l'utente sia nel gruppo da cui sta inviando
-                                if group != 'ALL' and username not in self.groups[group]:
-                                    client_socket.send((json.dumps({
-                                        'type': 'error',
-                                        'message': f'Non sei membro del gruppo {group}'
-                                    }) + '\n').encode())
-                                    continue
-
                                 self.broadcast_to_group({
                                     'type': 'message',
                                     'from': username,
@@ -493,7 +486,12 @@ class ChatServer:
 
                         elif data['type'] == 'create_task':
                             if data['group'] != self.user_groups[username] and data['group'] != 'ALL':
-                                task = self.create_task(username, data['group'], data['text'])
+                                task = self.create_task(
+                                    username, 
+                                    data['group'], 
+                                    data['text'],
+                                    data.get('requester_group', 'N/A')  # Aggiungi il gruppo richiedente
+                                )
                                 print(f"DEBUG: Nuovo task creato da {username}: {task}")  # Debug
                                 self.broadcast_to_group({
                                     'type': 'system',

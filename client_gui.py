@@ -171,22 +171,21 @@ class ChatWindow(QMainWindow):
         # Area input messaggio
         msg_layout = QVBoxLayout()
         
-        # Sposta la label "Scrivi in" qui
-        self.writing_label = QLabel('Scrivi in: ALL')
-        msg_layout.addWidget(self.writing_label)
-        
         # Input box più compatto
         self.message_input = QTextEdit()
         self.message_input.setPlaceholderText("Scrivi il tuo messaggio...")
         self.message_input.setFixedHeight(60)  # Altezza fissa per 3 linee circa
         
-        # Layout orizzontale per input e pulsante
-        input_layout = QHBoxLayout()
-        input_layout.addWidget(self.message_input)
+        # Layout orizzontale per label e pulsante sotto l'input
+        bottom_layout = QHBoxLayout()
+        self.writing_label = QLabel('Scrivi in: ALL')
+        bottom_layout.addWidget(self.writing_label)
+        bottom_layout.addStretch()  # Aggiunge spazio elastico tra label e pulsante
         self.send_btn = QPushButton('Invia')
-        input_layout.addWidget(self.send_btn)
+        bottom_layout.addWidget(self.send_btn)
         
-        msg_layout.addLayout(input_layout)
+        msg_layout.addWidget(self.message_input)
+        msg_layout.addLayout(bottom_layout)
         chat_layout.addLayout(msg_layout, stretch=1)  # Meno spazio per l'area input
 
         self.chat_tab_index = self.tab_widget.addTab(chat_widget, "Chat")
@@ -226,40 +225,22 @@ class ChatWindow(QMainWindow):
         
         # Lista dei task con stile
         self.task_list = QTreeWidget()
-        self.task_list.setHeaderLabels(["Stato", "ID", "Task", "Gruppo", "Creato da", "Data", "Completato da", "Data completamento"])
+        self.task_list.setHeaderLabels([
+            "Stato", 
+            "ID", 
+            "Task", 
+            "Gruppo", 
+            "Gruppo Richiedente",  # Nuovo campo
+            "Creato da", 
+            "Data", 
+            "Completato da", 
+            "Data completamento"
+        ])
         self.task_list.setAlternatingRowColors(True)
-        self.task_list.setStyleSheet("""
-            QTreeWidget {
-                background-color: white;
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                font-size: 11pt;
-            }
-            QTreeWidget::item {
-                padding: 4px;
-                border-bottom: 1px solid #eee;
-            }
-            QTreeWidget::item:alternate {
-                background-color: #f8f8f8;
-            }
-            QTreeWidget::item:selected {
-                background-color: #0078d7;
-                color: white;
-            }
-            QTreeWidget::item:hover {
-                background-color: #e6f3ff;
-            }
-            QTreeWidget::item:selected:hover {
-                background-color: #0078d7;
-                color: white;
-            }
-            QTreeWidget QHeaderView::section {
-                background-color: #f0f0f0;
-                padding: 6px;
-                border: 1px solid #ccc;
-                font-weight: bold;
-            }
-        """)
+        
+        # Imposta la larghezza minima della colonna Task
+        self.task_list.setColumnWidth(2, 300)  # Colonna Task più larga
+        
         task_layout.addWidget(self.task_list)
         
         self.task_tab_index = self.tab_widget.addTab(task_widget, "Task")
@@ -271,15 +252,16 @@ class ChatWindow(QMainWindow):
         users_label = QLabel('Utenti Online:')
         right_layout.addWidget(users_label)
         
-        # Lista utenti
+        # Lista utenti con larghezza fissa
         self.users_list = QListWidget()
         self.users_list.setContextMenuPolicy(Qt.CustomContextMenu)
         self.users_list.customContextMenuRequested.connect(self.show_user_context_menu)
+        self.users_list.setMaximumWidth(200)  # Larghezza massima fissa
         right_layout.addWidget(self.users_list)
 
         # Aggiungi i layout al layout principale
-        main_layout.addLayout(left_layout, stretch=7)  # 70% dello spazio
-        main_layout.addLayout(right_layout, stretch=3)  # 30% dello spazio
+        main_layout.addLayout(left_layout, stretch=8)  # 80% dello spazio
+        main_layout.addLayout(right_layout, stretch=2)  # 20% dello spazio
 
         # Imposta stili
         self.chat_area.setStyleSheet("""
@@ -314,6 +296,22 @@ class ChatWindow(QMainWindow):
                 color: black;
                 font-size: 11pt;
                 padding: 5px;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+            }
+            
+            QListWidget::item {
+                padding: 4px;
+                border-bottom: 1px solid #ecf0f1;
+            }
+            
+            QListWidget::item:selected {
+                background-color: #3498db;
+                color: white;
+            }
+            
+            QListWidget::item:hover {
+                background-color: #ecf0f1;
             }
         """)
 
@@ -582,6 +580,9 @@ class ChatWindow(QMainWindow):
         # Applica gli stili
         self.create_task_btn.setStyleSheet(create_task_style)
 
+        # Aggiungi il gestore del tasto per l'input del task
+        self.task_input.keyPressEvent = self.handle_task_input_keypress
+
     def setup_signals(self):
         self.connect_btn.clicked.connect(self.handle_connection)
         self.send_btn.clicked.connect(self.send_message)
@@ -649,17 +650,14 @@ class ChatWindow(QMainWindow):
             print(f"DEBUG GUI - Gestione messaggio: {data}")
             
             if data['type'] == 'task_list':
-                # Non cambiare il filtro quando riceviamo un aggiornamento
                 self.update_task_list(data['tasks'])
                 return
             
-            # Se siamo nella tab Task e arriva un messaggio, incrementa il contatore
             if self.tab_widget.currentIndex() == self.task_tab_index and data['type'] in ['message', 'private']:
                 self.unread_messages += 1
                 self.update_chat_tab()
-                # Avvia l'animazione flash
                 self.flash_count = 0
-                self.flash_timer.start(500)  # Flash ogni 500ms
+                self.flash_timer.start(500)
             
             if data['type'] == 'connection_accepted':
                 # Abilita il combo box e popola i gruppi
@@ -679,9 +677,20 @@ class ChatWindow(QMainWindow):
                 message = data.get('message', '')
                 group = data.get('group', 'ALL')
                 group_info = f" → {group}" if group != 'ALL' else ""
-                # Sostituisce i newline con <br> per preservare la formattazione
-                formatted_message = message.replace('\n', '<br>')
-                self.chat_area.append(f'<b>{sender}{group_info}</b>: {formatted_message}')
+                
+                # Controlla se il messaggio contiene newline
+                if '\n' in message:
+                    # Se ha più righe, metti il nome su una riga separata
+                    formatted_message = f'<b>{sender}{group_info}</b>:<br>{message.replace("\n", "<br>")}'
+                else:
+                    # Se è una singola riga, mantieni il formato originale
+                    formatted_message = f'<b>{sender}{group_info}</b>: {message}'
+                
+                # Aggiungi un colore diverso per i messaggi da altri gruppi
+                if group != self.current_group:
+                    formatted_message = f'<span style="color: #666666">{formatted_message}</span>'
+                
+                self.chat_area.append(formatted_message)
             
             elif data['type'] == 'private':
                 sender = data.get('from', '')
@@ -714,31 +723,39 @@ class ChatWindow(QMainWindow):
         message = self.message_input.toPlainText().strip()
         if message and self.client.socket:
             if message.startswith('@'):
-                # Controlla se è un messaggio privato o di gruppo
+                # Gestione messaggi privati (codice esistente)
                 parts = message[1:].split(' ', 1)
                 if len(parts) == 2:
                     target, msg = parts
-                    # Verifica se il target è uno username (rimuovi eventuali [gruppo])
                     target = target.split('[')[0].strip()
-                    
-                    # Controlla se il target è un utente nella lista
                     users_in_list = [self.users_list.item(i).text().split('[')[0].strip() 
                                    for i in range(self.users_list.count())]
                     
                     if target in users_in_list:
-                        # Messaggio privato
                         data = {
                             'type': 'private_message',
                             'to': target,
                             'message': msg
                         }
                     else:
-                        # Messaggio di gruppo
                         data = {
                             'type': 'group_message',
                             'group': target.upper(),
                             'message': msg
                         }
+                else:
+                    return
+            elif message.startswith('#'):
+                # Nuova gestione per messaggi a gruppi specifici
+                parts = message[1:].split(' ', 1)
+                if len(parts) == 2:
+                    target_group, msg = parts
+                    target_group = target_group.upper()
+                    data = {
+                        'type': 'group_message',
+                        'group': target_group,
+                        'message': msg
+                    }
                 else:
                     return
             else:
@@ -753,7 +770,7 @@ class ChatWindow(QMainWindow):
             self.client.send_message(data)
             self.message_input.clear()
             
-            # Dopo l'invio del messaggio, assicurati di resettare il contatore
+            # Reset del contatore se siamo nella tab chat
             if self.tab_widget.currentIndex() == self.chat_tab_index:
                 self.unread_messages = 0
                 self.update_chat_tab()
@@ -861,7 +878,8 @@ class ChatWindow(QMainWindow):
             data = {
                 'type': 'create_task',
                 'group': group,
-                'text': task_text
+                'text': task_text,
+                'requester_group': self.current_group  # Aggiungi il gruppo richiedente
             }
             self.client.send_message(data)
             self.task_input.clear()
@@ -884,7 +902,6 @@ class ChatWindow(QMainWindow):
 
     def update_task_list(self, tasks):
         print(f"DEBUG: Aggiornamento lista task nella GUI")
-        # Salva il filtro corrente
         current_filter = self.task_group_filter.currentText()
         
         self.task_list.clear()
@@ -904,29 +921,30 @@ class ChatWindow(QMainWindow):
             # ID (seconda colonna)
             item.setText(1, str(task['id']))
             
-            # Testo del task
+            # Testo del task in maiuscolo
             if task['completed']:
-                item.setText(2, f"✓ {task['text']}")
+                item.setText(2, f"✓ {task['text'].upper()}")
                 item.setForeground(2, QColor('#666666'))
                 font = item.font(2)
                 font.setStrikeOut(True)
                 item.setFont(2, font)
             else:
-                item.setText(2, task['text'])
+                item.setText(2, task['text'].upper())
                 item.setForeground(2, QColor('#000000'))
             
             # Altri campi
             item.setText(3, task['group'])
-            item.setText(4, task['created_by'])
-            item.setText(5, task['date'])
+            item.setText(4, task.get('requester_group', 'N/A'))  # Nuovo campo
+            item.setText(5, task['created_by'])
+            item.setText(6, task['date'])
             
             # Informazioni sul completamento
             if task['completed']:
-                item.setText(6, task['completed_by'])
-                item.setText(7, task['completed_date'])
+                item.setText(7, task['completed_by'])
+                item.setText(8, task['completed_date'])
             else:
-                item.setText(6, "")
                 item.setText(7, "")
+                item.setText(8, "")
             
             # Memorizza i dati del task nell'item
             item.setData(0, Qt.UserRole, {
@@ -942,8 +960,11 @@ class ChatWindow(QMainWindow):
                 item.setHidden(True)
         
         # Adatta le colonne al contenuto
-        for i in range(8):
+        for i in range(9):  # Aggiornato il numero di colonne
             self.task_list.resizeColumnToContents(i)
+        
+        # Forza la larghezza minima della colonna Task
+        self.task_list.setColumnWidth(2, max(300, self.task_list.columnWidth(2)))
 
     def filter_tasks(self):
         selected_group = self.task_group_filter.currentText()
@@ -1115,6 +1136,15 @@ class ChatWindow(QMainWindow):
         else:
             # Se è Shift+Enter o qualsiasi altro tasto, comportamento normale
             QTextEdit.keyPressEvent(self.message_input, event)
+
+    def handle_task_input_keypress(self, event):
+        # Invia con Enter
+        if event.key() == Qt.Key_Return:
+            self.create_task()
+            event.accept()  # Previene il comportamento predefinito
+        else:
+            # Per qualsiasi altro tasto, comportamento normale
+            QLineEdit.keyPressEvent(self.task_input, event)
 
 def main():
     app = QApplication([])
