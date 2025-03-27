@@ -531,6 +531,12 @@ class ChatServer:
         else:
             # Se il messaggio è per un gruppo specifico, lo ricevono SOLO i membri di quel gruppo
             recipients = self.groups[group]
+            
+            # Se è un messaggio di gruppo, aggiungi il mittente ai destinatari
+            if message.get('type') == 'message':
+                sender = message.get('from')
+                if sender:
+                    recipients.add(sender)
 
         for client_socket, username in self.clients.items():
             if username in recipients and (not exclude or username != exclude):

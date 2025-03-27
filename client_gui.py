@@ -176,11 +176,70 @@ class ChatWindow(QMainWindow):
         self.message_input.setPlaceholderText("Scrivi il tuo messaggio...")
         self.message_input.setFixedHeight(60)  # Altezza fissa per 3 linee circa
         
-        # Layout orizzontale per label e pulsante sotto l'input
+        # Layout orizzontale per combo box e pulsante sotto l'input
         bottom_layout = QHBoxLayout()
-        self.writing_label = QLabel('Scrivi in: ALL')
+        
+        # Label "Scrivi in" stilizzata
+        self.writing_label = QLabel('Scrivi in')
+        self.writing_label.setStyleSheet("""
+            QLabel {
+                color: #2c3e50;
+                font-size: 12px;
+                font-weight: bold;
+                padding: 5px;
+                margin-right: 5px;
+                background-color: #ecf0f1;
+                border-radius: 4px;
+            }
+        """)
         bottom_layout.addWidget(self.writing_label)
-        bottom_layout.addStretch()  # Aggiunge spazio elastico tra label e pulsante
+        
+        self.writing_group_combo = QComboBox()
+        self.writing_group_combo.setStyleSheet("""
+            QComboBox {
+                background-color: #2c3e50;
+                color: white;
+                border: 1px solid #34495e;
+                border-radius: 4px;
+                padding: 5px;
+                min-width: 100px;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 20px;
+            }
+            QComboBox::down-arrow {
+                image: url(down_arrow.png);
+                width: 12px;
+                height: 12px;
+            }
+            QComboBox QListView {
+                background-color: #2c3e50;
+                color: white;
+                selection-background-color: #2ecc71;
+                selection-color: white;
+                border: 1px solid #34495e;
+                border-radius: 4px;
+                padding: 5px;
+            }
+            QComboBox QListView::item {
+                padding: 5px;
+                min-height: 25px;
+            }
+            QComboBox QListView::item:hover {
+                background-color: #27ae60;
+                color: white;
+            }
+            QComboBox QListView::item:selected {
+                background-color: #2ecc71;
+                color: white;
+            }
+        """)
+        self.writing_group_combo.setView(QListView())
+        self.writing_group_combo.setMinimumWidth(100)
+        
+        bottom_layout.addWidget(self.writing_group_combo)
+        bottom_layout.addStretch()  # Aggiunge spazio elastico tra combo box e pulsante
         self.send_btn = QPushButton('Invia')
         bottom_layout.addWidget(self.send_btn)
         
@@ -598,6 +657,7 @@ class ChatWindow(QMainWindow):
         self.task_group_filter.currentTextChanged.connect(self.filter_tasks)
         self.pdf_btn.clicked.connect(self.export_to_pdf)
         self.tab_widget.currentChanged.connect(self.handle_tab_change)
+        self.writing_group_combo.currentTextChanged.connect(self.change_writing_group)
 
     def handle_connection(self):
         if self.client.socket:
@@ -623,7 +683,6 @@ class ChatWindow(QMainWindow):
             self.group_combo.clear()
             self.group_combo.addItem('ALL')
             self.current_group = 'ALL'
-            self.writing_label.setText('Scrivi in: ALL')
             self.chat_area.append('<i>Disconnesso dal server</i>')
             
             # Pulisci la lista task
@@ -664,33 +723,60 @@ class ChatWindow(QMainWindow):
                 self.group_combo.setEnabled(True)
                 self.group_combo.clear()
                 self.group_combo.addItems(data['groups'])
-                # Aggiorna anche il combo box dei task
+                # Aggiorna anche il combo box dei task e il writing group combo
                 self.task_group_combo.clear()
                 self.task_group_combo.addItems(data['groups'])
                 self.task_group_filter.clear()
                 self.task_group_filter.addItem("Tutti i gruppi")
                 self.task_group_filter.addItems(data['groups'])
+                self.writing_group_combo.clear()
+                self.writing_group_combo.addItems(data['groups'])
+                self.writing_group_combo.setCurrentText('ALL')
                 self.chat_area.append('<i style="color: green">Connesso al server</i>')
                 
             elif data['type'] == 'message':
                 sender = data.get('from', 'Unknown')
                 message = data.get('message', '')
                 group = data.get('group', 'ALL')
-                group_info = f" → {group}" if group != 'ALL' else ""
+                sender_group = None
                 
-                # Controlla se il messaggio contiene newline
-                if '\n' in message:
-                    # Se ha più righe, metti il nome su una riga separata
-                    formatted_message = f'<b>{sender}{group_info}</b>:<br>{message.replace("\n", "<br>")}'
-                else:
-                    # Se è una singola riga, mantieni il formato originale
-                    formatted_message = f'<b>{sender}{group_info}</b>: {message}'
+                # Cerca il gruppo del mittente dalla lista utenti
+                for i in range(self.users_list.count()):
+                    item = self.users_list.item(i)
+                    user_text = item.text()
+                    if user_text.startswith(sender):
+                        # Estrai il gruppo tra parentesi quadre se presente
+                        if '[' in user_text:
+                            sender_group = user_text.split('[')[1].rstrip(']')
+                        break
                 
-                # Aggiungi un colore diverso per i messaggi da altri gruppi
-                if group != self.current_group:
-                    formatted_message = f'<span style="color: #666666">{formatted_message}</span>'
+                # Verifica se il messaggio deve essere mostrato
+                should_show = False
+                if group == 'ALL':  # Messaggi in ALL sono visibili a tutti
+                    should_show = True
+                elif group == self.current_group:  # Messaggi nel gruppo destinatario
+                    should_show = True
+                elif sender == self.client.username:  # I propri messaggi sono sempre visibili
+                    should_show = True
+                elif sender_group and sender_group == self.current_group:  # Messaggi da membri del proprio gruppo
+                    should_show = True
                 
-                self.chat_area.append(formatted_message)
+                if should_show:
+                    group_info = f" → {group}" if group != 'ALL' else ""
+                    
+                    # Controlla se il messaggio contiene newline
+                    if '\n' in message:
+                        # Se ha più righe, metti il nome su una riga separata
+                        formatted_message = f'<b>{sender}{group_info}</b>:<br>{message.replace("\n", "<br>")}'
+                    else:
+                        # Se è una singola riga, mantieni il formato originale
+                        formatted_message = f'<b>{sender}{group_info}</b>: {message}'
+                    
+                    # Aggiungi un colore diverso per i messaggi da altri gruppi
+                    if group != self.current_group:
+                        formatted_message = f'<span style="color: #666666">{formatted_message}</span>'
+                    
+                    self.chat_area.append(formatted_message)
             
             elif data['type'] == 'private':
                 sender = data.get('from', '')
@@ -745,24 +831,12 @@ class ChatWindow(QMainWindow):
                         }
                 else:
                     return
-            elif message.startswith('#'):
-                # Nuova gestione per messaggi a gruppi specifici
-                parts = message[1:].split(' ', 1)
-                if len(parts) == 2:
-                    target_group, msg = parts
-                    target_group = target_group.upper()
-                    data = {
-                        'type': 'group_message',
-                        'group': target_group,
-                        'message': msg
-                    }
-                else:
-                    return
             else:
-                # Messaggio nel gruppo corrente
+                # Usa il gruppo selezionato nel writing_group_combo
+                target_group = self.writing_group_combo.currentText()
                 data = {
                     'type': 'group_message',
-                    'group': self.current_group,
+                    'group': target_group,
                     'message': message
                 }
             
@@ -786,9 +860,11 @@ class ChatWindow(QMainWindow):
         self.group_combo.clear()
         self.group_combo.addItem('ALL')
         self.current_group = 'ALL'
-        self.writing_label.setText('Scrivi in: ALL')
         self.chat_area.append('<i>Connessione persa</i>')
         self.client.socket = None
+        self.writing_group_combo.clear()
+        self.writing_group_combo.addItem('ALL')
+        self.writing_group_combo.setCurrentText('ALL')
 
     def change_group(self, group):
         if group and group != self.current_group:
@@ -798,7 +874,8 @@ class ChatWindow(QMainWindow):
                 'group': group
             })
             self.current_group = group
-            self.writing_label.setText(f'Scrivi in: {group}')
+            # Aggiorna automaticamente il gruppo di destinazione dei messaggi
+            self.writing_group_combo.setCurrentText(group)
 
     def show_user_context_menu(self, position):
         menu = QMenu()
@@ -1145,6 +1222,12 @@ class ChatWindow(QMainWindow):
         else:
             # Per qualsiasi altro tasto, comportamento normale
             QLineEdit.keyPressEvent(self.task_input, event)
+
+    def change_writing_group(self, group):
+        """Cambia solo il gruppo di destinazione del messaggio"""
+        if group:
+            # Non aggiorniamo più la label poiché l'abbiamo rimossa
+            pass
 
 def main():
     app = QApplication([])
