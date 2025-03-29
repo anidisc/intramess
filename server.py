@@ -401,114 +401,119 @@ class ChatServer:
 
             while self.running:
                 try:
-                    message = client_socket.recv(1024).decode()
-                    if not message:
+                    data = json.loads(client_socket.recv(4096).decode())
+                    print(f"DEBUG: Ricevuto messaggio da {username}: {data}")
+                    
+                    if data['type'] == 'disconnect':
                         break
-
-                    messages = message.split('\n')
-                    for msg in messages:
-                        if not msg:
-                            continue
-                            
-                        data = json.loads(msg)
-                        print(f"DEBUG: Ricevuto da {username}: {data}")
-
-                        if data['type'] == 'disconnect':
-                            print(f"DEBUG: Disconnessione richiesta da {username}")
-                            raise ConnectionResetError  # Forza l'uscita dal loop
                         
-                        if data['type'] == 'request_users':
-                            client_socket.send((json.dumps({
-                                'type': 'user_list',
-                                'users': list(self.clients.values())
-                            }) + '\n').encode())
-                        
-                        elif data['type'] == 'private_message':
-                            target = data['to']
-                            if target in self.clients.values():
-                                # Trova il socket del destinatario
-                                target_socket = next(
-                                    (s for s, u in self.clients.items() if u == target),
-                                    None
-                                )
-                                if target_socket:
-                                    # Invia al destinatario
-                                    target_socket.send((json.dumps({
-                                        'type': 'private',
-                                        'from': username,
-                                        'message': data['message']
-                                    }) + '\n').encode())
-                                    # Conferma al mittente
-                                    client_socket.send((json.dumps({
-                                        'type': 'private',
-                                        'to': target,
-                                        'message': data['message']
-                                    }) + '\n').encode())
-                            else:
-                                client_socket.send((json.dumps({
-                                    'type': 'error',
-                                    'message': f'Utente {target} non trovato'
-                                }) + '\n').encode())
-                        elif data['type'] == 'group_message':
-                            group = data['group'].upper()
-                            if group in self.groups:
+                    elif data['type'] == 'delete_task':
+                        task_id = data['task_id']
+                        # Cerca il task e verifica che l'utente sia il creatore
+                        for task in self.tasks:
+                            if task['id'] == task_id and task['created_by'] == username:
+                                self.tasks.remove(task)
+                                print(f"DEBUG: Task {task_id} eliminato da {username}")
                                 self.broadcast_to_group({
-                                    'type': 'message',
+                                    'type': 'system',
+                                    'message': f'{username} ha eliminato un task'
+                                })
+                                self.broadcast_tasks()
+                                break
+                        continue
+                        
+                    elif data['type'] == 'request_users':
+                        client_socket.send((json.dumps({
+                            'type': 'user_list',
+                            'users': list(self.clients.values())
+                        }) + '\n').encode())
+                        
+                    elif data['type'] == 'private_message':
+                        target = data['to']
+                        if target in self.clients.values():
+                            # Trova il socket del destinatario
+                            target_socket = next(
+                                (s for s, u in self.clients.items() if u == target),
+                                None
+                            )
+                            if target_socket:
+                                # Invia al destinatario
+                                target_socket.send((json.dumps({
+                                    'type': 'private',
                                     'from': username,
-                                    'message': data['message'],
-                                    'group': group
-                                }, group=group)
-                        elif data['type'] == 'join_group':
-                            group = data['group'].upper()
-                            if group in self.groups:
-                                old_group = self.user_groups[username]
-                                if old_group != 'ALL':
-                                    self.groups[old_group].remove(username)
-                                self.groups[group].add(username)
-                                self.user_groups[username] = group
-                                
-                                # Notifica il cambio gruppo
-                                client_socket.send((json.dumps({
-                                    'type': 'system',
-                                    'message': f'Sei entrato nel gruppo {group}'
+                                    'message': data['message']
                                 }) + '\n').encode())
-                                
-                                # Notifica gli altri utenti
-                                self.broadcast_to_group({
-                                    'type': 'system',
-                                    'message': f'{username} è entrato nel gruppo {group}'
-                                }, group=group)
-                                
-                                # Aggiorna la lista utenti per tutti
-                                self.broadcast_user_list()
-                                
-                                print(f"DEBUG: Utente {username} entrato nel gruppo {group}")
+                                # Conferma al mittente
+                                client_socket.send((json.dumps({
+                                    'type': 'private',
+                                    'to': target,
+                                    'message': data['message']
+                                }) + '\n').encode())
+                        else:
+                            client_socket.send((json.dumps({
+                                'type': 'error',
+                                'message': f'Utente {target} non trovato'
+                            }) + '\n').encode())
+                    elif data['type'] == 'group_message':
+                        group = data['group'].upper()
+                        if group in self.groups:
+                            self.broadcast_to_group({
+                                'type': 'message',
+                                'from': username,
+                                'message': data['message'],
+                                'group': group
+                            }, group=group)
+                    elif data['type'] == 'join_group':
+                        group = data['group'].upper()
+                        if group in self.groups:
+                            old_group = self.user_groups[username]
+                            if old_group != 'ALL':
+                                self.groups[old_group].remove(username)
+                            self.groups[group].add(username)
+                            self.user_groups[username] = group
+                            
+                            # Notifica il cambio gruppo
+                            client_socket.send((json.dumps({
+                                'type': 'system',
+                                'message': f'Sei entrato nel gruppo {group}'
+                            }) + '\n').encode())
+                            
+                            # Notifica gli altri utenti
+                            self.broadcast_to_group({
+                                'type': 'system',
+                                'message': f'{username} è entrato nel gruppo {group}'
+                            }, group=group)
+                            
+                            # Aggiorna la lista utenti per tutti
+                            self.broadcast_user_list()
+                            
+                            print(f"DEBUG: Utente {username} entrato nel gruppo {group}")
 
-                        elif data['type'] == 'create_task':
-                            if data['group'] != self.user_groups[username] and data['group'] != 'ALL':
-                                task = self.create_task(
-                                    username, 
-                                    data['group'], 
-                                    data['text'],
-                                    data.get('requester_group', 'N/A')  # Aggiungi il gruppo richiedente
-                                )
-                                print(f"DEBUG: Nuovo task creato da {username}: {task}")  # Debug
-                                self.broadcast_to_group({
-                                    'type': 'system',
-                                    'message': f'{username} ha creato un nuovo task per il gruppo {data["group"]}'
-                                })
+                    elif data['type'] == 'create_task':
+                        if data['group'] != self.user_groups[username] and data['group'] != 'ALL':
+                            task = self.create_task(
+                                username, 
+                                data['group'], 
+                                data['text'],
+                                data.get('requester_group', 'N/A')  # Aggiungi il gruppo richiedente
+                            )
+                            print(f"DEBUG: Nuovo task creato da {username}: {task}")  # Debug
+                            self.broadcast_to_group({
+                                'type': 'system',
+                                'message': f'{username} ha creato un nuovo task per il gruppo {data["group"]}'
+                            })
 
-                        elif data['type'] == 'complete_task':
-                            if self.complete_task(data['task_id'], username):
-                                print(f"DEBUG: Task {data['task_id']} completato da {username}")  # Debug
-                                self.broadcast_to_group({
-                                    'type': 'system',
-                                    'message': f'{username} ha completato un task'
-                                })
+                    elif data['type'] == 'complete_task':
+                        if self.complete_task(data['task_id'], username):
+                            print(f"DEBUG: Task {data['task_id']} completato da {username}")  # Debug
+                            self.broadcast_to_group({
+                                'type': 'system',
+                                'message': f'{username} ha completato un task'
+                            })
 
-                        elif data['type'] == 'update_task':
-                            if self.update_task(data['task_id'], username, data['completed']):
-                                print(f"DEBUG: Task {data['task_id']} {'completato' if data['completed'] else 'riaperto'} da {username}")
+                    elif data['type'] == 'update_task':
+                        if self.update_task(data['task_id'], username, data['completed']):
+                            print(f"DEBUG: Task {data['task_id']} {'completato' if data['completed'] else 'riaperto'} da {username}")
 
                 except json.JSONDecodeError:
                     continue

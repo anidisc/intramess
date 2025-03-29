@@ -113,5 +113,5 @@ class Client:
         self.socket.close()
 
 if __name__ == '__main__':
-    client = Client()
+    client = Client(host='localhost', port=5000)
     client.connect() 

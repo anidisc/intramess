@@ -1,0 +1,17 @@
+{
+    "server": {
+        "host": "localhost",
+        "port": 5000
+    },
+    "client": {
+        "window": {
+            "width": 800,
+            "height": 600,
+            "title": "Chat Client"
+        },
+        "chat": {
+            "message_height": 60,
+            "min_task_width": 300
+        }
+    }
+} 

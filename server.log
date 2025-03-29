@@ -734,3 +734,23 @@ bene
 2025-03-27 06:35:29,545 - INFO - Nuovo gruppo creato: NAPOLI
 2025-03-27 06:35:43,097 - INFO - Server arrestato
 2025-03-27 06:35:43,098 - INFO - Server arrestato
+2025-03-28 05:56:13,704 - INFO - Server avviato su localhost:5000
+2025-03-28 05:56:13,704 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-28 05:57:14,569 - INFO - Nuovo gruppo creato: NAPOLI
+2025-03-28 06:26:13,879 - INFO - Server arrestato
+2025-03-28 06:26:13,880 - INFO - Server arrestato
+2025-03-28 06:31:09,642 - INFO - Server avviato su localhost:5000
+2025-03-28 06:31:09,642 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-28 06:32:00,366 - INFO - Nuovo gruppo creato: G1
+2025-03-28 06:36:34,486 - INFO - Server arrestato
+2025-03-28 06:36:34,487 - INFO - Server arrestato
+2025-03-28 06:42:43,922 - INFO - Server avviato su localhost:5000
+2025-03-28 06:42:43,923 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-28 06:44:00,223 - INFO - Nuovo gruppo creato: NAPOLI
+2025-03-28 06:44:04,321 - INFO - Nuovo gruppo creato: MILANO
+2025-03-29 03:27:46,121 - INFO - Server avviato su localhost:5000
+2025-03-29 03:27:46,121 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-29 03:28:52,938 - INFO - Nuovo gruppo creato: GRUPPO1
+2025-03-29 03:28:59,363 - INFO - Nuovo gruppo creato: GRUPPO2
+2025-03-29 03:32:50,231 - INFO - Server arrestato
+2025-03-29 03:32:50,232 - INFO - Server arrestato

@@ -28,6 +28,34 @@ class ChatClient(QObject):
         self.running = False
         self.username = None
         self.signals = ChatSignals()
+        self.config = self.load_config()
+
+    def load_config(self):
+        """Carica la configurazione dal file config.json"""
+        try:
+            config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+            with open(config_path, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Errore nel caricamento della configurazione: {e}")
+            # Configurazione di default
+            return {
+                "server": {
+                    "host": "localhost",
+                    "port": 5000
+                },
+                "client": {
+                    "window": {
+                        "width": 800,
+                        "height": 600,
+                        "title": "Chat Client"
+                    },
+                    "chat": {
+                        "message_height": 60,
+                        "min_task_width": 300
+                    }
+                }
+            }
 
     def connect_to_server(self, host, port, username):
         try:
@@ -116,6 +144,7 @@ class ChatWindow(QMainWindow):
         self.client = ChatClient()
         self.current_group = 'ALL'
         self.unread_messages = 0
+        self.config = self.client.config
         self.init_ui()
         self.setup_signals()
         self.flash_timer = QTimer()
@@ -124,8 +153,10 @@ class ChatWindow(QMainWindow):
         self.flash_count = 0
 
     def init_ui(self):
-        self.setWindowTitle('Chat Client')
-        self.setGeometry(100, 100, 800, 600)
+        self.setWindowTitle(self.config['client']['window']['title'])
+        self.setGeometry(100, 100, 
+                        self.config['client']['window']['width'],
+                        self.config['client']['window']['height'])
 
         # Widget centrale
         central_widget = QWidget()
@@ -174,7 +205,7 @@ class ChatWindow(QMainWindow):
         # Input box più compatto
         self.message_input = QTextEdit()
         self.message_input.setPlaceholderText("Scrivi il tuo messaggio...")
-        self.message_input.setFixedHeight(60)  # Altezza fissa per 3 linee circa
+        self.message_input.setFixedHeight(self.config['client']['chat']['message_height'])
         
         # Layout orizzontale per combo box e pulsante sotto l'input
         bottom_layout = QHBoxLayout()
@@ -289,16 +320,18 @@ class ChatWindow(QMainWindow):
             "ID", 
             "Task", 
             "Gruppo", 
-            "Gruppo Richiedente",  # Nuovo campo
+            "Gruppo Richiedente",
             "Creato da", 
             "Data", 
             "Completato da", 
             "Data completamento"
         ])
         self.task_list.setAlternatingRowColors(True)
+        self.task_list.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.task_list.customContextMenuRequested.connect(self.show_task_context_menu)
         
         # Imposta la larghezza minima della colonna Task
-        self.task_list.setColumnWidth(2, 300)  # Colonna Task più larga
+        self.task_list.setColumnWidth(2, self.config['client']['chat']['min_task_width'])
         
         task_layout.addWidget(self.task_list)
         
@@ -695,7 +728,11 @@ class ChatWindow(QMainWindow):
         else:
             username = self.username_input.text().strip()
             if username:
-                if self.client.connect_to_server('localhost', 5000, username):
+                if self.client.connect_to_server(
+                    self.config['server']['host'],
+                    self.config['server']['port'],
+                    username
+                ):
                     self.connect_btn.setProperty('connected', True)
                     self.connect_btn.style().unpolish(self.connect_btn)
                     self.connect_btn.style().polish(self.connect_btn)
@@ -794,6 +831,9 @@ class ChatWindow(QMainWindow):
             
             elif data['type'] == 'user_list':
                 self.update_users_list(data.get('users', []))
+            
+            elif data['type'] == 'task_deleted':
+                self.chat_area.append(f'<i style="color: green">Task eliminato con successo</i>')
             
             self.chat_area.verticalScrollBar().setValue(
                 self.chat_area.verticalScrollBar().maximum()
@@ -988,6 +1028,8 @@ class ChatWindow(QMainWindow):
             
             # Imposta lo stato con checkbox e permessi
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            
+            # Abilita il checkbox solo se l'utente è nel gruppo del task
             if task['group'] == self.current_group:
                 item.setFlags(item.flags() | Qt.ItemIsEnabled)
             else:
@@ -1041,7 +1083,7 @@ class ChatWindow(QMainWindow):
             self.task_list.resizeColumnToContents(i)
         
         # Forza la larghezza minima della colonna Task
-        self.task_list.setColumnWidth(2, max(300, self.task_list.columnWidth(2)))
+        self.task_list.setColumnWidth(2, max(self.config['client']['chat']['min_task_width'], self.task_list.columnWidth(2)))
 
     def filter_tasks(self):
         selected_group = self.task_group_filter.currentText()
@@ -1228,6 +1270,30 @@ class ChatWindow(QMainWindow):
         if group:
             # Non aggiorniamo più la label poiché l'abbiamo rimossa
             pass
+
+    def show_task_context_menu(self, position):
+        menu = QMenu()
+        item = self.task_list.itemAt(position)
+        
+        if item:
+            task_data = item.data(0, Qt.UserRole)
+            if task_data:
+                # Verifica se l'utente corrente è il creatore del task
+                creator = item.text(5)  # Colonna "Creato da"
+                if creator == self.client.username:
+                    delete_action = menu.addAction("Elimina task")
+                    action = menu.exec_(self.task_list.mapToGlobal(position))
+                    
+                    if action == delete_action:
+                        self.delete_task(task_data['id'])
+
+    def delete_task(self, task_id):
+        data = {
+            'type': 'delete_task',
+            'task_id': task_id
+        }
+        print(f"DEBUG: Invio richiesta eliminazione task: {data}")
+        self.client.send_message(data)
 
 def main():
     app = QApplication([])
