@@ -21,9 +21,13 @@ class Database:
             self.db = self.client[db_config['database']]
             # Seleziona la collezione users
             self.users = self.db.users
+            # Seleziona la collezione groups
+            self.groups = self.db.groups
             
             # Crea un indice unico sull'username
             self.users.create_index('username', unique=True)
+            # Crea un indice unico sul nome del gruppo
+            self.groups.create_index('name', unique=True)
             print("DEBUG: Connessione al database stabilita con successo")
             
         except Exception as e:
@@ -144,4 +148,56 @@ class Database:
             return True, users
         except Exception as e:
             print(f"DEBUG: Errore nel recupero utenti: {str(e)}")
-            return False, f"Errore durante il recupero degli utenti: {str(e)}" 
+            return False, f"Errore durante il recupero degli utenti: {str(e)}"
+    
+    def save_group(self, group_name):
+        """Salva un gruppo nel database (solo il nome)"""
+        try:
+            # Verifica se il gruppo esiste già
+            existing_group = self.groups.find_one({'name': group_name})
+            
+            if existing_group:
+                print(f"DEBUG: Gruppo {group_name} già presente nel database")
+                return True, f"Gruppo {group_name} già esistente"
+            else:
+                # Crea un nuovo gruppo
+                group_doc = {
+                    'name': group_name,
+                    'created_at': datetime.now()
+                }
+                result = self.groups.insert_one(group_doc)
+                if result.inserted_id:
+                    print(f"DEBUG: Gruppo {group_name} salvato nel database")
+                    return True, f"Gruppo {group_name} salvato"
+                else:
+                    print(f"DEBUG: Errore nel salvataggio del gruppo {group_name}")
+                    return False, f"Errore nel salvataggio del gruppo {group_name}"
+        except Exception as e:
+            print(f"DEBUG: Errore durante il salvataggio del gruppo: {str(e)}")
+            return False, f"Errore durante il salvataggio del gruppo: {str(e)}"
+    
+    def delete_group(self, group_name):
+        """Elimina un gruppo dal database"""
+        try:
+            result = self.groups.delete_one({'name': group_name})
+            if result.deleted_count > 0:
+                print(f"DEBUG: Gruppo {group_name} eliminato dal database")
+                return True, f"Gruppo {group_name} eliminato"
+            else:
+                print(f"DEBUG: Gruppo {group_name} non trovato nel database")
+                return False, f"Gruppo {group_name} non trovato"
+        except Exception as e:
+            print(f"DEBUG: Errore durante l'eliminazione del gruppo: {str(e)}")
+            return False, f"Errore durante l'eliminazione del gruppo: {str(e)}"
+    
+    def get_all_groups(self):
+        """Ottiene tutti i nomi dei gruppi dal database"""
+        try:
+            groups = []
+            for group in self.groups.find():
+                groups.append(group['name'])
+            print(f"DEBUG: Gruppi caricati dal database: {groups}")
+            return True, groups
+        except Exception as e:
+            print(f"DEBUG: Errore durante il recupero dei gruppi: {str(e)}")
+            return False, f"Errore durante il recupero dei gruppi: {str(e)}" 

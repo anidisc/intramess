@@ -909,3 +909,105 @@ bene
 2025-03-30 11:04:08,938 - INFO - Nuovo gruppo creato: LAVORO
 2025-03-30 11:23:50,459 - INFO - Server arrestato
 2025-03-30 11:23:50,460 - INFO - Server arrestato
+2025-03-30 11:40:52,751 - INFO - Server arrestato
+2025-03-30 11:45:41,232 - INFO - Server arrestato
+2025-03-30 11:45:43,118 - INFO - Server avviato su localhost:5000
+2025-03-30 11:45:43,119 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 11:46:10,568 - INFO - Server arrestato
+2025-03-30 11:46:10,568 - INFO - Server arrestato
+2025-03-30 13:39:59,530 - INFO - Server avviato su localhost:5000
+2025-03-30 13:39:59,532 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 13:40:16,704 - INFO - Nuovo gruppo creato: NAPOLI
+2025-03-30 13:41:14,771 - INFO - Nuovo gruppo creato: MILANO
+2025-03-30 13:44:24,022 - INFO - Server arrestato
+2025-03-30 13:44:24,022 - INFO - Server arrestato
+2025-03-30 13:44:25,305 - INFO - Server avviato su localhost:5000
+2025-03-30 13:44:25,306 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 13:45:18,445 - INFO - Nuovo gruppo creato: G1
+2025-03-30 13:46:47,729 - ERROR - Errore avvio server: [Errno 5] Input/output error
+2025-03-30 15:08:18,031 - INFO - Server avviato su localhost:5000
+2025-03-30 15:08:18,032 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 15:11:04,240 - INFO - Nuovo gruppo creato: G1
+2025-03-30 15:11:24,096 - INFO - Nuovo gruppo creato: G2
+2025-03-30 15:13:08,825 - INFO - Server arrestato
+2025-03-30 15:13:08,825 - INFO - Server arrestato
+2025-03-30 15:19:50,637 - INFO - Server avviato su localhost:5000
+2025-03-30 15:19:50,637 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 15:20:26,403 - INFO - Nuovo gruppo creato: G1
+2025-03-30 16:01:57,967 - INFO - Nuovo gruppo creato: G2
+2025-03-30 16:06:39,849 - INFO - Server arrestato
+2025-03-30 16:06:39,850 - INFO - Server arrestato
+2025-03-30 16:06:41,961 - INFO - Server avviato su localhost:5000
+2025-03-30 16:06:41,962 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 16:06:56,521 - INFO - Nuovo gruppo creato: G1
+2025-03-30 16:06:59,654 - INFO - Nuovo gruppo creato: G2
+2025-03-30 16:07:01,428 - INFO - Nuovo gruppo creato: G3
+2025-03-30 16:10:40,828 - INFO - Server arrestato
+2025-03-30 16:10:40,828 - INFO - Server arrestato
+2025-03-30 16:10:42,236 - INFO - Server avviato su localhost:5000
+2025-03-30 16:10:42,236 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 16:14:56,941 - INFO - Server arrestato
+2025-03-30 16:14:56,941 - INFO - Server arrestato
+2025-03-30 16:14:59,622 - INFO - Server avviato su localhost:5000
+2025-03-30 16:14:59,623 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 16:17:01,365 - INFO - Nuovo gruppo creato: G1
+2025-03-30 16:18:54,368 - INFO - Server arrestato
+2025-03-30 16:18:54,369 - INFO - Server arrestato
+2025-03-30 16:19:04,447 - INFO - Server avviato su localhost:5000
+2025-03-30 16:19:04,447 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 16:19:11,815 - INFO - Nuovo gruppo creato: G1
+2025-03-30 16:19:25,768 - INFO - Nuovo gruppo creato: G2
+2025-03-30 16:23:02,562 - INFO - Server arrestato
+2025-03-30 16:23:02,563 - INFO - Server arrestato
+2025-03-30 16:23:04,115 - INFO - Server avviato su localhost:5000
+2025-03-30 16:23:04,116 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 16:23:20,150 - INFO - Nuovo gruppo creato: G1
+2025-03-30 16:23:22,287 - INFO - Nuovo gruppo creato: G2
+2025-03-30 16:29:33,463 - INFO - Server arrestato
+2025-03-30 16:29:33,464 - INFO - Server arrestato
+2025-03-30 16:29:35,781 - INFO - Server avviato su localhost:5000
+2025-03-30 16:29:35,781 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 16:30:30,102 - ERROR - Errore avvio server: [Errno 98] Address already in use
+2025-03-30 16:30:30,102 - INFO - Server arrestato
+2025-03-30 16:48:38,760 - INFO - Server arrestato
+2025-03-30 16:48:38,761 - INFO - Server arrestato
+2025-03-30 16:48:40,201 - INFO - Server avviato su localhost:5000
+2025-03-30 16:48:40,201 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 16:48:46,580 - INFO - Server arrestato
+2025-03-30 16:48:46,581 - INFO - Server arrestato
+2025-03-30 16:49:48,826 - INFO - Server avviato su localhost:5000
+2025-03-30 16:49:48,827 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 16:50:31,344 - INFO - Server arrestato
+2025-03-30 16:50:31,345 - INFO - Server arrestato
+2025-03-30 17:19:49,760 - INFO - Caricamento gruppi dal database...
+2025-03-30 17:19:49,761 - INFO - Gruppi caricati dal database: ['ALL']
+2025-03-30 17:19:49,762 - INFO - Server avviato su localhost:5000
+2025-03-30 17:19:49,762 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 17:20:07,026 - INFO - Nuovo gruppo creato: CASA
+2025-03-30 17:22:23,992 - INFO - Server arrestato
+2025-03-30 17:22:23,993 - INFO - Server arrestato
+2025-03-30 17:22:28,809 - INFO - Caricamento gruppi dal database...
+2025-03-30 17:22:28,810 - INFO - Gruppi caricati dal database: ['ALL', 'CASA']
+2025-03-30 17:22:28,811 - INFO - Server avviato su localhost:5000
+2025-03-30 17:22:28,811 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 17:23:23,607 - INFO - Server arrestato
+2025-03-30 17:23:23,607 - INFO - Server arrestato
+2025-03-30 17:23:54,080 - INFO - Caricamento gruppi dal database...
+2025-03-30 17:23:54,081 - INFO - Gruppi caricati dal database: ['ALL', 'CASA']
+2025-03-30 17:23:54,082 - INFO - Server avviato su localhost:5000
+2025-03-30 17:23:54,082 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 17:24:01,319 - INFO - Nuovo gruppo creato: LAVORO
+2025-03-30 17:26:11,995 - INFO - Gruppo eliminato: CASA
+2025-03-30 17:26:18,484 - INFO - Server arrestato
+2025-03-30 17:26:18,485 - INFO - Server arrestato
+2025-03-30 17:26:20,050 - INFO - Caricamento gruppi dal database...
+2025-03-30 17:26:20,052 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO']
+2025-03-30 17:26:20,053 - INFO - Server avviato su localhost:5000
+2025-03-30 17:26:20,053 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 17:27:15,289 - INFO - Server arrestato
+2025-03-30 17:27:15,290 - INFO - Server arrestato
+2025-03-30 17:32:08,061 - INFO - Caricamento gruppi dal database...
+2025-03-30 17:32:08,062 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-30 17:32:08,063 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO']
+2025-03-30 17:32:08,063 - INFO - Server avviato su localhost:5000
+2025-03-30 17:32:08,063 - INFO - Server avviato con gruppo predefinito 'ALL'
