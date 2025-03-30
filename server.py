@@ -28,6 +28,9 @@ class ChatServer:
         # Carica i gruppi dal database
         self.load_groups_from_db()
         
+        # Carica i task dal database
+        self.load_tasks_from_db()
+        
         # Dizionario dei comandi disponibili
         self.commands = {
             'help': {'alias': 'h', 'description': 'Mostra l\'elenco dei comandi disponibili', 'func': self.show_help},
@@ -71,6 +74,34 @@ class ChatServer:
             logging.info(f"Gruppi caricati dal database: {list(self.groups.keys())}")
         else:
             logging.error(f"Errore nel caricamento dei gruppi: {result}")
+
+    def load_tasks_from_db(self):
+        """Carica i task dal database"""
+        logging.info("Caricamento task dal database...")
+        success, result = self.db.get_all_tasks()
+        
+        if success:
+            # Carica tutti i task dal database
+            self.tasks = result
+            
+            # Determina il valore iniziale del contatore dei task
+            if self.tasks:
+                # Trova l'ID numerico più alto tra i task esistenti
+                max_id = 0
+                for task in self.tasks:
+                    try:
+                        # Estrai il numero dall'ID (formato Txxxx)
+                        task_num = int(task['id'][1:])
+                        max_id = max(max_id, task_num)
+                    except:
+                        pass
+                
+                # Imposta il contatore al valore massimo + 1
+                self.task_id_counter = max_id + 1
+                
+            logging.info(f"Caricati {len(self.tasks)} task dal database. Prossimo ID: T{self.task_id_counter:04d}")
+        else:
+            logging.error(f"Errore nel caricamento dei task: {result}")
 
     def start(self):
         """Avvia il server"""
@@ -313,8 +344,23 @@ class ChatServer:
             print(f"{Fore.RED}Errore: Il gruppo {group_name} non esiste{Style.RESET_ALL}")
             return
         
+        # Trova tutti i task associati al gruppo
+        tasks_to_delete = [task for task in self.tasks if task['group'] == group_name]
+        incomplete_tasks = [task for task in tasks_to_delete if not task['completed']]
+        
+        # Mostra i task non completati che verranno eliminati
+        if incomplete_tasks:
+            print(f"{Fore.YELLOW}Attenzione: I seguenti task non completati assegnati al gruppo {group_name} verranno eliminati:{Style.RESET_ALL}")
+            for task in incomplete_tasks:
+                print(f"- [{task['id']}] {task['text']} (creato da: {task['created_by']})")
+        else:
+            if tasks_to_delete:
+                print(f"{Fore.YELLOW}Attenzione: Verranno eliminati {len(tasks_to_delete)} task completati associati al gruppo {group_name}{Style.RESET_ALL}")
+            else:
+                print(f"{Fore.YELLOW}Non ci sono task associati al gruppo {group_name}{Style.RESET_ALL}")
+        
         # Richiedi conferma prima di eliminare
-        confirm = input(f"{Fore.YELLOW}Sei sicuro di voler eliminare il gruppo {group_name}? (s/n): {Style.RESET_ALL}")
+        confirm = input(f"{Fore.YELLOW}Sei sicuro di voler eliminare il gruppo {group_name} e tutti i task associati? (s/n): {Style.RESET_ALL}")
         if confirm.lower() != 's':
             print(f"{Fore.YELLOW}Eliminazione del gruppo {group_name} annullata{Style.RESET_ALL}")
             return
@@ -323,7 +369,20 @@ class ChatServer:
         for username in self.groups[group_name]:
             self.groups['ALL'].add(username)
             self.user_groups[username] = 'ALL'
+        
+        # Elimina tutti i task associati al gruppo
+        if tasks_to_delete:
+            for task in tasks_to_delete:
+                # Rimuovi il task dalla lista dei task
+                self.tasks.remove(task)
+                # Elimina il task dal database
+                success, message = self.db.delete_task(task['id'])
+                if not success:
+                    logging.error(f"Errore nell'eliminazione del task {task['id']} dal database: {message}")
             
+            print(f"{Fore.GREEN}{len(tasks_to_delete)} task associati al gruppo {group_name} eliminati{Style.RESET_ALL}")
+        
+        # Elimina il gruppo
         del self.groups[group_name]
         
         # Elimina il gruppo dal database
@@ -332,10 +391,25 @@ class ChatServer:
             logging.error(f"Errore nell'eliminazione del gruppo dal database: {message}")
         
         print(f"{Fore.GREEN}Gruppo {group_name} eliminato{Style.RESET_ALL}")
-        logging.info(f"Gruppo eliminato: {group_name}")
+        logging.info(f"Gruppo eliminato: {group_name} con {len(tasks_to_delete)} task associati")
+        
+        # Invia un messaggio specifico per l'eliminazione del gruppo
+        for client_socket in self.clients:
+            try:
+                client_socket.send(json.dumps({
+                    'type': 'group_deleted',
+                    'group_name': group_name,
+                    'message': f'Il gruppo {group_name} è stato eliminato'
+                }).encode())
+            except:
+                self.remove_client(client_socket)
         
         # Notifica tutti i client
         self.broadcast_groups()
+        
+        # Aggiorna la lista dei task su tutti i client
+        if tasks_to_delete:
+            self.broadcast_tasks()
 
     def list_groups(self, *args):
         """Mostra la lista dei gruppi"""
@@ -372,6 +446,12 @@ class ChatServer:
         self.tasks.append(task)
         self.task_id_counter += 1
         print(f"DEBUG: Task creato: {task}")
+        
+        # Salva il task nel database
+        success, message = self.db.save_task(task)
+        if not success:
+            logging.error(f"Errore nel salvataggio del task nel database: {message}")
+        
         self.broadcast_tasks()
         return task
 
@@ -412,6 +492,11 @@ class ChatServer:
                     else:
                         task['completed_by'] = None
                         task['completed_date'] = None
+                    
+                    # Salva le modifiche nel database
+                    success, message = self.db.save_task(task)
+                    if not success:
+                        logging.error(f"Errore nell'aggiornamento del task nel database: {message}")
                     
                     # Notifica tutti dell'aggiornamento
                     self.broadcast_to_group({
@@ -518,7 +603,14 @@ class ChatServer:
                         # Cerca il task e verifica che l'utente sia il creatore
                         for task in self.tasks:
                             if task['id'] == task_id and task['created_by'] == username:
+                                # Rimuovi il task dalla lista
                                 self.tasks.remove(task)
+                                
+                                # Elimina il task dal database
+                                success, message = self.db.delete_task(task_id)
+                                if not success:
+                                    logging.error(f"Errore nell'eliminazione del task dal database: {message}")
+                                
                                 print(f"DEBUG: Task {task_id} eliminato da {username}")
                                 self.broadcast_to_group({
                                     'type': 'system',

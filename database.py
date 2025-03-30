@@ -23,11 +23,15 @@ class Database:
             self.users = self.db.users
             # Seleziona la collezione groups
             self.groups = self.db.groups
+            # Seleziona la collezione tasks
+            self.tasks = self.db.tasks
             
             # Crea un indice unico sull'username
             self.users.create_index('username', unique=True)
             # Crea un indice unico sul nome del gruppo
             self.groups.create_index('name', unique=True)
+            # Crea un indice unico sull'ID del task
+            self.tasks.create_index('id', unique=True)
             print("DEBUG: Connessione al database stabilita con successo")
             
         except Exception as e:
@@ -200,4 +204,62 @@ class Database:
             return True, groups
         except Exception as e:
             print(f"DEBUG: Errore durante il recupero dei gruppi: {str(e)}")
-            return False, f"Errore durante il recupero dei gruppi: {str(e)}" 
+            return False, f"Errore durante il recupero dei gruppi: {str(e)}"
+    
+    def save_task(self, task):
+        """Salva un task nel database"""
+        try:
+            # Converti le date string in oggetti datetime se necessario
+            task_copy = task.copy()  # Crea una copia per non modificare l'originale
+            
+            # Verifica se il task esiste già
+            existing_task = self.tasks.find_one({'id': task_copy['id']})
+            
+            if existing_task:
+                # Aggiorna il task esistente
+                result = self.tasks.update_one(
+                    {'id': task_copy['id']},
+                    {'$set': task_copy}
+                )
+                if result.modified_count > 0:
+                    print(f"DEBUG: Task {task_copy['id']} aggiornato nel database")
+                    return True, f"Task {task_copy['id']} aggiornato"
+                else:
+                    print(f"DEBUG: Nessuna modifica al task {task_copy['id']}")
+                    return True, f"Nessuna modifica al task {task_copy['id']}"
+            else:
+                # Crea un nuovo task
+                result = self.tasks.insert_one(task_copy)
+                if result.inserted_id:
+                    print(f"DEBUG: Task {task_copy['id']} salvato nel database")
+                    return True, f"Task {task_copy['id']} salvato"
+                else:
+                    print(f"DEBUG: Errore nel salvataggio del task {task_copy['id']}")
+                    return False, f"Errore nel salvataggio del task {task_copy['id']}"
+        except Exception as e:
+            print(f"DEBUG: Errore durante il salvataggio del task: {str(e)}")
+            return False, f"Errore durante il salvataggio del task: {str(e)}"
+    
+    def delete_task(self, task_id):
+        """Elimina un task dal database"""
+        try:
+            result = self.tasks.delete_one({'id': task_id})
+            if result.deleted_count > 0:
+                print(f"DEBUG: Task {task_id} eliminato dal database")
+                return True, f"Task {task_id} eliminato"
+            else:
+                print(f"DEBUG: Task {task_id} non trovato nel database")
+                return False, f"Task {task_id} non trovato"
+        except Exception as e:
+            print(f"DEBUG: Errore durante l'eliminazione del task: {str(e)}")
+            return False, f"Errore durante l'eliminazione del task: {str(e)}"
+    
+    def get_all_tasks(self):
+        """Ottiene tutti i task dal database"""
+        try:
+            tasks = list(self.tasks.find({}, {'_id': 0}))
+            print(f"DEBUG: {len(tasks)} task caricati dal database")
+            return True, tasks
+        except Exception as e:
+            print(f"DEBUG: Errore durante il recupero dei task: {str(e)}")
+            return False, f"Errore durante il recupero dei task: {str(e)}" 

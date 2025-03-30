@@ -366,7 +366,6 @@ class ChatWindow(QMainWindow):
         self.task_list = QTreeWidget()
         self.task_list.setHeaderLabels([
             "Stato", 
-            "ID", 
             "Task", 
             "Gruppo", 
             "Gruppo Richiedente",
@@ -380,7 +379,7 @@ class ChatWindow(QMainWindow):
         self.task_list.customContextMenuRequested.connect(self.show_task_context_menu)
         
         # Imposta la larghezza minima della colonna Task
-        self.task_list.setColumnWidth(2, self.config['client']['chat']['min_task_width'])
+        self.task_list.setColumnWidth(1, self.config['client']['chat']['min_task_width'])
         
         task_layout.addWidget(self.task_list)
         
@@ -930,6 +929,44 @@ class ChatWindow(QMainWindow):
                 self.writing_group_combo.setCurrentText('ALL')
                 self.chat_area.append('<i style="color: green">Connesso al server</i>')
                 
+            elif data['type'] == 'system':
+                self.chat_area.append(f'<i style="color: gray">{data["message"]}</i>')
+                
+                # Se il messaggio indica che l'utente è entrato in un nuovo gruppo, aggiorna le flag dei task
+                if "entrato nel gruppo" in data["message"] and self.client.username in data["message"]:
+                    self.update_task_permissions()
+            
+            elif data['type'] == 'group_deleted':
+                # Ottieni il nome del gruppo eliminato
+                deleted_group = data['group_name']
+                
+                # Rimuovi il gruppo da tutti i combobox
+                for combo in [self.group_combo, self.task_group_combo, self.task_group_filter, self.writing_group_combo]:
+                    index = combo.findText(deleted_group)
+                    if index >= 0:
+                        combo.removeItem(index)
+                
+                # Se il gruppo corrente è stato eliminato, passa al gruppo ALL
+                if self.current_group == deleted_group:
+                    self.current_group = 'ALL'
+                    self.group_combo.setCurrentText('ALL')
+                
+                # Se il gruppo di scrittura è stato eliminato, passa al gruppo ALL
+                if self.writing_group_combo.currentText() == deleted_group:
+                    self.writing_group_combo.setCurrentText('ALL')
+                
+                # Rimuovi i task del gruppo eliminato dalla lista
+                i = 0
+                while i < self.task_list.topLevelItemCount():
+                    item = self.task_list.topLevelItem(i)
+                    if item.text(2) == deleted_group:  # La colonna 2 contiene il nome del gruppo
+                        self.task_list.takeTopLevelItem(i)
+                    else:
+                        i += 1
+                
+                # Mostra un messaggio nell'area chat
+                self.chat_area.append(f'<i style="color: orange">{data["message"]}</i>')
+            
             elif data['type'] == 'message':
                 sender = data.get('from', 'Unknown')
                 message = data.get('message', '')
@@ -981,9 +1018,6 @@ class ChatWindow(QMainWindow):
                     self.chat_area.append(f'<i style="color: purple"><b>PM da {sender}</b>: {data["message"]}</i>')
                 else:
                     self.chat_area.append(f'<i style="color: purple"><b>PM a {to}</b>: {data["message"]}</i>')
-            
-            elif data['type'] == 'system':
-                self.chat_area.append(f'<i style="color: gray">{data["message"]}</i>')
             
             elif data['type'] == 'error':
                 self.chat_area.append(f'<span style="color: red"><i>{data["message"]}</i></span>')
@@ -1096,6 +1130,9 @@ class ChatWindow(QMainWindow):
             self.current_group = group
             # Aggiorna automaticamente il gruppo di destinazione dei messaggi
             self.writing_group_combo.setCurrentText(group)
+            
+            # Aggiorna i permessi dei task per il nuovo gruppo
+            self.update_task_permissions()
 
     def show_user_context_menu(self, pos):
         """Mostra il menu contestuale per gli utenti"""
@@ -1219,33 +1256,36 @@ class ChatWindow(QMainWindow):
             
             item.setCheckState(0, Qt.Checked if task['completed'] else Qt.Unchecked)
             
-            # ID (seconda colonna)
-            item.setText(1, str(task['id']))
-            
-            # Testo del task in maiuscolo
-            if task['completed']:
-                item.setText(2, f"✓ {task['text'].upper()}")
-                item.setForeground(2, QColor('#666666'))
-                font = item.font(2)
-                font.setStrikeOut(True)
-                item.setFont(2, font)
+            # Testo del task, troncato se troppo lungo
+            task_text = task['text'].upper()
+            if len(task_text) > 30:
+                display_text = task_text[:30] + "..."
             else:
-                item.setText(2, task['text'].upper())
-                item.setForeground(2, QColor('#000000'))
+                display_text = task_text
+                
+            if task['completed']:
+                item.setText(1, f"✓ {display_text}")
+                item.setForeground(1, QColor('#666666'))
+                font = item.font(1)
+                font.setStrikeOut(True)
+                item.setFont(1, font)
+            else:
+                item.setText(1, display_text)
+                item.setForeground(1, QColor('#000000'))
             
-            # Altri campi
-            item.setText(3, task['group'])
-            item.setText(4, task.get('requester_group', 'N/A'))  # Nuovo campo
-            item.setText(5, task['created_by'])
-            item.setText(6, task['date'])
+            # Altri campi (ID è stato rimosso dalla visualizzazione)
+            item.setText(2, task['group'])
+            item.setText(3, task.get('requester_group', 'N/A'))
+            item.setText(4, task['created_by'])
+            item.setText(5, task['date'])
             
             # Informazioni sul completamento
             if task['completed']:
-                item.setText(7, task['completed_by'])
-                item.setText(8, task['completed_date'])
+                item.setText(6, task['completed_by'])
+                item.setText(7, task['completed_date'])
             else:
+                item.setText(6, "")
                 item.setText(7, "")
-                item.setText(8, "")
             
             # Memorizza i dati del task nell'item
             item.setData(0, Qt.UserRole, {
@@ -1254,6 +1294,27 @@ class ChatWindow(QMainWindow):
                 'completed': task['completed']
             })
             
+            # Crea un tooltip con tutte le informazioni, incluso l'ID
+            tooltip = f"""
+            <div style='font-family: Arial; font-size: 15pt;'>
+                <b>ID:</b> {task['id']}<br>
+                <b>Task:</b> {task['text']}<br>
+                <b>Gruppo:</b> {task['group']}<br>
+                <b>Gruppo Richiedente:</b> {task.get('requester_group', 'N/A')}<br>
+                <b>Creato da:</b> {task['created_by']}<br>
+                <b>Data creazione:</b> {task['date']}<br>
+            """
+            
+            if task['completed']:
+                tooltip += f"""
+                <b>Completato da:</b> {task['completed_by']}<br>
+                <b>Data completamento:</b> {task['completed_date']}<br>
+                """
+                
+            tooltip += "</div>"
+            
+            item.setToolTip(1, tooltip)  # Applica il tooltip alla colonna del task
+            
             self.task_list.addTopLevelItem(item)
             
             # Nascondi l'item se non corrisponde al filtro corrente
@@ -1261,11 +1322,11 @@ class ChatWindow(QMainWindow):
                 item.setHidden(True)
         
         # Adatta le colonne al contenuto
-        for i in range(9):  # Aggiornato il numero di colonne
+        for i in range(8):  # Una colonna in meno (rimosso ID)
             self.task_list.resizeColumnToContents(i)
         
         # Forza la larghezza minima della colonna Task
-        self.task_list.setColumnWidth(2, max(self.config['client']['chat']['min_task_width'], self.task_list.columnWidth(2)))
+        self.task_list.setColumnWidth(1, max(self.config['client']['chat']['min_task_width'], self.task_list.columnWidth(1)))
 
     def filter_tasks(self):
         selected_group = self.task_group_filter.currentText()
@@ -1276,7 +1337,7 @@ class ChatWindow(QMainWindow):
         
         for i in range(self.task_list.topLevelItemCount()):
             item = self.task_list.topLevelItem(i)
-            if selected_group == "Tutti i gruppi" or item.text(3) == selected_group:
+            if selected_group == "Tutti i gruppi" or item.text(2) == selected_group:
                 item.setHidden(False)
             else:
                 item.setHidden(True)
@@ -1291,10 +1352,10 @@ class ChatWindow(QMainWindow):
             tasks_to_export = []
             for i in range(self.task_list.topLevelItemCount()):
                 item = self.task_list.topLevelItem(i)
-                if item.text(3) == selected_group and item.checkState(0) == Qt.Unchecked:
+                if item.text(2) == selected_group and item.checkState(0) == Qt.Unchecked:
                     tasks_to_export.append({
                         'id': item.text(1),
-                        'task': item.text(2),
+                        'task': item.text(1),
                         'created_by': item.text(4),
                         'date': item.text(5)
                     })
@@ -1461,7 +1522,7 @@ class ChatWindow(QMainWindow):
             task_data = item.data(0, Qt.UserRole)
             if task_data:
                 # Verifica se l'utente corrente è il creatore del task
-                creator = item.text(5)  # Colonna "Creato da"
+                creator = item.text(4)  # Colonna "Creato da" (indice aggiornato)
                 if creator == self.client.username:
                     delete_action = menu.addAction("Elimina task")
                     action = menu.exec_(self.task_list.mapToGlobal(position))
@@ -1476,6 +1537,24 @@ class ChatWindow(QMainWindow):
         }
         print(f"DEBUG: Invio richiesta eliminazione task: {data}")
         self.client.send_message(data)
+
+    def update_task_permissions(self):
+        """Aggiorna i permessi dei task in base al gruppo corrente dell'utente"""
+        for i in range(self.task_list.topLevelItemCount()):
+            item = self.task_list.topLevelItem(i)
+            task_data = item.data(0, Qt.UserRole)
+            
+            # Abilita o disabilita l'interazione con i task
+            if task_data and task_data['group'] == self.current_group:
+                item.setFlags(item.flags() | Qt.ItemIsEnabled)
+            else:
+                item.setFlags(item.flags() & ~Qt.ItemIsEnabled)
+            
+            # Aggiorna lo stile visivo per riflettere lo stato di abilitazione
+            if task_data['group'] == self.current_group:
+                item.setForeground(1, QColor('#000000') if not task_data['completed'] else QColor('#666666'))
+            else:
+                item.setForeground(1, QColor('#777777'))
 
 def main():
     app = QApplication([])
