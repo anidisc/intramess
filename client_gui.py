@@ -14,6 +14,9 @@ import subprocess
 import platform
 from datetime import datetime
 from PyQt5.QtCore import QTimer
+from login_dialog import LoginDialog
+from signup_dialog import SignupDialog
+from database import Database
 
 class ChatSignals(QObject):
     message_received = pyqtSignal(dict)
@@ -57,14 +60,17 @@ class ChatClient(QObject):
                 }
             }
 
-    def connect_to_server(self, host, port, username):
+    def connect_to_server(self, host, port, credentials):
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.connect((host, port))
-            self.username = username
             
-            # Invia username
-            self.socket.send(username.encode())
+            # Invia credenziali di login
+            self.socket.send(json.dumps({
+                'type': 'login',
+                'username': credentials['username'],
+                'password': credentials['password']
+            }).encode())
             
             # Ricevi risposta iniziale
             response = json.loads(self.socket.recv(4096).decode())
@@ -74,6 +80,7 @@ class ChatClient(QObject):
                 self.signals.message_received.emit(response)
                 return False
                 
+            self.username = credentials['username']
             self.signals.message_received.emit(response)
             
             # Richiedi lista utenti
@@ -127,10 +134,9 @@ class ChatClient(QObject):
     def send_message(self, message):
         if self.socket:
             try:
-                # Aggiungi newline come delimitatore
-                self.socket.send((json.dumps(message) + '\n').encode())
+                self.socket.send(json.dumps(message).encode('utf-8'))
             except Exception as e:
-                print(f"Errore invio: {e}")
+                print(f"Errore invio messaggio: {e}")
 
     def disconnect(self):
         self.running = False
@@ -170,11 +176,54 @@ class ChatWindow(QMainWindow):
         
         # Area connessione
         conn_layout = QHBoxLayout()
-        self.username_input = QLineEdit()
-        self.username_input.setPlaceholderText('Username')
-        self.connect_btn = QPushButton('Connetti')
-        conn_layout.addWidget(self.username_input)
-        conn_layout.addWidget(self.connect_btn)
+        self.login_btn = QPushButton('Login')
+        self.signup_btn = QPushButton('Sign Up')
+        self.login_btn.setStyleSheet("""
+            QPushButton {
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 11pt;
+                min-width: 80px;
+                background-color: #2ecc71;
+                border: none;
+                color: white;
+            }
+            QPushButton:hover {
+                opacity: 0.8;
+            }
+            QPushButton:pressed {
+                opacity: 1;
+            }
+            QPushButton:disabled {
+                background-color: #cccccc;
+                color: #666666;
+            }
+        """)
+        self.signup_btn.setStyleSheet("""
+            QPushButton {
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 11pt;
+                min-width: 80px;
+                background-color: #3498db;
+                border: none;
+                color: white;
+            }
+            QPushButton:hover {
+                opacity: 0.8;
+            }
+            QPushButton:pressed {
+                opacity: 1;
+            }
+            QPushButton:disabled {
+                background-color: #cccccc;
+                color: #666666;
+            }
+        """)
+        conn_layout.addWidget(self.login_btn)
+        conn_layout.addWidget(self.signup_btn)
         left_layout.addLayout(conn_layout)
 
         # Area gruppo
@@ -484,7 +533,8 @@ class ChatWindow(QMainWindow):
         """
 
         # Applica gli stili ai pulsanti
-        self.connect_btn.setStyleSheet(connect_button_style)
+        self.login_btn.setStyleSheet(connect_button_style)
+        self.signup_btn.setStyleSheet(connect_button_style)
         self.send_btn.setStyleSheet(send_button_style)
         self.pdf_btn.setStyleSheet(pdf_button_style)
 
@@ -576,7 +626,6 @@ class ChatWindow(QMainWindow):
             }
         """
         
-        self.username_input.setStyleSheet(input_style)
         self.task_input.setStyleSheet(input_style)
 
         # Stile per le etichette
@@ -676,7 +725,8 @@ class ChatWindow(QMainWindow):
         self.task_input.keyPressEvent = self.handle_task_input_keypress
 
     def setup_signals(self):
-        self.connect_btn.clicked.connect(self.handle_connection)
+        self.login_btn.clicked.connect(self.handle_login)
+        self.signup_btn.clicked.connect(self.handle_signup)
         self.send_btn.clicked.connect(self.send_message)
         self.message_input.keyPressEvent = self.handle_message_input_keypress
         
@@ -692,26 +742,44 @@ class ChatWindow(QMainWindow):
         self.tab_widget.currentChanged.connect(self.handle_tab_change)
         self.writing_group_combo.currentTextChanged.connect(self.change_writing_group)
 
-    def handle_connection(self):
+    def handle_login(self):
         if self.client.socket:
-            # Invia messaggio di disconnessione al server
+            # Se siamo già connessi, disconnettiamo
             try:
                 self.client.send_message({
                     'type': 'disconnect',
                     'username': self.client.username
                 })
             except:
-                pass  # Se la connessione è già interrotta, ignora l'errore
-            
-            # Disconnetti il client
+                pass
             self.client.disconnect()
             
             # Resetta l'interfaccia
-            self.connect_btn.setProperty('connected', False)
-            self.connect_btn.style().unpolish(self.connect_btn)
-            self.connect_btn.style().polish(self.connect_btn)
-            self.connect_btn.setText('Connetti')
-            self.username_input.setEnabled(True)
+            self.login_btn.setText('Login')
+            self.login_btn.setStyleSheet("""
+                QPushButton {
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    font-weight: bold;
+                    font-size: 11pt;
+                    min-width: 80px;
+                    background-color: #2ecc71;
+                    border: none;
+                    color: white;
+                }
+                QPushButton:hover {
+                    opacity: 0.8;
+                }
+                QPushButton:pressed {
+                    opacity: 1;
+                }
+                QPushButton:disabled {
+                    background-color: #cccccc;
+                    color: #666666;
+                }
+            """)
+            self.login_btn.setEnabled(True)
+            self.signup_btn.setEnabled(True)
             self.group_combo.setEnabled(False)
             self.group_combo.clear()
             self.group_combo.addItem('ALL')
@@ -726,24 +794,115 @@ class ChatWindow(QMainWindow):
             # Pulisci la lista utenti
             self.users_list.clear()
         else:
-            username = self.username_input.text().strip()
-            if username:
+            # Se non siamo connessi, procedi con il login
+            dialog = LoginDialog(self)
+            if dialog.exec_() == QDialog.Accepted:
+                credentials = dialog.get_credentials()
                 if self.client.connect_to_server(
                     self.config['server']['host'],
                     self.config['server']['port'],
-                    username
+                    credentials
                 ):
-                    self.connect_btn.setProperty('connected', True)
-                    self.connect_btn.style().unpolish(self.connect_btn)
-                    self.connect_btn.style().polish(self.connect_btn)
-                    self.connect_btn.setText('Disconnetti')
-                    self.username_input.setEnabled(False)
+                    self.login_btn.setText('Disconnetti')
+                    self.login_btn.setStyleSheet("""
+                        QPushButton {
+                            padding: 8px 16px;
+                            border-radius: 4px;
+                            font-weight: bold;
+                            font-size: 11pt;
+                            min-width: 80px;
+                            background-color: #e74c3c;
+                            border: none;
+                            color: white;
+                        }
+                        QPushButton:hover {
+                            opacity: 0.8;
+                        }
+                        QPushButton:pressed {
+                            opacity: 1;
+                        }
+                        QPushButton:disabled {
+                            background-color: #cccccc;
+                            color: #666666;
+                        }
+                    """)
+                    self.login_btn.setEnabled(True)
+                    self.signup_btn.setEnabled(False)
+                    self.chat_area.append('<i style="color: green">Login effettuato con successo</i>')
                 else:
-                    self.chat_area.append('<span style="color: red">Errore di connessione</span>')
+                    self.chat_area.append('<span style="color: red">Errore di login</span>')
+
+    def handle_signup(self):
+        dialog = SignupDialog(self)
+        if dialog.exec_() == QDialog.Accepted:
+            credentials = dialog.get_credentials()
+            try:
+                # Crea una connessione diretta al database
+                db = Database()
+                
+                # Tenta la registrazione
+                success, message = db.register_user(credentials['username'], credentials['password'])
+                
+                if success:
+                    self.chat_area.append(f'<i style="color: green">{message}</i>')
+                    QMessageBox.information(self, 'Registrazione', message)
+                    # Dopo la registrazione, procedi con il login
+                    if self.client.connect_to_server(
+                        self.config['server']['host'],
+                        self.config['server']['port'],
+                        credentials
+                    ):
+                        # Aggiorna lo stato del pulsante di login
+                        self.login_btn.setText('Disconnetti')
+                        self.login_btn.setStyleSheet("""
+                            QPushButton {
+                                padding: 8px 16px;
+                                border-radius: 4px;
+                                font-weight: bold;
+                                font-size: 11pt;
+                                min-width: 80px;
+                                background-color: #e74c3c;
+                                border: none;
+                                color: white;
+                            }
+                            QPushButton:hover {
+                                opacity: 0.8;
+                            }
+                            QPushButton:pressed {
+                                opacity: 1;
+                            }
+                            QPushButton:disabled {
+                                background-color: #cccccc;
+                                color: #666666;
+                            }
+                        """)
+                        self.login_btn.setEnabled(True)
+                        self.signup_btn.setEnabled(False)
+                        self.chat_area.append('<i style="color: green">Login effettuato con successo</i>')
+                    else:
+                        self.chat_area.append('<span style="color: red">Errore di login</span>')
+                else:
+                    self.chat_area.append(f'<span style="color: red">{message}</span>')
+                    QMessageBox.warning(self, 'Errore Registrazione', message)
+                
+            except Exception as e:
+                self.chat_area.append(f'<span style="color: red">Errore durante la registrazione: {str(e)}</span>')
+                QMessageBox.critical(self, 'Errore', f'Errore durante la registrazione: {str(e)}')
 
     def handle_message(self, data):
         try:
             print(f"DEBUG GUI - Gestione messaggio: {data}")
+            
+            if data['type'] == 'register_response':
+                if data['success']:
+                    self.chat_area.append(f'<i style="color: green">{data["message"]}</i>')
+                    # Mostra un messaggio di conferma nella finestra di dialogo
+                    QMessageBox.information(self, 'Registrazione', data['message'])
+                else:
+                    self.chat_area.append(f'<span style="color: red">{data["message"]}</span>')
+                    # Mostra l'errore nella finestra di dialogo
+                    QMessageBox.warning(self, 'Errore Registrazione', data['message'])
+                return
             
             if data['type'] == 'task_list':
                 self.update_task_list(data['tasks'])
@@ -891,12 +1050,33 @@ class ChatWindow(QMainWindow):
                 self.update_window_title()
 
     def handle_disconnection(self):
-        self.connect_btn.setProperty('connected', False)
-        self.connect_btn.style().unpolish(self.connect_btn)
-        self.connect_btn.style().polish(self.connect_btn)
-        self.connect_btn.setText('Connetti')
-        self.username_input.setEnabled(True)
-        self.group_combo.setEnabled(False)  # Disabilita il combo box alla disconnessione
+        # Resetta l'interfaccia
+        self.login_btn.setText('Login')
+        self.login_btn.setStyleSheet("""
+            QPushButton {
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 11pt;
+                min-width: 80px;
+                background-color: #2ecc71;
+                border: none;
+                color: white;
+            }
+            QPushButton:hover {
+                opacity: 0.8;
+            }
+            QPushButton:pressed {
+                opacity: 1;
+            }
+            QPushButton:disabled {
+                background-color: #cccccc;
+                color: #666666;
+            }
+        """)
+        self.login_btn.setEnabled(True)
+        self.signup_btn.setEnabled(True)
+        self.group_combo.setEnabled(False)
         self.group_combo.clear()
         self.group_combo.addItem('ALL')
         self.current_group = 'ALL'
@@ -917,20 +1097,22 @@ class ChatWindow(QMainWindow):
             # Aggiorna automaticamente il gruppo di destinazione dei messaggi
             self.writing_group_combo.setCurrentText(group)
 
-    def show_user_context_menu(self, position):
-        menu = QMenu()
-        item = self.users_list.itemAt(position)
-        
-        if item:
-            # Estrai il nome utente dalla stringa (rimuovi il gruppo se presente)
-            username = item.text().split('[')[0].strip()
+    def show_user_context_menu(self, pos):
+        """Mostra il menu contestuale per gli utenti"""
+        item = self.users_list.itemAt(pos)
+        if item and item.text() != self.client.username:
+            menu = QMenu()
+            send_private = menu.addAction("Invia messaggio privato")
+            action = menu.exec_(self.users_list.mapToGlobal(pos))
             
-            if username != self.client.username:
-                private_msg_action = menu.addAction(f"Messaggio privato a {username}")
-                action = menu.exec_(self.users_list.mapToGlobal(position))
-                
-                if action == private_msg_action:
-                    self.start_private_chat(item)
+            if action == send_private:
+                username = item.text().split('[')[0].strip()  # Rimuove il gruppo se presente
+                self.message_input.setFocus()
+                self.message_input.setText(f"@{username} ")
+                # Sposta il cursore alla fine del testo
+                cursor = self.message_input.textCursor()
+                cursor.movePosition(QTextCursor.End)
+                self.message_input.setTextCursor(cursor)
 
     def start_private_chat(self, item):
         if isinstance(item, str):

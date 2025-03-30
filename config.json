@@ -13,5 +13,12 @@
             "message_height": 60,
             "min_task_width": 300
         }
+    },
+    "database": {
+        "host": "localhost",
+        "port": 27017,
+        "username": "user",
+        "password": "pass",
+        "database": "chat_db"
     }
 } 

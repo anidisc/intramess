@@ -1,0 +1,147 @@
+from pymongo import MongoClient
+import hashlib
+import os
+from datetime import datetime
+import json
+
+class Database:
+    def __init__(self):
+        # Carica la configurazione
+        with open('config.json', 'r') as f:
+            config = json.load(f)
+            db_config = config['database']
+        
+        # Costruisci l'URI di connessione con le credenziali
+        mongo_uri = f"mongodb://{db_config['username']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/"
+        
+        try:
+            # Connessione a MongoDB
+            self.client = MongoClient(mongo_uri)
+            # Seleziona il database
+            self.db = self.client[db_config['database']]
+            # Seleziona la collezione users
+            self.users = self.db.users
+            
+            # Crea un indice unico sull'username
+            self.users.create_index('username', unique=True)
+            print("DEBUG: Connessione al database stabilita con successo")
+            
+        except Exception as e:
+            print(f"DEBUG: Errore connessione al database: {str(e)}")
+            raise
+    
+    def hash_password(self, password):
+        """Genera un hash sicuro della password"""
+        salt = os.urandom(32)
+        key = hashlib.pbkdf2_hmac(
+            'sha256',
+            password.encode('utf-8'),
+            salt,
+            100000
+        )
+        return salt + key
+    
+    def verify_password(self, stored_password, password):
+        """Verifica se la password corrisponde all'hash memorizzato"""
+        salt = stored_password[:32]
+        stored_key = stored_password[32:]
+        key = hashlib.pbkdf2_hmac(
+            'sha256',
+            password.encode('utf-8'),
+            salt,
+            100000
+        )
+        return key == stored_key
+    
+    def register_user(self, username, password):
+        """Registra un nuovo utente nel database"""
+        try:
+            # Verifica se l'utente esiste già
+            if self.user_exists(username):
+                return False, "Username già in uso"
+            
+            # Genera il salt e l'hash della password
+            salt = os.urandom(32)
+            key = hashlib.pbkdf2_hmac(
+                'sha256',
+                password.encode('utf-8'),
+                salt,
+                100000
+            )
+            
+            # Prepara il documento utente
+            user_doc = {
+                'username': username,
+                'password': key.hex(),
+                'salt': salt.hex(),
+                'created_at': datetime.now()
+            }
+            
+            print(f"DEBUG: Tentativo di registrazione utente: {username}")
+            
+            # Inserisci l'utente nel database
+            result = self.users.insert_one(user_doc)
+            
+            if result.inserted_id:
+                print(f"DEBUG: Utente registrato con successo: {username}")
+                return True, "Utente registrato con successo"
+            else:
+                print(f"DEBUG: Errore durante la registrazione: {username}")
+                return False, "Errore durante la registrazione"
+                
+        except Exception as e:
+            print(f"DEBUG: Eccezione durante la registrazione: {str(e)}")
+            return False, f"Errore durante la registrazione: {str(e)}"
+    
+    def login_user(self, username, password):
+        """Verifica le credenziali di login"""
+        try:
+            # Cerca l'utente nel database
+            user = self.users.find_one({'username': username})
+            
+            if not user:
+                return False, "Utente non trovato"
+            
+            # Verifica la password
+            salt = bytes.fromhex(user['salt'])
+            key = hashlib.pbkdf2_hmac(
+                'sha256',
+                password.encode('utf-8'),
+                salt,
+                100000
+            )
+            
+            if key.hex() == user['password']:
+                return True, "Login effettuato con successo"
+            else:
+                return False, "Password non valida"
+                
+        except Exception as e:
+            print(f"DEBUG: Errore durante il login: {str(e)}")
+            return False, f"Errore durante il login: {str(e)}"
+    
+    def delete_user(self, username):
+        """Elimina un utente dal database"""
+        try:
+            result = self.users.delete_one({'username': username})
+            if result.deleted_count > 0:
+                return True, f"Utente {username} eliminato con successo"
+            else:
+                return False, f"Utente {username} non trovato"
+        except Exception as e:
+            return False, f"Errore durante l'eliminazione: {str(e)}"
+    
+    def user_exists(self, username):
+        """Verifica se un utente esiste"""
+        return self.users.find_one({'username': username}) is not None
+    
+    def get_all_users(self):
+        """Ottiene la lista di tutti gli utenti registrati"""
+        try:
+            print("DEBUG: Tentativo di recupero utenti dal database")
+            users = list(self.users.find({}, {'username': 1, 'created_at': 1, '_id': 0}))
+            print(f"DEBUG: Utenti trovati: {users}")
+            return True, users
+        except Exception as e:
+            print(f"DEBUG: Errore nel recupero utenti: {str(e)}")
+            return False, f"Errore durante il recupero degli utenti: {str(e)}" 

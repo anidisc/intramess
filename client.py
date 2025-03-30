@@ -112,6 +112,43 @@ class Client:
         self.connected = False
         self.socket.close()
 
+    def connect_to_server(self, host, port, credentials):
+        try:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.connect((host, port))
+            
+            # Invia credenziali di login
+            self.socket.send(json.dumps({
+                'type': 'login',
+                'username': credentials['username'],
+                'password': credentials['password']
+            }).encode())
+            
+            # Ricevi risposta iniziale
+            response = json.loads(self.socket.recv(4096).decode())
+            if response.get('type') == 'error':
+                self.socket.close()
+                self.socket = None
+                self.signals.message_received.emit(response)
+                return False
+                
+            self.username = credentials['username']
+            self.signals.message_received.emit(response)
+            
+            # Richiedi lista utenti
+            self.request_user_list()
+            
+            # Avvia thread ricezione
+            self.running = True
+            self.receiver_thread = threading.Thread(target=self.receive_messages)
+            self.receiver_thread.daemon = True
+            self.receiver_thread.start()
+            
+            return True
+        except Exception as e:
+            print(f"Errore connessione: {e}")
+            return False
+
 if __name__ == '__main__':
     client = Client(host='localhost', port=5000)
     client.connect() 

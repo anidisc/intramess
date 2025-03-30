@@ -4,6 +4,7 @@ import json
 import logging
 from datetime import datetime
 from colorama import init, Fore, Style
+from database import Database
 
 # Inizializzazione colorama per i colori nel terminale
 init()
@@ -19,6 +20,24 @@ class ChatServer:
         self.task_id_counter = 1  # Inizia da 1 invece che 0
         self.running = True
         self.setup_logging()
+        self.db = Database()
+        
+        # Dizionario dei comandi disponibili
+        self.commands = {
+            'help': {'alias': 'h', 'description': 'Mostra l\'elenco dei comandi disponibili', 'func': self.show_help},
+            'list': {'alias': 'l', 'description': 'Mostra la lista degli utenti connessi', 'func': self.list_users},
+            'broadcast': {'alias': 'b', 'description': 'Invia un messaggio a tutti gli utenti', 'func': self.server_broadcast},
+            'broadcast_group': {'alias': 'bg', 'description': 'Invia un messaggio a un gruppo specifico', 'func': self.broadcast_to_group_command},
+            'private': {'alias': 'p', 'description': 'Invia un messaggio privato a un utente', 'func': self.private_message_command},
+            'showlog': {'alias': 'log', 'description': 'Mostra gli ultimi log del server', 'func': self.show_logs},
+            'kick': {'alias': 'k', 'description': 'Disconnette un utente specificato', 'func': self.kick_user},
+            'creategroup': {'alias': 'cg', 'description': 'Crea un nuovo gruppo', 'func': self.create_group},
+            'deletegroup': {'alias': 'dg', 'description': 'Elimina un gruppo esistente', 'func': self.delete_group},
+            'listgroups': {'alias': 'lg', 'description': 'Mostra la lista dei gruppi', 'func': self.list_groups},
+            'deleteuser': {'alias': 'du', 'description': 'Elimina un utente dal database', 'func': self.delete_user_command},
+            'list_users': {'alias': 'lu', 'description': 'Mostra tutti gli utenti registrati nel database', 'func': self.list_users_command},
+            'quit': {'alias': 'q', 'description': 'Chiude il server', 'func': self.stop}
+        }
 
     def setup_logging(self):
         logging.basicConfig(
@@ -73,7 +92,7 @@ class ChatServer:
                 client_socket, address = self.server_socket.accept()
                 client_thread = threading.Thread(
                     target=self.handle_client,
-                    args=(client_socket,)
+                    args=(client_socket, address)
                 )
                 client_thread.daemon = True
                 client_thread.start()
@@ -100,8 +119,9 @@ class ChatServer:
     def show_help(self, *args):
         """Mostra l'elenco dei comandi disponibili"""
         print(f"{Fore.YELLOW}Comandi disponibili:{Style.RESET_ALL}")
-        for cmd, (desc, _) in self.commands.items():
-            print(f"- {Fore.CYAN}{cmd}{Style.RESET_ALL}: {desc}")
+        for cmd, info in self.commands.items():
+            aliases_str = f" ({info['alias']})" if info['alias'] else ""
+            print(f"- {Fore.CYAN}{cmd}{aliases_str}{Style.RESET_ALL}: {info['description']}")
 
     def list_users(self, *args):
         """Mostra la lista degli utenti connessi"""
@@ -366,164 +386,226 @@ class ChatServer:
                     return True
         return False
 
-    def handle_client(self, client_socket):
+    def handle_client(self, client_socket, address):
+        """Gestisce la connessione di un client"""
         try:
-            username = client_socket.recv(1024).decode()
-            if username in [u for u in self.clients.values()]:
-                client_socket.send((json.dumps({
-                    'type': 'error',
-                    'message': 'Username già in uso'
-                }) + '\n').encode())
+            # Ricevi le credenziali di login/registrazione
+            data = client_socket.recv(1024).decode('utf-8')
+            if not data:
                 return
-            
-            # Registra il client
-            self.clients[client_socket] = username
-            self.groups['ALL'].add(username)
-            self.user_groups[username] = 'ALL'
-
-            # Invia conferma e lista gruppi disponibili
-            client_socket.send((json.dumps({
-                'type': 'connection_accepted',
-                'groups': list(self.groups.keys())
-            }) + '\n').encode())
-
-            # Notifica tutti della nuova connessione
-            self.broadcast_to_group({
-                'type': 'system',
-                'message': f'{username} si è unito alla chat'
-            })
-
-            # Invia lista utenti a tutti
-            self.broadcast_user_list()
-
-            # Invia la lista dei task subito dopo la connessione
-            self.broadcast_tasks()
-
-            while self.running:
-                try:
-                    data = json.loads(client_socket.recv(4096).decode())
-                    print(f"DEBUG: Ricevuto messaggio da {username}: {data}")
+                
+            try:
+                message = json.loads(data)
+                print(f"DEBUG SERVER - Messaggio ricevuto: {message}")
+                
+                if message['type'] == 'login':
+                    username = message['username']
+                    password = message['password']
                     
-                    if data['type'] == 'disconnect':
-                        break
+                    print(f"DEBUG SERVER - Tentativo di login per: {username}")
+                    success, msg = self.db.login_user(username, password)
+                    
+                    if success:
+                        # Registra il client
+                        self.clients[client_socket] = username
+                        self.groups['ALL'].add(username)
+                        self.user_groups[username] = 'ALL'
                         
-                    elif data['type'] == 'delete_task':
-                        task_id = data['task_id']
-                        # Cerca il task e verifica che l'utente sia il creatore
-                        for task in self.tasks:
-                            if task['id'] == task_id and task['created_by'] == username:
-                                self.tasks.remove(task)
-                                print(f"DEBUG: Task {task_id} eliminato da {username}")
-                                self.broadcast_to_group({
-                                    'type': 'system',
-                                    'message': f'{username} ha eliminato un task'
-                                })
-                                self.broadcast_tasks()
-                                break
-                        continue
+                        # Invia conferma al client
+                        client_socket.send(json.dumps({
+                            'type': 'connection_accepted',
+                            'groups': list(self.groups.keys()),
+                            'message': msg
+                        }).encode('utf-8'))
                         
-                    elif data['type'] == 'request_users':
+                        # Notifica tutti della nuova connessione
+                        self.broadcast_to_group({
+                            'type': 'system',
+                            'message': f'{username} si è unito alla chat'
+                        })
+                        
+                        # Invia lista utenti a tutti
+                        self.broadcast_user_list()
+                        
+                        # Invia la lista dei task
+                        self.broadcast_tasks()
+                        
+                        # Avvia il loop principale per i messaggi
+                        self.handle_client_messages(client_socket, username)
+                    else:
+                        client_socket.send(json.dumps({
+                            'type': 'error',
+                            'message': msg
+                        }).encode('utf-8'))
+                        client_socket.close()
+                        return
+                        
+                elif message['type'] == 'register':
+                    username = message['username']
+                    password = message['password']
+                    
+                    print(f"DEBUG SERVER - Tentativo di registrazione per: {username}")
+                    success, msg = self.db.register_user(username, password)
+                    
+                    print(f"DEBUG SERVER - Risultato registrazione: success={success}, msg={msg}")
+                    
+                    # Invia la risposta al client
+                    response = {
+                        'type': 'register_response',
+                        'success': success,
+                        'message': msg
+                    }
+                    client_socket.send(json.dumps(response).encode('utf-8'))
+                    
+                    if not success:
+                        client_socket.close()
+                        return
+                        
+                else:
+                    client_socket.send(json.dumps({
+                        'type': 'error',
+                        'message': 'Tipo di messaggio non valido'
+                    }).encode('utf-8'))
+                    client_socket.close()
+                    return
+                    
+            except json.JSONDecodeError:
+                print(f"DEBUG SERVER - Errore decodifica JSON: {data}")
+                client_socket.send(json.dumps({
+                    'type': 'error',
+                    'message': 'Formato messaggio non valido'
+                }).encode('utf-8'))
+                client_socket.close()
+                return
+                
+        except Exception as e:
+            logging.error(f"Errore gestione client: {e}")
+        finally:
+            if client_socket in self.clients:
+                self.remove_client(client_socket)
+
+    def handle_client_messages(self, client_socket, username):
+        while self.running:
+            try:
+                data = json.loads(client_socket.recv(4096).decode())
+                print(f"DEBUG: Ricevuto messaggio da {username}: {data}")
+                
+                if data['type'] == 'disconnect':
+                    break
+                    
+                elif data['type'] == 'delete_task':
+                    task_id = data['task_id']
+                    # Cerca il task e verifica che l'utente sia il creatore
+                    for task in self.tasks:
+                        if task['id'] == task_id and task['created_by'] == username:
+                            self.tasks.remove(task)
+                            print(f"DEBUG: Task {task_id} eliminato da {username}")
+                            self.broadcast_to_group({
+                                'type': 'system',
+                                'message': f'{username} ha eliminato un task'
+                            })
+                            self.broadcast_tasks()
+                            break
+                    continue
+                    
+                elif data['type'] == 'request_users':
+                    client_socket.send((json.dumps({
+                        'type': 'user_list',
+                        'users': list(self.clients.values())
+                    }) + '\n').encode())
+                    
+                elif data['type'] == 'private_message':
+                    target = data['to']
+                    if target in self.clients.values():
+                        # Trova il socket del destinatario
+                        target_socket = next(
+                            (s for s, u in self.clients.items() if u == target),
+                            None
+                        )
+                        if target_socket:
+                            # Invia al destinatario
+                            target_socket.send((json.dumps({
+                                'type': 'private',
+                                'from': username,
+                                'message': data['message']
+                            }) + '\n').encode())
+                            # Conferma al mittente
+                            client_socket.send((json.dumps({
+                                'type': 'private',
+                                'to': target,
+                                'message': data['message']
+                            }) + '\n').encode())
+                    else:
                         client_socket.send((json.dumps({
-                            'type': 'user_list',
-                            'users': list(self.clients.values())
+                            'type': 'error',
+                            'message': f'Utente {target} non trovato'
+                        }) + '\n').encode())
+                elif data['type'] == 'group_message':
+                    group = data['group'].upper()
+                    if group in self.groups:
+                        self.broadcast_to_group({
+                            'type': 'message',
+                            'from': username,
+                            'message': data['message'],
+                            'group': group
+                        }, group=group)
+                elif data['type'] == 'join_group':
+                    group = data['group'].upper()
+                    if group in self.groups:
+                        old_group = self.user_groups[username]
+                        if old_group != 'ALL':
+                            self.groups[old_group].remove(username)
+                        self.groups[group].add(username)
+                        self.user_groups[username] = group
+                        
+                        # Notifica il cambio gruppo
+                        client_socket.send((json.dumps({
+                            'type': 'system',
+                            'message': f'Sei entrato nel gruppo {group}'
                         }) + '\n').encode())
                         
-                    elif data['type'] == 'private_message':
-                        target = data['to']
-                        if target in self.clients.values():
-                            # Trova il socket del destinatario
-                            target_socket = next(
-                                (s for s, u in self.clients.items() if u == target),
-                                None
-                            )
-                            if target_socket:
-                                # Invia al destinatario
-                                target_socket.send((json.dumps({
-                                    'type': 'private',
-                                    'from': username,
-                                    'message': data['message']
-                                }) + '\n').encode())
-                                # Conferma al mittente
-                                client_socket.send((json.dumps({
-                                    'type': 'private',
-                                    'to': target,
-                                    'message': data['message']
-                                }) + '\n').encode())
-                        else:
-                            client_socket.send((json.dumps({
-                                'type': 'error',
-                                'message': f'Utente {target} non trovato'
-                            }) + '\n').encode())
-                    elif data['type'] == 'group_message':
-                        group = data['group'].upper()
-                        if group in self.groups:
-                            self.broadcast_to_group({
-                                'type': 'message',
-                                'from': username,
-                                'message': data['message'],
-                                'group': group
-                            }, group=group)
-                    elif data['type'] == 'join_group':
-                        group = data['group'].upper()
-                        if group in self.groups:
-                            old_group = self.user_groups[username]
-                            if old_group != 'ALL':
-                                self.groups[old_group].remove(username)
-                            self.groups[group].add(username)
-                            self.user_groups[username] = group
-                            
-                            # Notifica il cambio gruppo
-                            client_socket.send((json.dumps({
-                                'type': 'system',
-                                'message': f'Sei entrato nel gruppo {group}'
-                            }) + '\n').encode())
-                            
-                            # Notifica gli altri utenti
-                            self.broadcast_to_group({
-                                'type': 'system',
-                                'message': f'{username} è entrato nel gruppo {group}'
-                            }, group=group)
-                            
-                            # Aggiorna la lista utenti per tutti
-                            self.broadcast_user_list()
-                            
-                            print(f"DEBUG: Utente {username} entrato nel gruppo {group}")
+                        # Notifica gli altri utenti
+                        self.broadcast_to_group({
+                            'type': 'system',
+                            'message': f'{username} è entrato nel gruppo {group}'
+                        }, group=group)
+                        
+                        # Aggiorna la lista utenti per tutti
+                        self.broadcast_user_list()
+                        
+                        print(f"DEBUG: Utente {username} entrato nel gruppo {group}")
 
-                    elif data['type'] == 'create_task':
-                        if data['group'] != self.user_groups[username] and data['group'] != 'ALL':
-                            task = self.create_task(
-                                username, 
-                                data['group'], 
-                                data['text'],
-                                data.get('requester_group', 'N/A')  # Aggiungi il gruppo richiedente
-                            )
-                            print(f"DEBUG: Nuovo task creato da {username}: {task}")  # Debug
-                            self.broadcast_to_group({
-                                'type': 'system',
-                                'message': f'{username} ha creato un nuovo task per il gruppo {data["group"]}'
-                            })
+                elif data['type'] == 'create_task':
+                    if data['group'] != self.user_groups[username] and data['group'] != 'ALL':
+                        task = self.create_task(
+                            username, 
+                            data['group'], 
+                            data['text'],
+                            data.get('requester_group', 'N/A')  # Aggiungi il gruppo richiedente
+                        )
+                        print(f"DEBUG: Nuovo task creato da {username}: {task}")  # Debug
+                        self.broadcast_to_group({
+                            'type': 'system',
+                            'message': f'{username} ha creato un nuovo task per il gruppo {data["group"]}'
+                        })
 
-                    elif data['type'] == 'complete_task':
-                        if self.complete_task(data['task_id'], username):
-                            print(f"DEBUG: Task {data['task_id']} completato da {username}")  # Debug
-                            self.broadcast_to_group({
-                                'type': 'system',
-                                'message': f'{username} ha completato un task'
-                            })
+                elif data['type'] == 'complete_task':
+                    if self.complete_task(data['task_id'], username):
+                        print(f"DEBUG: Task {data['task_id']} completato da {username}")  # Debug
+                        self.broadcast_to_group({
+                            'type': 'system',
+                            'message': f'{username} ha completato un task'
+                        })
 
-                    elif data['type'] == 'update_task':
-                        if self.update_task(data['task_id'], username, data['completed']):
-                            print(f"DEBUG: Task {data['task_id']} {'completato' if data['completed'] else 'riaperto'} da {username}")
+                elif data['type'] == 'update_task':
+                    if self.update_task(data['task_id'], username, data['completed']):
+                        print(f"DEBUG: Task {data['task_id']} {'completato' if data['completed'] else 'riaperto'} da {username}")
 
-                except json.JSONDecodeError:
-                    continue
-                except Exception as e:
-                    print(f"DEBUG: Errore gestione client {username}: {e}")
-                    break
-
-        finally:
-            self.remove_client(client_socket)
-            self.broadcast_user_list()
+            except json.JSONDecodeError:
+                continue
+            except Exception as e:
+                print(f"DEBUG: Errore gestione client {username}: {e}")
+                break
 
     def broadcast_to_group(self, message, group='ALL', exclude=None):
         print(f"DEBUG: Broadcasting to group {group}: {message}")
@@ -587,126 +669,117 @@ class ChatServer:
             print(f"DEBUG: Client {username} rimosso con successo")
 
     def handle_command(self, command):
-        parts = command.split()
-        if not parts:
-            return
-
-        cmd = parts[0].lower()
-        args = parts[1:]
-
-        # Dizionario dei comandi e loro alias
-        commands = {
-            'creategroup': ['creategroup', 'cg'],
-            'listgroups': ['listgroups', 'lg'],
-            'removegroup': ['removegroup', 'rg'],
-            'kick': ['kick', 'k'],
-            'list': ['list', 'l'],
-            'help': ['help', 'h'],
-            'quit': ['quit', 'q', 'exit']
-        }
-
+        """Gestisce i comandi del server"""
         try:
-            # Trova il comando effettivo dall'alias usato
+            parts = command.split()
+            if not parts:
+                return False
+                
+            cmd = parts[0].lower()
+            args = parts[1:]
+            
+            # Cerca il comando effettivo basato sull'alias
             actual_command = None
-            for cmd_name, aliases in commands.items():
-                if cmd in aliases:
+            for cmd_name, info in self.commands.items():
+                if cmd in [cmd_name, info['alias']]:
                     actual_command = cmd_name
                     break
-
-            if actual_command == 'creategroup':
-                if len(args) != 1:
-                    print("Uso: creategroup|cg <nome_gruppo>")
-                    return
-                # Passa l'intero nome del gruppo, non solo il primo carattere
-                group_name = args[0]
-                if self.create_group(group_name):
-                    print(f"Gruppo {group_name.upper()} creato con successo")
-                else:
-                    print(f"Gruppo {group_name.upper()} già esistente")
-
-            elif actual_command == 'listgroups':
-                print("Gruppi disponibili:")
-                for group, members in self.groups.items():
-                    print(f"- {group}: {len(members)} utenti")
-                    for member in sorted(members):
-                        print(f"  • {member}")
-
-            elif actual_command == 'removegroup':
-                if len(args) != 1:
-                    print("Uso: removegroup|rg <nome_gruppo>")
-                    return
-                group_name = args[0].upper()
-                if group_name == 'ALL':
-                    print("Non puoi rimuovere il gruppo ALL")
-                    return
-                if group_name in self.groups:
-                    del self.groups[group_name]
-                    # Sposta gli utenti nel gruppo ALL
-                    for username, group in self.user_groups.items():
-                        if group == group_name:
-                            self.user_groups[username] = 'ALL'
-                    print(f"Gruppo {group_name} rimosso")
-                else:
-                    print(f"Gruppo {group_name} non trovato")
-
-            elif actual_command == 'kick':
-                if len(args) != 1:
-                    print("Uso: kick|k <username>")
-                    return
-                username = args[0]
-                kicked = False
-                # Trova il socket dell'utente
-                for client_socket, name in list(self.clients.items()):  # Usa una copia della lista
-                    if name == username:
-                        print(f"DEBUG: Trovato utente {username} da espellere")
-                        self.broadcast_to_group({
-                            'type': 'system',
-                            'message': f'{username} è stato espulso dal server'
-                        })
-                        try:
-                            client_socket.send(json.dumps({
-                                'type': 'kicked',
-                                'message': 'Sei stato espulso dal server'
-                            }).encode() + b'\n')
-                            client_socket.close()
-                        except:
-                            pass
-                        self.remove_client(client_socket)
-                        kicked = True
-                        break
-                
-                if kicked:
-                    print(f"Utente {username} espulso con successo")
-                else:
-                    print(f"Utente {username} non trovato")
-
-            elif actual_command == 'list':
-                print("Client connessi:")
-                for username in sorted(self.clients.values()):
-                    print(f"- {username}")
-
-            elif actual_command == 'help':
-                print("Comandi disponibili:")
-                print("- creategroup|cg <nome_gruppo> : Crea un nuovo gruppo")
-                print("- listgroups|lg : Mostra i gruppi e i loro membri")
-                print("- removegroup|rg <nome_gruppo> : Rimuove un gruppo")
-                print("- kick|k <username> : Espelle un utente")
-                print("- list|l : Mostra gli utenti connessi")
-                print("- help|h : Mostra questo messaggio")
-                print("- quit|q|exit : Chiude il server")
-
-            elif actual_command == 'quit':
-                self.stop()
-                return True
-
+            
+            if actual_command:
+                self.commands[actual_command]['func'](*args)
+                return actual_command == 'quit'
             else:
-                print(f"Comando non riconosciuto. Digita 'help' per la lista dei comandi")
-
+                print(f"{Fore.RED}Comando non riconosciuto. Digita 'help' per la lista dei comandi{Style.RESET_ALL}")
+                return False
+                
         except Exception as e:
-            print(f"Errore nell'esecuzione del comando: {e}")
-            logging.error(f"Errore comando: {e}")
+            print(f"{Fore.RED}Errore nell'esecuzione del comando: {str(e)}{Style.RESET_ALL}")
+            logging.error(f"Errore comando {cmd}: {e}")
+            return False
 
-        return False
+    def broadcast_to_group_command(self, *args):
+        """Invia un messaggio a un gruppo specifico"""
+        if len(args) < 2:
+            print(f"{Fore.RED}Errore: Specificare il gruppo e il messaggio{Style.RESET_ALL}")
+            print("Uso: broadcast_group <gruppo> <messaggio>")
+            return
+        
+        group = args[0].upper()
+        message = ' '.join(args[1:])
+        
+        if group not in self.groups:
+            print(f"{Fore.RED}Errore: Gruppo {group} non trovato{Style.RESET_ALL}")
+            return
+            
+        self.broadcast_to_group({
+            'type': 'system',
+            'message': f"[Server Broadcast a {group}] {message}"
+        }, group=group)
+        
+        logging.info(f"Server broadcast al gruppo {group}: {message}")
+        print(f"{Fore.GREEN}Messaggio inviato al gruppo {group}{Style.RESET_ALL}")
+
+    def private_message_command(self, *args):
+        """Invia un messaggio privato a un utente specifico"""
+        if len(args) < 2:
+            print(f"{Fore.RED}Errore: Specificare l'utente e il messaggio{Style.RESET_ALL}")
+            print("Uso: private <username> <messaggio>")
+            return
+        
+        recipient = args[0]
+        message = ' '.join(args[1:])
+        
+        if recipient not in self.clients.values():
+            print(f"{Fore.RED}Errore: Utente {recipient} non trovato{Style.RESET_ALL}")
+            return
+            
+        # Trova il socket del destinatario
+        recipient_socket = next(
+            (s for s, u in self.clients.items() if u == recipient),
+            None
+        )
+        
+        if recipient_socket:
+            try:
+                recipient_socket.send(json.dumps({
+                    'type': 'system',
+                    'message': f"[Server Private Message] {message}"
+                }).encode())
+                logging.info(f"Server private message a {recipient}: {message}")
+                print(f"{Fore.GREEN}Messaggio privato inviato a {recipient}{Style.RESET_ALL}")
+            except:
+                self.remove_client(recipient_socket)
+                print(f"{Fore.RED}Errore: Impossibile inviare il messaggio{Style.RESET_ALL}")
+
+    def delete_user_command(self, *args):
+        """Elimina un utente dal database"""
+        if not args or not args[0]:
+            print(f"{Fore.RED}Errore: Specificare l'username da eliminare{Style.RESET_ALL}")
+            print("Uso: deleteuser <username>")
+            return
+            
+        username = args[0]
+        success, message = self.db.delete_user(username)
+        
+        if success:
+            print(f"{Fore.GREEN}{message}{Style.RESET_ALL}")
+            logging.info(f"Utente eliminato: {username}")
+        else:
+            print(f"{Fore.RED}{message}{Style.RESET_ALL}")
+
+    def list_users_command(self):
+        """Mostra tutti gli utenti registrati nel database"""
+        success, result = self.db.get_all_users()
+        if success:
+            print("\nUtenti registrati:")
+            print("-" * 50)
+            for user in result:
+                created_at = user['created_at'].strftime('%Y-%m-%d %H:%M:%S')
+                print(f"Username: {user['username']}")
+                print(f"Registrato il: {created_at}")
+                print("-" * 50)
+        else:
+            print(f"\nErrore: {result}")
 
 def main():
     server = ChatServer()

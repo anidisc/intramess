@@ -754,3 +754,147 @@ bene
 2025-03-29 03:28:59,363 - INFO - Nuovo gruppo creato: GRUPPO2
 2025-03-29 03:32:50,231 - INFO - Server arrestato
 2025-03-29 03:32:50,232 - INFO - Server arrestato
+2025-03-29 06:03:17,666 - INFO - Server avviato su localhost:5000
+2025-03-29 06:03:17,666 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-29 06:04:44,475 - INFO - Nuovo gruppo creato: NAPOLI
+2025-03-29 06:07:26,109 - INFO - Server private message a mario: ciao
+2025-03-29 06:08:01,165 - INFO - Server broadcast: tutto il gruppo a cagare
+2025-03-29 06:08:36,443 - INFO - Server broadcast al gruppo NAPOLI: ciao a tutti i napoletani
+2025-03-29 06:09:35,044 - INFO - Server broadcast al gruppo NAPOLI: ciano ancora
+2025-03-29 06:12:02,444 - INFO - Nuovo gruppo creato: MILANO
+2025-03-29 06:29:34,842 - INFO - Server arrestato
+2025-03-29 06:29:34,842 - INFO - Server arrestato
+2025-03-29 22:56:02,410 - INFO - Server avviato su localhost:5000
+2025-03-29 22:56:02,411 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-29 22:56:18,545 - INFO - Nuovo gruppo creato: NAPOLI
+2025-03-29 22:56:27,132 - INFO - Nuovo gruppo creato: FIRENZE
+2025-03-29 22:56:29,952 - INFO - Nuovo gruppo creato: ROMA
+2025-03-29 22:57:27,045 - INFO - Server arrestato
+2025-03-29 22:57:27,046 - INFO - Server arrestato
+2025-03-29 22:58:41,251 - INFO - Server avviato su localhost:5000
+2025-03-29 22:58:41,251 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-29 22:59:03,166 - INFO - Nuovo gruppo creato: SRL
+2025-03-29 22:59:06,485 - INFO - Nuovo gruppo creato: SNC
+2025-03-29 23:15:10,134 - INFO - Server arrestato
+2025-03-29 23:15:10,135 - INFO - Server arrestato
+2025-03-29 23:18:07,702 - INFO - Server avviato su localhost:5000
+2025-03-29 23:18:07,703 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-29 23:19:26,918 - INFO - Server arrestato
+2025-03-29 23:19:26,919 - INFO - Server arrestato
+2025-03-29 23:22:09,104 - INFO - Server avviato su localhost:5000
+2025-03-29 23:22:09,104 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-29 23:31:04,365 - INFO - Server arrestato
+2025-03-29 23:31:04,366 - INFO - Server arrestato
+2025-03-29 23:31:07,838 - INFO - Server avviato su localhost:5000
+2025-03-29 23:31:07,838 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-29 23:31:12,918 - INFO - Nuovo gruppo creato: NAPOLI
+2025-03-29 23:35:02,687 - INFO - Server arrestato
+2025-03-29 23:35:02,687 - INFO - Server arrestato
+2025-03-29 23:37:10,829 - INFO - Server avviato su localhost:5000
+2025-03-29 23:37:10,829 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-29 23:41:05,582 - INFO - Server arrestato
+2025-03-29 23:41:05,583 - INFO - Server arrestato
+2025-03-29 23:41:07,628 - INFO - Server avviato su localhost:5000
+2025-03-29 23:41:07,628 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-29 23:42:57,165 - INFO - Server arrestato
+2025-03-29 23:42:57,165 - INFO - Server arrestato
+2025-03-30 00:11:26,264 - INFO - Server avviato su localhost:5000
+2025-03-30 00:11:26,264 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 00:16:19,655 - INFO - Server avviato su localhost:5000
+2025-03-30 00:16:19,655 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 00:18:45,868 - INFO - Server arrestato
+2025-03-30 00:18:45,868 - INFO - Server arrestato
+2025-03-30 00:18:49,223 - INFO - Server avviato su localhost:5000
+2025-03-30 00:18:49,223 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 00:23:14,757 - INFO - Server arrestato
+2025-03-30 00:23:14,757 - INFO - Server arrestato
+2025-03-30 00:23:17,520 - INFO - Server avviato su localhost:5000
+2025-03-30 00:23:17,520 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 00:23:28,225 - INFO - Nuovo gruppo creato: CASA
+2025-03-30 00:24:54,437 - INFO - Server arrestato
+2025-03-30 00:24:54,438 - INFO - Server arrestato
+2025-03-30 00:27:55,269 - INFO - Server avviato su localhost:5000
+2025-03-30 00:27:55,269 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 00:38:34,153 - INFO - Server arrestato
+2025-03-30 00:38:34,153 - INFO - Server arrestato
+2025-03-30 00:38:38,008 - INFO - Server avviato su localhost:5000
+2025-03-30 00:38:38,009 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 00:40:33,640 - INFO - Server arrestato
+2025-03-30 00:40:33,641 - INFO - Server arrestato
+2025-03-30 08:19:47,486 - INFO - Server avviato su localhost:5000
+2025-03-30 08:19:47,486 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 08:49:20,757 - INFO - Server arrestato
+2025-03-30 08:49:20,758 - INFO - Server arrestato
+2025-03-30 08:49:27,722 - INFO - Server avviato su localhost:5000
+2025-03-30 08:49:27,723 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 08:58:47,824 - INFO - Server arrestato
+2025-03-30 08:58:47,825 - INFO - Server arrestato
+2025-03-30 08:58:51,138 - INFO - Server avviato su localhost:5000
+2025-03-30 08:58:51,139 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 09:13:23,463 - INFO - Nuovo gruppo creato: NAPOLI
+2025-03-30 09:15:44,160 - INFO - Utente eliminato: luca
+2025-03-30 09:20:26,667 - INFO - Server arrestato
+2025-03-30 09:20:26,667 - INFO - Server arrestato
+2025-03-30 09:20:29,015 - INFO - Server avviato su localhost:5000
+2025-03-30 09:20:29,016 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 09:23:28,891 - INFO - Nuovo gruppo creato: G1
+2025-03-30 09:26:36,005 - INFO - Nuovo gruppo creato: G2
+2025-03-30 09:49:04,910 - INFO - Server arrestato
+2025-03-30 09:49:04,910 - INFO - Server arrestato
+2025-03-30 09:55:57,944 - INFO - Server avviato su localhost:5000
+2025-03-30 09:55:57,944 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 09:56:28,384 - INFO - Nuovo gruppo creato: G1
+2025-03-30 09:58:14,739 - INFO - Server arrestato
+2025-03-30 09:58:14,740 - INFO - Server arrestato
+2025-03-30 10:07:43,284 - INFO - Server avviato su localhost:5000
+2025-03-30 10:07:43,284 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 10:08:09,162 - ERROR - Errore gestione client: 'Database' object has no attribute 'verify_user'
+2025-03-30 10:09:50,219 - ERROR - Errore gestione client: 'Database' object has no attribute 'verify_user'
+2025-03-30 10:11:16,273 - ERROR - Errore gestione client: 'Database' object has no attribute 'verify_user'
+2025-03-30 10:13:08,738 - INFO - Server arrestato
+2025-03-30 10:13:08,739 - INFO - Server arrestato
+2025-03-30 10:13:11,110 - INFO - Server avviato su localhost:5000
+2025-03-30 10:13:11,110 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 10:13:21,551 - ERROR - Errore gestione client: 'Database' object has no attribute 'verify_user'
+2025-03-30 10:14:57,023 - INFO - Server arrestato
+2025-03-30 10:14:57,023 - INFO - Server arrestato
+2025-03-30 10:15:47,108 - INFO - Server avviato su localhost:5000
+2025-03-30 10:15:47,108 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 10:16:01,080 - ERROR - Errore gestione client: 'Database' object has no attribute 'verify_user'
+2025-03-30 10:16:50,716 - INFO - Server arrestato
+2025-03-30 10:16:50,717 - INFO - Server arrestato
+2025-03-30 10:16:54,856 - INFO - Server avviato su localhost:5000
+2025-03-30 10:16:54,856 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 10:20:13,863 - INFO - Utente eliminato: diego
+2025-03-30 10:20:43,457 - INFO - Server arrestato
+2025-03-30 10:20:43,458 - INFO - Server arrestato
+2025-03-30 10:23:36,049 - INFO - Server avviato su localhost:5000
+2025-03-30 10:23:36,050 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 10:23:45,105 - ERROR - Errore gestione client: 'Database' object has no attribute 'verify_user'
+2025-03-30 10:26:52,826 - INFO - Server arrestato
+2025-03-30 10:26:52,826 - INFO - Server arrestato
+2025-03-30 10:26:54,680 - INFO - Server avviato su localhost:5000
+2025-03-30 10:26:54,681 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 10:27:02,063 - ERROR - Errore avvio server: [Errno 98] Address already in use
+2025-03-30 10:27:02,063 - INFO - Server arrestato
+2025-03-30 10:27:23,181 - ERROR - Errore gestione client: 'Database' object has no attribute 'verify_user'
+2025-03-30 10:29:47,014 - INFO - Server arrestato
+2025-03-30 10:29:47,014 - INFO - Server arrestato
+2025-03-30 10:29:48,361 - INFO - Server avviato su localhost:5000
+2025-03-30 10:29:48,361 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 10:29:59,908 - ERROR - Errore gestione client: 'Database' object has no attribute 'verify_user'
+2025-03-30 10:30:45,879 - ERROR - Errore gestione client: 'Database' object has no attribute 'verify_user'
+2025-03-30 10:30:56,726 - INFO - Server arrestato
+2025-03-30 10:30:56,727 - INFO - Server arrestato
+2025-03-30 10:30:58,275 - INFO - Server avviato su localhost:5000
+2025-03-30 10:30:58,277 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 10:37:40,595 - INFO - Nuovo gruppo creato: CASA
+2025-03-30 10:38:13,486 - INFO - Nuovo gruppo creato: LAVORO
+2025-03-30 10:39:53,262 - INFO - Nuovo gruppo creato: LAVORO2
+2025-03-30 10:41:00,087 - INFO - Gruppo eliminato: LAVORO2
+2025-03-30 10:47:21,177 - INFO - Server arrestato
+2025-03-30 10:47:21,178 - INFO - Server arrestato
+2025-03-30 10:47:23,515 - INFO - Server avviato su localhost:5000
+2025-03-30 10:47:23,515 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 10:48:26,219 - INFO - Server arrestato
+2025-03-30 10:48:26,220 - INFO - Server arrestato
