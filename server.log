@@ -898,3 +898,14 @@ bene
 2025-03-30 10:47:23,515 - INFO - Server avviato con gruppo predefinito 'ALL'
 2025-03-30 10:48:26,219 - INFO - Server arrestato
 2025-03-30 10:48:26,220 - INFO - Server arrestato
+2025-03-30 10:56:27,614 - INFO - Server avviato su localhost:5000
+2025-03-30 10:56:27,614 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 10:56:48,995 - ERROR - Errore gestione client: 'Database' object has no attribute 'verify_user'
+2025-03-30 11:01:28,281 - INFO - Server arrestato
+2025-03-30 11:01:28,282 - INFO - Server arrestato
+2025-03-30 11:01:32,715 - INFO - Server avviato su localhost:5000
+2025-03-30 11:01:32,716 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 11:01:35,382 - INFO - Nuovo gruppo creato: CASA
+2025-03-30 11:04:08,938 - INFO - Nuovo gruppo creato: LAVORO
+2025-03-30 11:23:50,459 - INFO - Server arrestato
+2025-03-30 11:23:50,460 - INFO - Server arrestato

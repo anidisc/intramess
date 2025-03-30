@@ -13,6 +13,8 @@ class ChatServer:
     def __init__(self, host='localhost', port=5000):
         self.host = host
         self.port = port
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.clients = {}  # socket -> username
         self.groups = {'ALL': set()}  # group -> set of usernames
         self.user_groups = {}  # username -> group
@@ -21,6 +23,7 @@ class ChatServer:
         self.running = True
         self.setup_logging()
         self.db = Database()
+        self.connected_users = set()  # Set di utenti attualmente connessi
         
         # Dizionario dei comandi disponibili
         self.commands = {
@@ -51,9 +54,6 @@ class ChatServer:
 
     def start(self):
         """Avvia il server"""
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        
         try:
             self.server_socket.bind((self.host, self.port))
             self.server_socket.listen(5)
@@ -183,7 +183,7 @@ class ChatServer:
         users_data = {}
         for client_socket, username in self.clients.items():
             users_data[username] = {
-                'group': self.user_groups.get(username, 'ALL')
+                'group': self.user_groups.get(username, 'N/A')
             }
         
         print(f"DEBUG: Invio lista utenti: {users_data}")  # Debug
@@ -220,7 +220,7 @@ class ChatServer:
             try:
                 private_message = {
                     'type': 'private',
-                    'from': self.clients[sender],
+                    'from': username,
                     'message': message
                 }
                 recipient_socket.send(json.dumps(private_message).encode())
@@ -406,6 +406,18 @@ class ChatServer:
                     success, msg = self.db.login_user(username, password)
                     
                     if success:
+                        # Verifica se l'utente è già connesso
+                        if username in self.connected_users:
+                            client_socket.send(json.dumps({
+                                'type': 'error',
+                                'message': 'Utente già connesso da un\'altra sessione'
+                            }).encode('utf-8'))
+                            client_socket.close()
+                            return
+                        
+                        # Aggiungi l'utente alla lista degli utenti connessi
+                        self.connected_users.add(username)
+                        
                         # Registra il client
                         self.clients[client_socket] = username
                         self.groups['ALL'].add(username)
@@ -439,45 +451,10 @@ class ChatServer:
                         }).encode('utf-8'))
                         client_socket.close()
                         return
-                        
-                elif message['type'] == 'register':
-                    username = message['username']
-                    password = message['password']
-                    
-                    print(f"DEBUG SERVER - Tentativo di registrazione per: {username}")
-                    success, msg = self.db.register_user(username, password)
-                    
-                    print(f"DEBUG SERVER - Risultato registrazione: success={success}, msg={msg}")
-                    
-                    # Invia la risposta al client
-                    response = {
-                        'type': 'register_response',
-                        'success': success,
-                        'message': msg
-                    }
-                    client_socket.send(json.dumps(response).encode('utf-8'))
-                    
-                    if not success:
-                        client_socket.close()
-                        return
-                        
-                else:
-                    client_socket.send(json.dumps({
-                        'type': 'error',
-                        'message': 'Tipo di messaggio non valido'
-                    }).encode('utf-8'))
-                    client_socket.close()
-                    return
-                    
-            except json.JSONDecodeError:
-                print(f"DEBUG SERVER - Errore decodifica JSON: {data}")
-                client_socket.send(json.dumps({
-                    'type': 'error',
-                    'message': 'Formato messaggio non valido'
-                }).encode('utf-8'))
+            except Exception as e:
+                print(f"Errore nel parsing del messaggio: {e}")
                 client_socket.close()
                 return
-                
         except Exception as e:
             logging.error(f"Errore gestione client: {e}")
         finally:
@@ -641,6 +618,10 @@ class ChatServer:
             username = self.clients[client_socket]
             print(f"DEBUG: Rimozione client {username}")
             
+            # Rimuovi l'utente dalla lista degli utenti connessi
+            if username in self.connected_users:
+                self.connected_users.remove(username)
+            
             # Rimuovi da tutti i gruppi
             for group in self.groups.values():
                 group.discard(username)
@@ -780,6 +761,36 @@ class ChatServer:
                 print("-" * 50)
         else:
             print(f"\nErrore: {result}")
+
+    def handle_disconnect(self, client_socket):
+        if client_socket in self.clients:
+            username = self.clients[client_socket]
+            group = self.user_groups[username]
+            
+            # Rimuovi l'utente dalla lista degli utenti connessi
+            if username in self.connected_users:
+                self.connected_users.remove(username)
+            
+            # Rimuovi il client dalla lista dei client connessi
+            del self.clients[client_socket]
+            
+            # Rimuovi l'utente dal gruppo
+            if group in self.groups:
+                if username in self.groups[group]:
+                    self.groups[group].remove(username)
+                if not self.groups[group]:  # Se il gruppo è vuoto
+                    del self.groups[group]
+            
+            # Invia la lista aggiornata degli utenti a tutti i client
+            self.broadcast_user_list()
+            
+            # Invia messaggio di disconnessione
+            self.broadcast_to_group({
+                'type': 'system',
+                'message': f'{username} ha lasciato la chat'
+            })
+            
+            client_socket.close()
 
 def main():
     server = ChatServer()
