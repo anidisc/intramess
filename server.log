@@ -1295,3 +1295,51 @@ bene
 2025-03-31 01:58:07,057 - INFO - Server WebSocket avviato su localhost:5000
 2025-03-31 01:58:07,057 - INFO - Server avviato con gruppo predefinito 'ALL'
 2025-03-31 01:58:07,062 - INFO - Server HTTP avviato su localhost:5001
+2025-03-31 02:02:25,146 - INFO - Server arrestato
+2025-03-31 02:02:25,146 - INFO - Server arrestato
+2025-03-31 02:02:29,979 - INFO - Caricamento gruppi dal database...
+2025-03-31 02:02:29,981 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-31 02:02:29,981 - INFO - Gruppo caricato dal database: CASA3
+2025-03-31 02:02:29,981 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-31 02:02:29,981 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-31 02:02:29,981 - INFO - Caricamento task dal database...
+2025-03-31 02:02:29,984 - INFO - Caricati 8 task dal database. Prossimo ID: T0015
+2025-03-31 02:02:29,985 - INFO - Server avviato su localhost:5000
+2025-03-31 02:02:29,986 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-31 02:02:33,772 - INFO - Server arrestato
+2025-03-31 02:02:33,773 - INFO - Server arrestato
+2025-04-01 00:10:41,678 - INFO - Caricamento gruppi dal database...
+2025-04-01 00:10:41,703 - INFO - Gruppo caricato dal database: LAVORO
+2025-04-01 00:10:41,703 - INFO - Gruppo caricato dal database: CASA
+2025-04-01 00:10:41,704 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA']
+2025-04-01 00:10:41,704 - INFO - Caricamento task dal database...
+2025-04-01 00:10:41,727 - INFO - Caricati 0 task dal database. Prossimo ID: T0001
+2025-04-01 00:10:41,728 - ERROR - Errore avvio server: [Errno 22] Invalid argument
+2025-04-01 00:11:09,787 - INFO - Caricamento gruppi dal database...
+2025-04-01 00:11:09,820 - INFO - Gruppo caricato dal database: LAVORO
+2025-04-01 00:11:09,820 - INFO - Gruppo caricato dal database: CASA
+2025-04-01 00:11:09,820 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA']
+2025-04-01 00:11:09,820 - INFO - Caricamento task dal database...
+2025-04-01 00:11:09,867 - INFO - Caricati 0 task dal database. Prossimo ID: T0001
+2025-04-01 00:11:09,868 - ERROR - Errore avvio server: [Errno 22] Invalid argument
+2025-04-01 00:23:43,563 - INFO - Caricamento gruppi dal database...
+2025-04-01 00:23:43,666 - INFO - Gruppo caricato dal database: LAVORO
+2025-04-01 00:23:43,666 - INFO - Gruppo caricato dal database: CASA
+2025-04-01 00:23:43,666 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA']
+2025-04-01 00:23:43,667 - INFO - Caricamento task dal database...
+2025-04-01 00:23:43,768 - INFO - Caricati 0 task dal database. Prossimo ID: T0001
+2025-04-01 00:23:43,769 - INFO - Server avviato su 0.0.0.0:5000
+2025-04-01 00:23:43,769 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-04-01 00:24:03,209 - INFO - Server arrestato
+2025-04-01 00:24:03,210 - INFO - Server arrestato
+2025-04-01 00:39:01,555 - INFO - Caricamento gruppi dal database...
+2025-04-01 00:39:01,558 - INFO - Gruppo caricato dal database: LAVORO
+2025-04-01 00:39:01,559 - INFO - Gruppo caricato dal database: CASA3
+2025-04-01 00:39:01,559 - INFO - Gruppo caricato dal database: LAVORO2
+2025-04-01 00:39:01,559 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-04-01 00:39:01,559 - INFO - Caricamento task dal database...
+2025-04-01 00:39:01,562 - INFO - Caricati 8 task dal database. Prossimo ID: T0015
+2025-04-01 00:39:01,563 - INFO - Server avviato su localhost:5000
+2025-04-01 00:39:01,563 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-04-01 01:06:26,507 - INFO - Server arrestato
+2025-04-01 01:06:26,611 - INFO - Server arrestato

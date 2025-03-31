@@ -1,3 +1,4 @@
+import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -25,20 +26,30 @@ class ChatSignals(QObject):
     username_response = pyqtSignal(dict)
 
 class ChatClient(QObject):
-    def __init__(self):
+    def __init__(self, config_file=None):
         super().__init__()
         self.socket = None
         self.running = False
         self.username = None
         self.signals = ChatSignals()
+        self.config_file = config_file
         self.config = self.load_config()
 
     def load_config(self):
-        """Carica la configurazione dal file config.json"""
+        """Carica la configurazione dal file config.json o dal file specificato"""
         try:
-            config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+            # Se è stato specificato un file di configurazione personalizzato, usa quello
+            if self.config_file:
+                config_path = self.config_file
+                print(f"Utilizzo file di configurazione client: {config_path}")
+            else:
+                # Altrimenti usa il file di configurazione predefinito
+                config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+            
             with open(config_path, 'r') as f:
-                return json.load(f)
+                config = json.load(f)
+                print(f"DEBUG Client - Configurazione caricata: server={config['server']['host']}:{config['server']['port']}")
+                return config
         except Exception as e:
             print(f"Errore nel caricamento della configurazione: {e}")
             # Configurazione di default
@@ -153,9 +164,9 @@ class ChatClient(QObject):
             self.socket = None
 
 class ChatWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, config_file=None):
         super().__init__()
-        self.client = ChatClient()
+        self.client = ChatClient(config_file)
         self.current_group = 'ALL'
         self.unread_messages = 0
         self.config = self.client.config
@@ -1697,10 +1708,19 @@ class ChatWindow(QMainWindow):
                 item.setForeground(1, QColor('#777777'))
 
 def main():
-    app = QApplication([])
-    window = ChatWindow()
+    app = QApplication(sys.argv)
+    
+    # Controlla se è stato specificato un file di configurazione come argomento
+    config_file = None
+    if len(sys.argv) > 1:
+        config_file = sys.argv[1]
+        print(f"Avvio client con file di configurazione: {config_file}")
+    
+    # Crea la finestra del client con la configurazione specificata
+    window = ChatWindow(config_file)
     window.show()
-    app.exec_()
+    
+    sys.exit(app.exec_())
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main() 

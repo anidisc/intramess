@@ -1,6 +1,6 @@
 {
     "server": {
-        "host": "localhost",
+        "host": "129.152.23.28",
         "port": 5000
     },
     "client": {
@@ -15,10 +15,10 @@
         }
     },
     "database": {
-        "host": "localhost",
+        "host": "129.152.23.28",
         "port": 27017,
-        "username": "user",
-        "password": "pass",
+        "username": "admin",
+        "password": "vittoria15",
         "database": "chat_db"
     }
 } 

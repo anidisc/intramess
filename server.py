@@ -5,14 +5,31 @@ import logging
 from datetime import datetime
 from colorama import init, Fore, Style
 from database import Database
+import sys
 
 # Inizializzazione colorama per i colori nel terminale
 init()
 
 class ChatServer:
-    def __init__(self, host='localhost', port=5000):
-        self.host = host
-        self.port = port
+    def __init__(self, config_file='config.json'):
+        # Carica la configurazione dal file JSON
+        try:
+            with open(config_file, 'r') as f:
+                config = json.load(f)
+            
+            # Ottieni la configurazione del server
+            server_config = config.get('server', {})
+            self.host = server_config.get('host', 'localhost')
+            self.port = server_config.get('port', 5000)
+            
+            print(f"DEBUG: Configurazione server caricata: host={self.host}, port={self.port}")
+        except Exception as e:
+            print(f"ERRORE: Impossibile caricare la configurazione: {e}")
+            # Usa valori predefiniti in caso di errore
+            self.host = 'localhost'
+            self.port = 5000
+            print(f"DEBUG: Utilizzo valori predefiniti: host={self.host}, port={self.port}")
+        
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.clients = {}  # socket -> username
@@ -106,7 +123,13 @@ class ChatServer:
     def start(self):
         """Avvia il server"""
         try:
-            self.server_socket.bind((self.host, self.port))
+            # Se l'host non è localhost, usa 0.0.0.0 per accettare connessioni da qualsiasi indirizzo
+            bind_host = self.host
+            if self.host != 'localhost' and self.host != '127.0.0.1':
+                bind_host = '0.0.0.0'
+                print(f"L'host di binding è impostato su 0.0.0.0 per accettare connessioni remote (host configurato: {self.host})")
+            
+            self.server_socket.bind((bind_host, self.port))
             self.server_socket.listen(5)
             logging.info(f"Server avviato su {self.host}:{self.port}")
             logging.info("Server avviato con gruppo predefinito 'ALL'")
@@ -972,7 +995,14 @@ class ChatServer:
             client_socket.close()
 
 def main():
-    server = ChatServer()
+    # Controlla se è stato specificato un file di configurazione come argomento
+    config_file = 'config.json'  # Default
+    if len(sys.argv) > 1:
+        config_file = sys.argv[1]
+        print(f"Utilizzo file di configurazione: {config_file}")
+    
+    # Crea il server con la configurazione specificata
+    server = ChatServer(config_file)
     try:
         server.start()
     except KeyboardInterrupt:
