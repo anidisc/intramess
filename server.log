@@ -1081,3 +1081,217 @@ bene
 2025-03-30 19:02:08,123 - INFO - Server avviato con gruppo predefinito 'ALL'
 2025-03-30 19:02:25,411 - INFO - Nuovo gruppo creato: ROMA
 2025-03-30 19:04:57,798 - INFO - Gruppo eliminato: ROMA con 3 task associati
+2025-03-30 20:15:16,161 - INFO - Server arrestato
+2025-03-30 20:15:16,162 - INFO - Server arrestato
+2025-03-30 20:25:22,432 - INFO - Caricamento gruppi dal database...
+2025-03-30 20:25:22,436 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-30 20:25:22,436 - INFO - Gruppo caricato dal database: CASA3
+2025-03-30 20:25:22,437 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3']
+2025-03-30 20:25:22,437 - INFO - Caricamento task dal database...
+2025-03-30 20:25:22,439 - INFO - Caricati 4 task dal database. Prossimo ID: T0011
+2025-03-30 20:25:22,441 - INFO - Server avviato su localhost:5000
+2025-03-30 20:25:22,441 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 20:27:11,456 - ERROR - Errore avvio server: [Errno 5] Input/output error
+2025-03-30 20:27:11,456 - INFO - Server arrestato
+2025-03-30 21:52:15,941 - INFO - Caricamento gruppi dal database...
+2025-03-30 21:52:15,943 - INFO - Gruppi caricati dal database: ['ALL']
+2025-03-30 21:52:15,943 - INFO - Caricamento task dal database...
+2025-03-30 21:52:15,945 - INFO - Caricati 0 task dal database. Prossimo ID: T0001
+2025-03-30 21:52:15,946 - INFO - Server avviato su localhost:5000
+2025-03-30 21:52:15,946 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 21:53:46,078 - INFO - Server arrestato
+2025-03-30 21:53:46,079 - INFO - Server arrestato
+2025-03-30 21:54:01,698 - INFO - Caricamento gruppi dal database...
+2025-03-30 21:54:01,699 - INFO - Gruppi caricati dal database: ['ALL']
+2025-03-30 21:54:01,700 - INFO - Caricamento task dal database...
+2025-03-30 21:54:01,701 - INFO - Caricati 0 task dal database. Prossimo ID: T0001
+2025-03-30 21:54:01,702 - INFO - Server avviato su localhost:5000
+2025-03-30 21:54:01,702 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 21:55:30,229 - INFO - Caricamento gruppi dal database...
+2025-03-30 21:55:30,232 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-30 21:55:30,233 - INFO - Gruppo caricato dal database: CASA3
+2025-03-30 21:55:30,233 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3']
+2025-03-30 21:55:30,233 - INFO - Caricamento task dal database...
+2025-03-30 21:55:30,236 - INFO - Caricati 4 task dal database. Prossimo ID: T0011
+2025-03-30 21:55:30,236 - INFO - Server avviato su localhost:5000
+2025-03-30 21:55:30,237 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 21:56:04,464 - INFO - Nuovo gruppo creato: LAVORO2
+2025-03-30 22:18:01,278 - INFO - Utente eliminato: mario
+2025-03-30 22:52:53,436 - INFO - Server arrestato
+2025-03-30 22:52:53,436 - INFO - Server arrestato
+2025-03-30 22:53:00,703 - INFO - Caricamento gruppi dal database...
+2025-03-30 22:53:00,704 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-30 22:53:00,704 - INFO - Gruppo caricato dal database: CASA3
+2025-03-30 22:53:00,704 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-30 22:53:00,705 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-30 22:53:00,705 - INFO - Caricamento task dal database...
+2025-03-30 22:53:00,707 - INFO - Caricati 6 task dal database. Prossimo ID: T0013
+2025-03-30 22:53:00,707 - INFO - Server avviato su localhost:5000
+2025-03-30 22:53:00,708 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 23:23:28,192 - INFO - Server arrestato
+2025-03-30 23:23:28,193 - INFO - Server arrestato
+2025-03-30 23:23:31,769 - INFO - Caricamento gruppi dal database...
+2025-03-30 23:23:31,770 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-30 23:23:31,770 - INFO - Gruppo caricato dal database: CASA3
+2025-03-30 23:23:31,771 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-30 23:23:31,771 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-30 23:23:31,771 - INFO - Caricamento task dal database...
+2025-03-30 23:23:31,773 - INFO - Caricati 6 task dal database. Prossimo ID: T0013
+2025-03-30 23:23:31,774 - INFO - Server avviato su localhost:5000
+2025-03-30 23:23:31,774 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 23:44:53,353 - INFO - Server arrestato
+2025-03-30 23:44:53,353 - INFO - Server arrestato
+2025-03-30 23:44:55,771 - INFO - Caricamento gruppi dal database...
+2025-03-30 23:44:55,772 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-30 23:44:55,772 - INFO - Gruppo caricato dal database: CASA3
+2025-03-30 23:44:55,772 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-30 23:44:55,772 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-30 23:44:55,772 - INFO - Caricamento task dal database...
+2025-03-30 23:44:55,774 - INFO - Caricati 6 task dal database. Prossimo ID: T0013
+2025-03-30 23:44:55,774 - INFO - Server avviato su localhost:5000
+2025-03-30 23:44:55,775 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 23:56:20,553 - INFO - Server arrestato
+2025-03-30 23:56:20,554 - INFO - Server arrestato
+2025-03-30 23:56:22,697 - INFO - Caricamento gruppi dal database...
+2025-03-30 23:56:22,698 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-30 23:56:22,698 - INFO - Gruppo caricato dal database: CASA3
+2025-03-30 23:56:22,699 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-30 23:56:22,699 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-30 23:56:22,699 - INFO - Caricamento task dal database...
+2025-03-30 23:56:22,700 - INFO - Caricati 6 task dal database. Prossimo ID: T0013
+2025-03-30 23:56:22,701 - INFO - Server avviato su localhost:5000
+2025-03-30 23:56:22,701 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-30 23:59:27,586 - INFO - Server arrestato
+2025-03-30 23:59:27,587 - INFO - Server arrestato
+2025-03-31 00:04:52,836 - INFO - Caricamento gruppi dal database...
+2025-03-31 00:04:52,837 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-31 00:04:52,837 - INFO - Gruppo caricato dal database: CASA3
+2025-03-31 00:04:52,838 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-31 00:04:52,838 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-31 00:04:52,838 - INFO - Caricamento task dal database...
+2025-03-31 00:04:52,839 - INFO - Caricati 6 task dal database. Prossimo ID: T0013
+2025-03-31 00:04:52,840 - INFO - Server avviato su localhost:5000
+2025-03-31 00:04:52,840 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-31 00:05:11,053 - INFO - Utente eliminato: giovanni
+2025-03-31 00:05:15,421 - INFO - Utente eliminato: sergio
+2025-03-31 00:05:25,922 - INFO - Utente eliminato: aniello
+2025-03-31 00:05:35,624 - INFO - Utente eliminato: admin
+2025-03-31 00:05:40,799 - INFO - Utente eliminato: marco2
+2025-03-31 00:05:46,132 - INFO - Utente eliminato: luca
+2025-03-31 00:17:56,305 - INFO - Server arrestato
+2025-03-31 00:17:56,306 - INFO - Server arrestato
+2025-03-31 00:17:57,758 - INFO - Caricamento gruppi dal database...
+2025-03-31 00:17:57,760 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-31 00:17:57,760 - INFO - Gruppo caricato dal database: CASA3
+2025-03-31 00:17:57,760 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-31 00:17:57,760 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-31 00:17:57,760 - INFO - Caricamento task dal database...
+2025-03-31 00:17:57,762 - INFO - Caricati 6 task dal database. Prossimo ID: T0013
+2025-03-31 00:17:57,762 - INFO - Server avviato su localhost:5000
+2025-03-31 00:17:57,763 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-31 00:20:06,443 - INFO - Server arrestato
+2025-03-31 00:20:06,443 - INFO - Server arrestato
+2025-03-31 00:20:08,165 - INFO - Caricamento gruppi dal database...
+2025-03-31 00:20:08,166 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-31 00:20:08,166 - INFO - Gruppo caricato dal database: CASA3
+2025-03-31 00:20:08,166 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-31 00:20:08,167 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-31 00:20:08,167 - INFO - Caricamento task dal database...
+2025-03-31 00:20:08,169 - INFO - Caricati 6 task dal database. Prossimo ID: T0013
+2025-03-31 00:20:08,170 - INFO - Server avviato su localhost:5000
+2025-03-31 00:20:08,170 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-31 00:30:13,423 - INFO - Server arrestato
+2025-03-31 00:30:13,423 - INFO - Server arrestato
+2025-03-31 00:30:15,371 - INFO - Caricamento gruppi dal database...
+2025-03-31 00:30:15,373 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-31 00:30:15,373 - INFO - Gruppo caricato dal database: CASA3
+2025-03-31 00:30:15,373 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-31 00:30:15,373 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-31 00:30:15,373 - INFO - Caricamento task dal database...
+2025-03-31 00:30:15,375 - INFO - Caricati 6 task dal database. Prossimo ID: T0013
+2025-03-31 00:30:15,376 - INFO - Server avviato su localhost:5000
+2025-03-31 00:30:15,376 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-31 00:40:29,498 - INFO - Server arrestato
+2025-03-31 00:40:29,498 - INFO - Server arrestato
+2025-03-31 00:40:31,456 - INFO - Caricamento gruppi dal database...
+2025-03-31 00:40:31,458 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-31 00:40:31,458 - INFO - Gruppo caricato dal database: CASA3
+2025-03-31 00:40:31,458 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-31 00:40:31,458 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-31 00:40:31,458 - INFO - Caricamento task dal database...
+2025-03-31 00:40:31,460 - INFO - Caricati 6 task dal database. Prossimo ID: T0013
+2025-03-31 00:40:31,461 - INFO - Server avviato su localhost:5000
+2025-03-31 00:40:31,461 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-31 00:57:30,514 - INFO - Server arrestato
+2025-03-31 00:57:30,514 - INFO - Server arrestato
+2025-03-31 00:57:39,421 - INFO - Caricamento gruppi dal database...
+2025-03-31 00:57:39,422 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-31 00:57:39,423 - INFO - Gruppo caricato dal database: CASA3
+2025-03-31 00:57:39,423 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-31 00:57:39,423 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-31 00:57:39,423 - INFO - Caricamento task dal database...
+2025-03-31 00:57:39,425 - INFO - Caricati 8 task dal database. Prossimo ID: T0015
+2025-03-31 00:57:39,426 - INFO - Server avviato su localhost:5000
+2025-03-31 00:57:39,426 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-31 01:14:35,445 - INFO - Server arrestato
+2025-03-31 01:14:35,445 - INFO - Server arrestato
+2025-03-31 01:14:37,924 - INFO - Caricamento gruppi dal database...
+2025-03-31 01:14:37,925 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-31 01:14:37,926 - INFO - Gruppo caricato dal database: CASA3
+2025-03-31 01:14:37,926 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-31 01:14:37,926 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-31 01:14:37,926 - INFO - Caricamento task dal database...
+2025-03-31 01:14:37,927 - INFO - Caricati 8 task dal database. Prossimo ID: T0015
+2025-03-31 01:14:37,928 - INFO - Server WebSocket avviato su localhost:5000
+2025-03-31 01:14:37,928 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-31 01:14:37,928 - INFO - Server HTTP avviato su localhost:5001
+2025-03-31 01:26:40,621 - INFO - Server arrestato
+2025-03-31 01:26:50,862 - INFO - Server arrestato
+2025-03-31 01:26:50,862 - INFO - Server arrestato
+2025-03-31 01:26:55,638 - INFO - Caricamento gruppi dal database...
+2025-03-31 01:26:55,640 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-31 01:26:55,640 - INFO - Gruppo caricato dal database: CASA3
+2025-03-31 01:26:55,640 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-31 01:26:55,640 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-31 01:26:55,640 - INFO - Caricamento task dal database...
+2025-03-31 01:26:55,641 - INFO - Caricati 8 task dal database. Prossimo ID: T0015
+2025-03-31 01:26:55,642 - INFO - Server WebSocket avviato su localhost:5000
+2025-03-31 01:26:55,642 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-31 01:26:55,642 - INFO - Server HTTP avviato su localhost:5001
+2025-03-31 01:40:04,851 - INFO - Server arrestato
+2025-03-31 01:40:04,851 - INFO - Server arrestato
+2025-03-31 01:40:07,118 - INFO - Caricamento gruppi dal database...
+2025-03-31 01:40:07,120 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-31 01:40:07,120 - INFO - Gruppo caricato dal database: CASA3
+2025-03-31 01:40:07,120 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-31 01:40:07,120 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-31 01:40:07,120 - INFO - Caricamento task dal database...
+2025-03-31 01:40:07,121 - INFO - Caricati 8 task dal database. Prossimo ID: T0015
+2025-03-31 01:40:07,122 - INFO - Server WebSocket avviato su localhost:5000
+2025-03-31 01:40:07,122 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-31 01:40:07,123 - INFO - Server HTTP avviato su localhost:5001
+2025-03-31 01:51:05,923 - INFO - Server arrestato
+2025-03-31 01:51:05,924 - INFO - Server arrestato
+2025-03-31 01:52:33,505 - INFO - Caricamento gruppi dal database...
+2025-03-31 01:52:33,506 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-31 01:52:33,506 - INFO - Gruppo caricato dal database: CASA3
+2025-03-31 01:52:33,506 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-31 01:52:33,507 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-31 01:52:33,507 - INFO - Caricamento task dal database...
+2025-03-31 01:52:33,508 - INFO - Caricati 8 task dal database. Prossimo ID: T0015
+2025-03-31 01:52:33,508 - INFO - Server WebSocket avviato su localhost:5000
+2025-03-31 01:52:33,508 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-31 01:52:33,509 - INFO - Server HTTP avviato su localhost:5001
+2025-03-31 01:56:28,861 - INFO - Server broadcast: ciao
+2025-03-31 01:58:04,703 - INFO - Server arrestato
+2025-03-31 01:58:04,704 - INFO - Server arrestato
+2025-03-31 01:58:07,053 - INFO - Caricamento gruppi dal database...
+2025-03-31 01:58:07,054 - INFO - Gruppo caricato dal database: LAVORO
+2025-03-31 01:58:07,054 - INFO - Gruppo caricato dal database: CASA3
+2025-03-31 01:58:07,054 - INFO - Gruppo caricato dal database: LAVORO2
+2025-03-31 01:58:07,054 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-03-31 01:58:07,055 - INFO - Caricamento task dal database...
+2025-03-31 01:58:07,056 - INFO - Caricati 8 task dal database. Prossimo ID: T0015
+2025-03-31 01:58:07,057 - INFO - Server WebSocket avviato su localhost:5000
+2025-03-31 01:58:07,057 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-03-31 01:58:07,062 - INFO - Server HTTP avviato su localhost:5001

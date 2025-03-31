@@ -25,6 +25,8 @@ class Database:
             self.groups = self.db.groups
             # Seleziona la collezione tasks
             self.tasks = self.db.tasks
+            # Seleziona la collezione chats
+            self.chats = self.db.chats
             
             # Crea un indice unico sull'username
             self.users.create_index('username', unique=True)
@@ -32,6 +34,9 @@ class Database:
             self.groups.create_index('name', unique=True)
             # Crea un indice unico sull'ID del task
             self.tasks.create_index('id', unique=True)
+            # Crea un indice sulla data per i messaggi
+            self.chats.create_index([('timestamp', 1)])
+            
             print("DEBUG: Connessione al database stabilita con successo")
             
         except Exception as e:
@@ -262,4 +267,68 @@ class Database:
             return True, tasks
         except Exception as e:
             print(f"DEBUG: Errore durante il recupero dei task: {str(e)}")
-            return False, f"Errore durante il recupero dei task: {str(e)}" 
+            return False, f"Errore durante il recupero dei task: {str(e)}"
+    
+    def save_message(self, group_name, message_text, sender, users_in_group):
+        """Salva un messaggio nella collezione chats"""
+        try:
+            # Crea il documento del messaggio
+            message_doc = {
+                'text': message_text,
+                'sender': sender,
+                'group': group_name,
+                'users_in_group': users_in_group,
+                'timestamp': datetime.now()
+            }
+            
+            # Salva nella collezione chats
+            self.chats.insert_one(message_doc)
+            
+            print(f"DEBUG: Messaggio salvato per il gruppo {group_name} nella collezione chats")
+            return True
+        except Exception as e:
+            print(f"DEBUG: Errore durante il salvataggio del messaggio: {str(e)}")
+            return False
+            
+    def get_group_messages(self, group_name, limit=100):
+        """Ottiene gli ultimi messaggi di un gruppo specifico dalla collezione chats"""
+        try:
+            # Ottieni i messaggi del gruppo dalla collezione chats
+            messages = list(self.chats.find({'group': group_name}).sort('timestamp', -1).limit(limit))
+            
+            # Inverte l'ordine per avere i messaggi dal più vecchio al più recente
+            messages.reverse()
+            
+            return True, messages
+        except Exception as e:
+            print(f"DEBUG: Errore durante il recupero dei messaggi: {str(e)}")
+            return False, []
+    
+    def get_user_historical_messages(self, username):
+        """Ottiene tutti i messaggi dei gruppi in cui l'utente è stato presente"""
+        try:
+            # Trova tutti i messaggi dove l'utente era nella lista users_in_group
+            messages = list(self.chats.find(
+                {'users_in_group': username}
+            ).sort('timestamp', 1))  # Ordina per timestamp in ordine crescente
+            
+            # Converti gli oggetti datetime in stringhe per la serializzazione JSON
+            for msg in messages:
+                if '_id' in msg:
+                    del msg['_id']  # Rimuovi l'ObjectId di MongoDB che non è serializzabile
+                if 'timestamp' in msg and isinstance(msg['timestamp'], datetime):
+                    msg['timestamp'] = msg['timestamp'].isoformat()
+            
+            # Raggruppa i messaggi per gruppo
+            messages_by_group = {}
+            for msg in messages:
+                group = msg['group']
+                if group not in messages_by_group:
+                    messages_by_group[group] = []
+                messages_by_group[group].append(msg)
+            
+            print(f"DEBUG: Trovati messaggi storici per l'utente {username} in {len(messages_by_group)} gruppi")
+            return True, messages_by_group
+        except Exception as e:
+            print(f"DEBUG: Errore durante il recupero dei messaggi storici: {str(e)}")
+            return False, {} 

@@ -552,6 +552,27 @@ class ChatServer:
                             'message': msg
                         }).encode('utf-8'))
                         
+                        # Invia i messaggi storici dei gruppi in cui l'utente era presente
+                        try:
+                            print(f"DEBUG: Tentativo di recupero messaggi storici per {username}")
+                            success, historical_messages = self.db.get_user_historical_messages(username)
+                            print(f"DEBUG: Risultato recupero messaggi storici: success={success}, gruppi={len(historical_messages) if success else 0}")
+                            
+                            if success and historical_messages:
+                                print(f"DEBUG: Preparazione invio messaggi storici all'utente {username}")
+                                message_json = json.dumps({
+                                    'type': 'historical_messages',
+                                    'messages': historical_messages
+                                })
+                                print(f"DEBUG: Dimensione JSON dei messaggi storici: {len(message_json)} byte")
+                                # Aggiungo \n alla fine per assicurarmi che il messaggio sia correttamente terminato
+                                client_socket.send((message_json + '\n').encode('utf-8'))
+                                print(f"DEBUG: Inviati messaggi storici all'utente {username}")
+                        except Exception as e:
+                            print(f"DEBUG: Errore nell'invio dei messaggi storici: {e}")
+                            import traceback
+                            traceback.print_exc()
+                        
                         # Notifica tutti della nuova connessione
                         self.broadcast_to_group({
                             'type': 'system',
@@ -739,6 +760,22 @@ class ChatServer:
                 sender = message.get('from')
                 if sender:
                     recipients.add(sender)
+        
+        # Salva il messaggio nel database se è un messaggio di tipo 'message' (non system o error)
+        # e non è un messaggio privato (il gruppo non è 'PRIVATE')
+        if message.get('type') == 'message' and group != 'PRIVATE':
+            try:
+                sender = message.get('from')
+                msg_text = message.get('message')
+                # Converti il set in lista per poterlo salvare in MongoDB
+                users_list = list(recipients)
+                
+                # Salva il messaggio nel database
+                db = Database()
+                db.save_message(group, msg_text, sender, users_list)
+                print(f"DEBUG: Messaggio salvato nel database per il gruppo {group}")
+            except Exception as e:
+                print(f"DEBUG: Errore durante il salvataggio del messaggio nel database: {e}")
 
         for client_socket, username in self.clients.items():
             if username in recipients and (not exclude or username != exclude):

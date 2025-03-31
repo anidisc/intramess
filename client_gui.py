@@ -118,10 +118,18 @@ class ChatClient(QObject):
                     if message:
                         try:
                             msg_data = json.loads(message)
-                            print(f"DEBUG Client - Messaggio ricevuto: {msg_data}")
+                            print(f"DEBUG Client - Messaggio ricevuto: tipo={msg_data.get('type')}, lunghezza={len(message)} bytes")
+                            
+                            # Log specifico per i messaggi storici
+                            if msg_data.get('type') == 'historical_messages':
+                                print(f"DEBUG Client - Ricevuti messaggi storici: {len(msg_data.get('messages', {}))} gruppi")
+                                for group, msgs in msg_data.get('messages', {}).items():
+                                    print(f"DEBUG Client - Gruppo {group}: {len(msgs)} messaggi")
+                            
                             self.signals.message_received.emit(msg_data)
                         except json.JSONDecodeError as e:
                             print(f"Errore decodifica JSON: {e}")
+                            print(f"Messaggio problematico: {message[:100]}...")
                             continue
                 
             except Exception as e:
@@ -1028,6 +1036,51 @@ class ChatWindow(QMainWindow):
             elif data['type'] == 'task_deleted':
                 self.chat_area.append(f'<i style="color: green">Task eliminato con successo</i>')
             
+            elif data['type'] == 'historical_messages':
+                # Gestione dei messaggi storici
+                print(f"DEBUG GUI - Elaborazione messaggi storici")
+                messages_by_group = data.get('messages', {})
+                print(f"DEBUG GUI - Messaggi storici per {len(messages_by_group)} gruppi")
+                
+                if messages_by_group:
+                    self.chat_area.append('<div style="text-align: center; margin: 10px 0; color: #666; font-style: italic;">--- Inizio messaggi storici ---</div>')
+                    
+                    # Itera attraverso i gruppi
+                    for group, messages in messages_by_group.items():
+                        print(f"DEBUG GUI - Gruppo {group}: {len(messages)} messaggi")
+                        if messages:
+                            self.chat_area.append(f'<div style="text-align: center; margin: 5px 0; color: #888; font-weight: bold;">Gruppo: {group}</div>')
+                            
+                            # Visualizza i messaggi del gruppo
+                            for msg in messages:
+                                sender = msg.get('sender', 'Unknown')
+                                text = msg.get('text', '')
+                                timestamp = msg.get('timestamp', '')
+                                
+                                # Formatta la data in modo leggibile
+                                if timestamp:
+                                    try:
+                                        # Converti da stringa ISO a datetime se necessario
+                                        if isinstance(timestamp, str):
+                                            from datetime import datetime
+                                            timestamp = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                                        
+                                        date_str = timestamp.strftime('%d/%m/%Y %H:%M')
+                                    except Exception as e:
+                                        print(f"DEBUG GUI - Errore formattazione timestamp: {e}")
+                                        date_str = ""
+                                else:
+                                    date_str = ""
+                                
+                                # Applica uno stile più chiaro per i messaggi storici
+                                message_html = f'<span style="color: #888; font-size: 0.95em;"><b>{sender} [{date_str}]</b>: {text}</span>'
+                                print(f"DEBUG GUI - Aggiunta messaggio storico: {sender} - {text[:20]}...")
+                                self.chat_area.append(message_html)
+                    
+                    self.chat_area.append('<div style="text-align: center; margin: 10px 0; color: #666; font-style: italic;">--- Fine messaggi storici ---</div>')
+                    self.chat_area.append('<div style="text-align: center; margin: 15px 0; color: #333; font-weight: bold;">--- Nuovi messaggi ---</div>')
+                    print(f"DEBUG GUI - Completata visualizzazione messaggi storici")
+            
             self.chat_area.verticalScrollBar().setValue(
                 self.chat_area.verticalScrollBar().maximum()
             )
@@ -1354,9 +1407,7 @@ class ChatWindow(QMainWindow):
                 item = self.task_list.topLevelItem(i)
                 if item.text(2) == selected_group and item.checkState(0) == Qt.Unchecked:
                     tasks_to_export.append({
-                        'id': item.text(1),
                         'task': item.text(1),
-                        'created_by': item.text(4),
                         'date': item.text(5)
                     })
 
@@ -1366,60 +1417,149 @@ class ChatWindow(QMainWindow):
 
             # Crea il PDF
             filename = f"tasks_pending_{selected_group}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-            doc = SimpleDocTemplate(filename, pagesize=A4)
+            doc = SimpleDocTemplate(
+                filename, 
+                pagesize=A4,
+                leftMargin=36, 
+                rightMargin=36, 
+                topMargin=36, 
+                bottomMargin=36
+            )
             elements = []
 
             # Stili
             styles = getSampleStyleSheet()
-            title_style = ParagraphStyle(
-                'CustomTitle',
+            
+            # Crea stili personalizzati
+            header_style = ParagraphStyle(
+                'Header',
                 parent=styles['Heading1'],
                 fontSize=16,
-                spaceAfter=30
+                alignment=1,  # Centrato
+                spaceAfter=10,
+                textColor=colors.darkblue
             )
-
-            # Titolo
-            elements.append(Paragraph(f"Task da completare - Gruppo {selected_group}", title_style))
+            
+            title_style = ParagraphStyle(
+                'Title',
+                parent=styles['Heading2'],
+                fontSize=14,
+                spaceAfter=20,
+                textColor=colors.darkblue
+            )
+            
+            subtitle_style = ParagraphStyle(
+                'Subtitle',
+                parent=styles['Heading3'],
+                fontSize=12,
+                spaceAfter=5,
+                textColor=colors.darkblue
+            )
+            
+            normal_style = ParagraphStyle(
+                'Normal',
+                parent=styles['Normal'],
+                fontSize=10,
+                spaceBefore=5,
+                spaceAfter=5
+            )
+            
+            info_style = ParagraphStyle(
+                'Info',
+                parent=styles['Italic'],
+                fontSize=8,
+                textColor=colors.grey
+            )
+            
+            # Nome programma dall'intestazione
+            program_name = self.config['client']['window']['title']
+            
+            # Intestazione
+            elements.append(Paragraph(program_name, header_style))
+            elements.append(Paragraph(f"Elenco Task da Completare", title_style))
+            elements.append(Paragraph(f"Gruppo: {selected_group}", subtitle_style))
+            
+            # Separatore
+            elements.append(Spacer(1, 10))
+            elements.append(Paragraph(f"<hr width='100%'/>", normal_style))
             elements.append(Spacer(1, 20))
-
+            
             # Dati per la tabella
-            data = [['ID', 'Task', 'Creato da', 'Data creazione']]
+            data = [['Descrizione Task', 'Data creazione']]
+            
+            # Larghezze colonne (in % della pagina)
+            col_widths = [doc.width * 0.75, doc.width * 0.25]
+            
+            # Aggiungi i task alla tabella
             for task in tasks_to_export:
-                data.append([
-                    task['id'],
-                    task['task'],
-                    task['created_by'],
-                    task['date']
-                ])
+                # Gestisci il testo lungo permettendo il wrapping nelle celle
+                task_text = Paragraph(task['task'], normal_style)
+                date_text = Paragraph(task['date'], normal_style)
+                data.append([task_text, date_text])
 
-            # Crea tabella
-            table = Table(data)
+            # Crea tabella con larghezze colonne specificate
+            table = Table(data, colWidths=col_widths)
+            
+            # Stile tabella
             table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                # Intestazione
+                ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('ALIGNMENT', (0, 0), (-1, 0), 'CENTER'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                 ('FONTSIZE', (0, 0), (-1, 0), 12),
                 ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('TOPPADDING', (0, 0), (-1, 0), 12),
+                
+                # Corpo tabella - alternanza colori righe
                 ('BACKGROUND', (0, 1), (-1, -1), colors.white),
                 ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
                 ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
                 ('FONTSIZE', (0, 1), (-1, -1), 10),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                
+                # Allineamento
+                ('ALIGNMENT', (0, 1), (0, -1), 'LEFT'),  # Task allineati a sinistra
+                ('ALIGNMENT', (1, 1), (1, -1), 'CENTER'),  # Date centrate
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                
+                # Padding celle
+                ('TOPPADDING', (0, 1), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+                ('LEFTPADDING', (0, 1), (0, -1), 10),
+                
+                # Bordi e separatori
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('LINEBELOW', (0, 0), (-1, 0), 1.5, colors.darkblue),  # Linea più spessa sotto l'intestazione
             ]))
+            
             elements.append(table)
 
-            # Aggiungi data e ora di generazione
+            # Aggiungi informazioni finali
             elements.append(Spacer(1, 20))
+            current_date = datetime.now().strftime('%d/%m/%Y alle %H:%M')
             elements.append(Paragraph(
-                f"Report generato il {datetime.now().strftime('%d/%m/%Y alle %H:%M')}",
-                styles['Italic']
+                f"Report generato il {current_date}", 
+                info_style
+            ))
+            
+            # Numero totale di task
+            elements.append(Spacer(1, 5))
+            elements.append(Paragraph(
+                f"Totale task da completare: {len(tasks_to_export)}", 
+                info_style
             ))
 
-            # Genera il PDF
-            doc.build(elements)
+            # Piè di pagina
+            def add_page_number(canvas, doc):
+                canvas.saveState()
+                canvas.setFont('Helvetica', 8)
+                canvas.setFillColor(colors.grey)
+                page_num = f"Pagina {doc.page}"
+                canvas.drawRightString(doc.pagesize[0] - 36, 36, page_num)
+                canvas.restoreState()
+
+            # Genera il PDF con numeri di pagina
+            doc.build(elements, onFirstPage=add_page_number, onLaterPages=add_page_number)
 
             # Apri il PDF con l'applicazione predefinita
             if platform.system() == 'Darwin':       # macOS
