@@ -5,16 +5,24 @@ from datetime import datetime
 import json
 
 class Database:
-    def __init__(self):
+    def __init__(self, config_file=None):
         # Carica la configurazione
-        with open('config.json', 'r') as f:
-            config = json.load(f)
-            db_config = config['database']
-        
-        # Costruisci l'URI di connessione con le credenziali
-        mongo_uri = f"mongodb://{db_config['username']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/"
-        
         try:
+            if config_file:
+                print(f"DEBUG Database: Utilizzo file di configurazione personalizzato: {config_file}")
+                with open(config_file, 'r') as f:
+                    config = json.load(f)
+            else:
+                print("DEBUG Database: Utilizzo file di configurazione predefinito: config.json")
+                with open('config.json', 'r') as f:
+                    config = json.load(f)
+                
+            db_config = config['database']
+            print(f"DEBUG Database: Connessione a {db_config['host']}:{db_config['port']}")
+        
+            # Costruisci l'URI di connessione con le credenziali
+            mongo_uri = f"mongodb://{db_config['username']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/"
+        
             # Connessione a MongoDB
             self.client = MongoClient(mongo_uri)
             # Seleziona il database

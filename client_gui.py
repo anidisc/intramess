@@ -855,8 +855,8 @@ class ChatWindow(QMainWindow):
         if dialog.exec_() == QDialog.Accepted:
             credentials = dialog.get_credentials()
             try:
-                # Crea una connessione diretta al database
-                db = Database()
+                # Crea una connessione diretta al database con la stessa configurazione del client
+                db = Database(self.client.config_file)
                 
                 # Tenta la registrazione
                 success, message = db.register_user(credentials['username'], credentials['password'])

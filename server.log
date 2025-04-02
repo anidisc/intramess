@@ -1343,3 +1343,14 @@ bene
 2025-04-01 00:39:01,563 - INFO - Server avviato con gruppo predefinito 'ALL'
 2025-04-01 01:06:26,507 - INFO - Server arrestato
 2025-04-01 01:06:26,611 - INFO - Server arrestato
+2025-04-02 01:50:03,568 - INFO - Caricamento gruppi dal database...
+2025-04-02 01:50:03,572 - INFO - Gruppo caricato dal database: LAVORO
+2025-04-02 01:50:03,573 - INFO - Gruppo caricato dal database: CASA3
+2025-04-02 01:50:03,573 - INFO - Gruppo caricato dal database: LAVORO2
+2025-04-02 01:50:03,573 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'LAVORO2']
+2025-04-02 01:50:03,573 - INFO - Caricamento task dal database...
+2025-04-02 01:50:03,576 - INFO - Caricati 8 task dal database. Prossimo ID: T0015
+2025-04-02 01:50:03,576 - INFO - Server avviato su localhost:5000
+2025-04-02 01:50:03,576 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-04-02 01:50:59,846 - INFO - Server arrestato
+2025-04-02 01:50:59,847 - INFO - Server arrestato
