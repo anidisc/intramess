@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IntraMess Mobile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Modal di autenticazione -->
+    <div class="modal fade" id="authModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Accesso</h5>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="authTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#loginTab">Login</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#registerTab">Registrazione</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content mt-3">
+                        <div class="tab-pane fade show active" id="loginTab">
+                            <form id="loginForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" class="form-control" name="username" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" class="form-control" name="password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Login</button>
+                            </form>
+                        </div>
+                        <div class="tab-pane fade" id="registerTab">
+                            <form id="registerForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" class="form-control" name="username" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" class="form-control" name="password" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Conferma Password</label>
+                                    <input type="password" class="form-control" name="confirmPassword" required>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">Registrati</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal per creazione task -->
+    <div class="modal fade" id="taskModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nuovo Task</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="taskForm">
+                        <div class="mb-3">
+                            <label class="form-label">Gruppo</label>
+                            <select class="form-select" name="group" id="taskGroupInput">
+                                <option value="ALL">Tutti</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descrizione</label>
+                            <input type="text" class="form-control" name="text" required>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Crea Task</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenitore principale dell'app -->
+    <div id="appContainer" class="container-fluid vh-100 d-none">
+        <div class="row h-100">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar d-flex flex-column">
+                <div class="user-info p-3">
+                    <i class="fas fa-user"></i>
+                    <span id="currentUser">{{ username if username else '' }}</span>
+                    <button id="logoutBtn" class="btn btn-danger btn-sm float-end">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+                <div class="nav flex-column nav-pills flex-grow-1">
+                    <a class="nav-link active" data-bs-toggle="pill" href="#chatTab">
+                        <i class="fas fa-comments"></i> Chat
+                    </a>
+                    <a class="nav-link" data-bs-toggle="pill" href="#tasksTab">
+                        <i class="fas fa-tasks"></i> Task
+                    </a>
+                    <a class="nav-link" data-bs-toggle="pill" href="#usersTab">
+                        <i class="fas fa-users"></i> Utenti Online
+                    </a>
+                </div>
+                <div class="connection-status p-2 text-center">
+                    <span id="connectionStatus" class="badge bg-success">Connesso</span>
+                </div>
+            </div>
+
+            <!-- Contenuto principale -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <div class="tab-content h-100">
+                    <!-- Tab Chat -->
+                    <div class="tab-pane fade show active h-100" id="chatTab">
+                        <div class="chat-container d-flex flex-column h-100">
+                            <div class="group-selector mb-2 pt-2">
+                                <select id="groupSelect" class="form-select">
+                                    <option value="ALL">Tutti</option>
+                                    {% for group in groups %}
+                                        {% if group != 'ALL' %}
+                                            <option value="{{ group }}">{{ group }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div id="messages" class="messages flex-grow-1"></div>
+                            <div class="message-input p-2">
+                                <div class="input-group">
+                                    <input type="text" id="messageInput" class="form-control" placeholder="Scrivi un messaggio...">
+                                    <button id="sendMessage" class="btn btn-primary">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Task -->
+                    <div class="tab-pane fade h-100" id="tasksTab">
+                        <div class="task-container d-flex flex-column h-100 p-2">
+                            <div class="task-controls mb-3">
+                                <button id="createTaskBtn" class="btn btn-success mb-2">
+                                    <i class="fas fa-plus"></i> Nuovo Task
+                                </button>
+                                <select id="taskFilterSelect" class="form-select">
+                                    <option value="ALL">Tutti i gruppi</option>
+                                    {% for group in groups %}
+                                        {% if group != 'ALL' %}
+                                            <option value="{{ group }}">{{ group }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div id="tasksList" class="task-list flex-grow-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Utenti -->
+                    <div class="tab-pane fade h-100" id="usersTab">
+                        <div class="users-container d-flex flex-column h-100 p-2">
+                            <h5 class="mb-3">Utenti Online</h5>
+                            <div id="usersList" class="users-list flex-grow-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variabili globali
+        let currentUser = "{{ username if username else '' }}";
+        let connected = {{ 'true' if logged_in else 'false' }};
+        let currentGroup = "ALL";
+        let pollingInterval = null;
+        let authModal = null;
+        
+        // Inizializzazione
+        document.addEventListener("DOMContentLoaded", function() {
+            // Inizializza il modal di autenticazione
+            authModal = new bootstrap.Modal(document.getElementById('authModal'));
+            
+            // Mostra o nascondi l'interfaccia in base allo stato di login
+            if ({{ 'true' if logged_in else 'false' }}) {
+                document.getElementById('appContainer').classList.remove('d-none');
+                currentUser = "{{ username if username else '' }}";
+                document.getElementById('currentUser').textContent = currentUser;
+                startPolling();
+            } else {
+                authModal.show();
+            }
+            
+            // Inizializza gli event listener
+            setupEventListeners();
+        });
+        
+        // Configurazione di tutti gli event listener
+        function setupEventListeners() {
+            // Form di login
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Form di registrazione
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+            
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            
+            // Invio messaggi
+            document.getElementById('sendMessage').addEventListener('click', sendMessage);
+            document.getElementById('messageInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // Gestione cambio gruppo per i messaggi
+            document.getElementById('groupSelect').addEventListener('change', function(e) {
+                currentGroup = e.target.value;
+                updateMessagesDisplay();
+            });
+            
+            // Gestione task
+            document.getElementById('createTaskBtn').addEventListener('click', function() {
+                new bootstrap.Modal(document.getElementById('taskModal')).show();
+            });
+            document.getElementById('taskForm').addEventListener('submit', createTask);
+            document.getElementById('taskFilterSelect').addEventListener('change', updateTasksDisplay);
+        }
+        
+        // Gestione login
+        async function handleLogin(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: formData.get('username'),
+                        password: formData.get('password')
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Imposta i dati dell'utente
+                    currentUser = formData.get('username');
+                    document.getElementById('currentUser').textContent = currentUser;
+                    
+                    // Nascondi il modal e mostra l'app
+                    authModal.hide();
+                    document.getElementById('appContainer').classList.remove('d-none');
+                    
+                    // Aggiorna le select con i gruppi ricevuti
+                    if (data.groups && Array.isArray(data.groups)) {
+                        updateGroupSelects(data.groups);
+                    }
+                    
+                    // Avvia il polling
+                    startPolling();
+                    
+                    // Mostra messaggio
+                    showToast('Login effettuato con successo', 'success');
+                } else {
+                    showToast(data.message || 'Errore durante il login', 'danger');
+                }
+            } catch (error) {
+                showToast('Errore di connessione', 'danger');
+            }
+        }
+        
+        // Gestione registrazione
+        async function handleRegister(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            if (formData.get('password') !== formData.get('confirmPassword')) {
+                showToast('Le password non coincidono', 'danger');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: formData.get('username'),
+                        password: formData.get('password')
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Imposta i dati dell'utente
+                    currentUser = formData.get('username');
+                    document.getElementById('currentUser').textContent = currentUser;
+                    
+                    // Nascondi il modal e mostra l'app
+                    authModal.hide();
+                    document.getElementById('appContainer').classList.remove('d-none');
+                    
+                    // Aggiorna le select con i gruppi ricevuti
+                    if (data.groups && Array.isArray(data.groups)) {
+                        updateGroupSelects(data.groups);
+                    }
+                    
+                    // Avvia il polling
+                    startPolling();
+                    
+                    // Mostra messaggio
+                    showToast('Registrazione effettuata con successo', 'success');
+                } else {
+                    showToast(data.message || 'Errore durante la registrazione', 'danger');
+                }
+            } catch (error) {
+                showToast('Errore di connessione', 'danger');
+            }
+        }
+        
+        // Gestione logout
+        async function handleLogout() {
+            try {
+                const response = await fetch('/logout', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Ferma il polling
+                    stopPolling();
+                    
+                    // Resetta l'interfaccia
+                    document.getElementById('appContainer').classList.add('d-none');
+                    document.getElementById('messages').innerHTML = '';
+                    document.getElementById('usersList').innerHTML = '';
+                    document.getElementById('tasksList').innerHTML = '';
+                    
+                    // Mostra il modal di login
+                    authModal.show();
+                    
+                    // Resetta i form
+                    document.getElementById('loginForm').reset();
+                    document.getElementById('registerForm').reset();
+                    
+                    // Mostra messaggio
+                    showToast('Logout effettuato con successo', 'success');
+                }
+            } catch (error) {
+                showToast('Errore durante il logout', 'danger');
+            }
+        }
+        
+        // Funzione per l'invio di messaggi
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            try {
+                const response = await fetch('/send_message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'group_message',
+                        group: currentGroup,
+                        message: message
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    input.value = '';
+                } else {
+                    showToast('Errore durante l\'invio del messaggio', 'danger');
+                }
+            } catch (error) {
+                showToast('Errore di connessione', 'danger');
+            }
+        }
+        
+        // Creazione di un nuovo task
+        async function createTask(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch('/send_message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'create_task',
+                        group: formData.get('group'),
+                        text: formData.get('text')
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Nascondi il modal
+                    bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
+                    
+                    // Reset del form
+                    e.target.reset();
+                    
+                    // Mostra messaggio
+                    showToast('Task creato con successo', 'success');
+                } else {
+                    showToast('Errore durante la creazione del task', 'danger');
+                }
+            } catch (error) {
+                showToast('Errore di connessione', 'danger');
+            }
+        }
+        
+        // Funzione per avviare il polling
+        function startPolling() {
+            if (pollingInterval) return;
+            
+            // Esegui subito la prima volta
+            pollData();
+            
+            // Poi ogni secondo
+            pollingInterval = setInterval(pollData, 1000);
+        }
+        
+        // Funzione per fermare il polling
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+        }
+        
+        // Polling dei dati dal server
+        async function pollData() {
+            try {
+                // Verifica lo stato della sessione
+                const sessionResponse = await fetch('/check_session');
+                const sessionData = await sessionResponse.json();
+                
+                if (!sessionData.logged_in) {
+                    // Sessione scaduta, mostra il login
+                    stopPolling();
+                    document.getElementById('appContainer').classList.add('d-none');
+                    authModal.show();
+                    showToast('Sessione scaduta, effettua nuovamente il login', 'danger');
+                    return;
+                }
+                
+                // Recupera i dati
+                const [messagesRes, usersRes, tasksRes, groupsRes] = await Promise.all([
+                    fetch('/messages'),
+                    fetch('/users'),
+                    fetch('/tasks'),
+                    fetch('/groups')
+                ]);
+                
+                const messages = await messagesRes.json();
+                const users = await usersRes.json();
+                const tasks = await tasksRes.json();
+                const groups = await groupsRes.json();
+                
+                // Aggiorna l'interfaccia
+                updateMessages(messages);
+                updateUsers(users);
+                updateTasks(tasks);
+                
+                // Aggiorna le select dei gruppi se necessario
+                if (groups && Array.isArray(groups)) {
+                    updateGroupSelects(groups);
+                }
+                
+                // Aggiorna lo stato della connessione
+                document.getElementById('connectionStatus').className = 'badge bg-success';
+                document.getElementById('connectionStatus').textContent = 'Connesso';
+            } catch (error) {
+                console.error('Errore durante il polling:', error);
+                document.getElementById('connectionStatus').className = 'badge bg-danger';
+                document.getElementById('connectionStatus').textContent = 'Disconnesso';
+            }
+        }
+        
+        // Aggiorna le select dei gruppi disponibili
+        function updateGroupSelects(groups) {
+            const selects = [
+                document.getElementById('groupSelect'),
+                document.getElementById('taskGroupInput'),
+                document.getElementById('taskFilterSelect')
+            ];
+            
+            selects.forEach(select => {
+                if (!select) return;
+                
+                // Salva il valore corrente
+                const currentValue = select.value;
+                
+                // Svuota la select tranne l'opzione ALL
+                const options = Array.from(select.options);
+                options.forEach(option => {
+                    if (option.value !== 'ALL') {
+                        select.removeChild(option);
+                    }
+                });
+                
+                // Aggiungi i nuovi gruppi
+                groups.forEach(group => {
+                    if (group !== 'ALL') {
+                        const option = document.createElement('option');
+                        option.value = group;
+                        option.textContent = group;
+                        select.appendChild(option);
+                    }
+                });
+                
+                // Ripristina il valore selezionato se ancora valido
+                if (groups.includes(currentValue)) {
+                    select.value = currentValue;
+                }
+            });
+        }
+        
+        // Aggiorna l'elenco messaggi
+        function updateMessages(messages) {
+            // Conserva i messaggi nell'array globale
+            window.allMessages = messages;
+            
+            // Aggiorna la visualizzazione
+            updateMessagesDisplay();
+        }
+        
+        // Aggiorna la visualizzazione dei messaggi in base al gruppo corrente
+        function updateMessagesDisplay() {
+            const container = document.getElementById('messages');
+            container.innerHTML = '';
+            
+            if (!window.allMessages || !Array.isArray(window.allMessages)) return;
+            
+            window.allMessages.forEach(msg => {
+                // Controlla se il messaggio appartiene al gruppo corrente
+                if (currentGroup === 'ALL' || msg.group === currentGroup) {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message';
+                    
+                    if (msg.from === currentUser) {
+                        messageDiv.classList.add('sent');
+                    } else {
+                        messageDiv.classList.add('received');
+                    }
+                    
+                    if (msg.type === 'private') {
+                        messageDiv.classList.add('private');
+                        messageDiv.textContent = `PM ${msg.from === currentUser ? 'a ' + msg.to : 'da ' + msg.from}: ${msg.message}`;
+                    } else if (msg.type === 'message') {
+                        messageDiv.textContent = `${msg.from}: ${msg.message}`;
+                    } else if (msg.type === 'system') {
+                        messageDiv.classList.add('system');
+                        messageDiv.textContent = msg.message;
+                    }
+                    
+                    container.appendChild(messageDiv);
+                }
+            });
+            
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // Aggiorna la lista utenti
+        function updateUsers(users) {
+            const container = document.getElementById('usersList');
+            container.innerHTML = '';
+            
+            Object.entries(users).forEach(([username, info]) => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'user-item';
+                
+                if (username === currentUser) {
+                    userDiv.classList.add('current-user');
+                }
+                
+                userDiv.innerHTML = `
+                    <i class="fas fa-user"></i>
+                    <span>${username}</span>
+                    ${info.group !== 'ALL' ? `<span class="badge bg-secondary">${info.group}</span>` : ''}
+                `;
+                
+                // Avvia chat privata al click
+                userDiv.addEventListener('click', () => {
+                    if (username !== currentUser) {
+                        document.getElementById('messageInput').value = `@${username} `;
+                        document.getElementById('messageInput').focus();
+                        
+                        // Attiva la tab chat
+                        document.querySelector('a[href="#chatTab"]').click();
+                    }
+                });
+                
+                container.appendChild(userDiv);
+            });
+        }
+        
+        // Aggiorna la lista task
+        function updateTasks(tasks) {
+            window.allTasks = tasks;
+            updateTasksDisplay();
+        }
+        
+        // Aggiorna la visualizzazione dei task
+        function updateTasksDisplay() {
+            const container = document.getElementById('tasksList');
+            container.innerHTML = '';
+            
+            const filter = document.getElementById('taskFilterSelect').value;
+            
+            if (!window.allTasks || !Array.isArray(window.allTasks)) return;
+            
+            window.allTasks.forEach(task => {
+                if (filter === 'ALL' || task.group === filter) {
+                    const taskDiv = document.createElement('div');
+                    taskDiv.className = 'task-item';
+                    
+                    if (task.completed) {
+                        taskDiv.classList.add('completed');
+                    }
+                    
+                    taskDiv.innerHTML = `
+                        <div class="task-check">
+                            <input type="checkbox" ${task.completed ? 'checked' : ''} 
+                                   ${task.created_by === currentUser ? '' : 'disabled'}>
+                        </div>
+                        <div class="task-content">
+                            <div class="task-text">${task.text}</div>
+                            <div class="task-meta">
+                                <span class="task-group badge bg-info">${task.group}</span>
+                                <span class="task-creator">${task.created_by}</span>
+                                <span class="task-date">${task.date || 'N/D'}</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Gestione cambio stato
+                    const checkbox = taskDiv.querySelector('input[type="checkbox"]');
+                    if (checkbox && task.created_by === currentUser) {
+                        checkbox.addEventListener('change', async () => {
+                            try {
+                                const response = await fetch('/send_message', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        type: 'update_task',
+                                        task_id: task.id,
+                                        completed: checkbox.checked
+                                    })
+                                });
+                                
+                                const data = await response.json();
+                                
+                                if (!data.success) {
+                                    checkbox.checked = !checkbox.checked; // Ripristina lo stato
+                                    showToast('Errore durante l\'aggiornamento del task', 'danger');
+                                }
+                            } catch (error) {
+                                checkbox.checked = !checkbox.checked; // Ripristina lo stato
+                                showToast('Errore di connessione', 'danger');
+                            }
+                        });
+                    }
+                    
+                    container.appendChild(taskDiv);
+                }
+            });
+        }
+        
+        // Funzione per mostrare i toast
+        function showToast(message, type = 'info') {
+            const toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            
+            const toast = document.createElement('div');
+            toast.className = `toast bg-${type} text-white`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            
+            toast.innerHTML = `
+                <div class="toast-header bg-${type} text-white">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong class="me-auto">${message}</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            document.body.appendChild(toastContainer);
+            
+            const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+            bsToast.show();
+            
+            toast.addEventListener('hidden.bs.toast', () => {
+                toastContainer.remove();
+            });
+        }
+    </script>
+</body>
+</html> 

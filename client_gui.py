@@ -226,7 +226,7 @@ class ChatWindow(QMainWindow):
                 font-weight: bold;
                 font-size: 11pt;
                 min-width: 80px;
-                background-color: #3498db;
+                background-color: #74b9ff;
                 border: none;
                 color: white;
             }
@@ -802,7 +802,7 @@ class ChatWindow(QMainWindow):
             self.group_combo.clear()
             self.group_combo.addItem('ALL')
             self.current_group = 'ALL'
-            self.chat_area.append('<i>Disconnesso dal server</i>')
+            self.chat_area.append('<i style="color: green"><b>Connesso al server</b> - Bentornato!</i>')
             
             # Pulisci la lista task
             self.task_list.clear()
@@ -848,7 +848,13 @@ class ChatWindow(QMainWindow):
                     self.signup_btn.setEnabled(False)
                     self.chat_area.append('<i style="color: green">Login effettuato con successo</i>')
                 else:
-                    self.chat_area.append('<span style="color: red">Errore di login</span>')
+                    self.chat_area.append("""
+                        <div style="background-color: #f8d7da; color: #721c24; padding: 10px; 
+                             border-radius: 5px; margin: 10px 0; text-align: left;">
+                            <span style="font-size: 16px;">&#10060;</span> 
+                            <b>Errore di login</b> - Impossibile connettersi al server
+                        </div>
+                    """)
 
     def handle_signup(self):
         dialog = SignupDialog(self)
@@ -946,13 +952,14 @@ class ChatWindow(QMainWindow):
                 self.writing_group_combo.clear()
                 self.writing_group_combo.addItems(data['groups'])
                 self.writing_group_combo.setCurrentText('ALL')
-                self.chat_area.append('<i style="color: green">Connesso al server</i>')
+                self.chat_area.append('<i style="color: green"><b>Connesso al server</b> - Bentornato!</i>')
                 
             elif data['type'] == 'system':
-                self.chat_area.append(f'<i style="color: gray">{data["message"]}</i>')
+                message = data["message"]
+                self.chat_area.append(f'<i style="color: #856404">{message}</i>')
                 
                 # Se il messaggio indica che l'utente è entrato in un nuovo gruppo, aggiorna le flag dei task
-                if "entrato nel gruppo" in data["message"] and self.client.username in data["message"]:
+                if "entrato nel gruppo" in message and self.client.username in message:
                     self.update_task_permissions()
             
             elif data['type'] == 'group_deleted':
@@ -1033,13 +1040,15 @@ class ChatWindow(QMainWindow):
             elif data['type'] == 'private':
                 sender = data.get('from', '')
                 to = data.get('to', '')
+                message = data.get('message', '')
+                
                 if sender:
-                    self.chat_area.append(f'<i style="color: purple"><b>PM da {sender}</b>: {data["message"]}</i>')
+                    self.chat_area.append(f'<i style="color: purple"><b>PM da {sender}</b>: {message}</i>')
                 else:
-                    self.chat_area.append(f'<i style="color: purple"><b>PM a {to}</b>: {data["message"]}</i>')
+                    self.chat_area.append(f'<i style="color: purple"><b>PM a {to}</b>: {message}</i>')
             
             elif data['type'] == 'error':
-                self.chat_area.append(f'<span style="color: red"><i>{data["message"]}</i></span>')
+                self.chat_area.append(f'<span style="color: red"><b>Errore:</b> {data["message"]}</span>')
             
             elif data['type'] == 'user_list':
                 self.update_users_list(data.get('users', []))
@@ -1054,13 +1063,15 @@ class ChatWindow(QMainWindow):
                 print(f"DEBUG GUI - Messaggi storici per {len(messages_by_group)} gruppi")
                 
                 if messages_by_group:
-                    self.chat_area.append('<div style="text-align: center; margin: 10px 0; color: #666; font-style: italic;">--- Inizio messaggi storici ---</div>')
+                    self.chat_area.append('<div style="border-top: 1px dashed #aaa; border-bottom: 1px dashed #aaa; margin: 10px 0;">')
+                    self.chat_area.append('<b style="color: #666;">MESSAGGI STORICI</b>')
+                    self.chat_area.append('</div>')
                     
                     # Itera attraverso i gruppi
                     for group, messages in messages_by_group.items():
                         print(f"DEBUG GUI - Gruppo {group}: {len(messages)} messaggi")
                         if messages:
-                            self.chat_area.append(f'<div style="text-align: center; margin: 5px 0; color: #888; font-weight: bold;">Gruppo: {group}</div>')
+                            self.chat_area.append(f'<b style="color: #495057;">Gruppo: {group}</b>')
                             
                             # Visualizza i messaggi del gruppo
                             for msg in messages:
@@ -1088,8 +1099,10 @@ class ChatWindow(QMainWindow):
                                 print(f"DEBUG GUI - Aggiunta messaggio storico: {sender} - {text[:20]}...")
                                 self.chat_area.append(message_html)
                     
-                    self.chat_area.append('<div style="text-align: center; margin: 10px 0; color: #666; font-style: italic;">--- Fine messaggi storici ---</div>')
-                    self.chat_area.append('<div style="text-align: center; margin: 15px 0; color: #333; font-weight: bold;">--- Nuovi messaggi ---</div>')
+                    self.chat_area.append('<div style="border-top: 1px dashed #aaa; border-bottom: 1px dashed #aaa; margin: 10px 0;">')
+                    self.chat_area.append('<b style="color: #666;">FINE MESSAGGI STORICI</b>')
+                    self.chat_area.append('</div>')
+                    self.chat_area.append('<b style="color: #333;">NUOVI MESSAGGI</b>')
                     print(f"DEBUG GUI - Completata visualizzazione messaggi storici")
             
             self.chat_area.verticalScrollBar().setValue(
@@ -1175,14 +1188,37 @@ class ChatWindow(QMainWindow):
         self.login_btn.setEnabled(True)
         self.signup_btn.setEnabled(True)
         self.group_combo.setEnabled(False)
+        
+        # Resetta le combo box
         self.group_combo.clear()
         self.group_combo.addItem('ALL')
-        self.current_group = 'ALL'
-        self.chat_area.append('<i>Connessione persa</i>')
-        self.client.socket = None
         self.writing_group_combo.clear()
         self.writing_group_combo.addItem('ALL')
-        self.writing_group_combo.setCurrentText('ALL')
+        self.task_group_combo.clear()
+        self.task_group_combo.addItem('ALL')
+        self.task_group_filter.clear()
+        self.task_group_filter.addItem("Tutti i gruppi")
+        
+        # Mostra messaggio di disconnessione con icona
+        self.chat_area.append("""
+            <div style="background-color: #f8d7da; color: #721c24; padding: 10px; 
+                 border-radius: 5px; margin: 10px 0; text-align: left;">
+                <span style="font-size: 16px;">&#128683;</span> 
+                <b>Disconnesso dal server</b>
+            </div>
+        """)
+        
+        # Pulisci la lista task e utenti
+        self.task_list.clear()
+        self.users_list.clear()
+        
+        # Reset altre variabili
+        self.current_group = 'ALL'
+        self.unread_messages = 0
+        self.update_chat_tab()
+        
+        # Aggiorna il titolo della finestra
+        self.update_window_title()
 
     def change_group(self, group):
         if group and group != self.current_group:

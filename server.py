@@ -7,6 +7,9 @@ from colorama import init, Fore, Style
 from database import Database
 import sys
 
+# Versione del server
+SERVER_VERSION = "1.0.0"
+
 # Inizializzazione colorama per i colori nel terminale
 init()
 
@@ -39,7 +42,9 @@ class ChatServer:
         self.task_id_counter = 1  # Inizia da 1 invece che 0
         self.running = True
         self.setup_logging()
-        self.db = Database()
+        
+        # Passa il file di configurazione anche alla classe Database
+        self.db = Database(config_file)
         self.connected_users = set()  # Set di utenti attualmente connessi
         
         # Carica i gruppi dal database
@@ -62,6 +67,7 @@ class ChatServer:
             'listgroups': {'alias': 'lg', 'description': 'Mostra la lista dei gruppi', 'func': self.list_groups},
             'deleteuser': {'alias': 'du', 'description': 'Elimina un utente dal database', 'func': self.delete_user_command},
             'list_users': {'alias': 'lu', 'description': 'Mostra tutti gli utenti registrati nel database', 'func': self.list_users_command},
+            'version': {'alias': 'v', 'description': 'Mostra informazioni sulla versione del server', 'func': self.show_version},
             'quit': {'alias': 'q', 'description': 'Chiude il server', 'func': self.stop}
         }
 
@@ -123,6 +129,9 @@ class ChatServer:
     def start(self):
         """Avvia il server"""
         try:
+            # Registra l'ora di avvio
+            self.start_time = datetime.now()
+            
             # Se l'host non è localhost, usa 0.0.0.0 per accettare connessioni da qualsiasi indirizzo
             bind_host = self.host
             if self.host != 'localhost' and self.host != '127.0.0.1':
@@ -131,7 +140,14 @@ class ChatServer:
             
             self.server_socket.bind((bind_host, self.port))
             self.server_socket.listen(5)
-            logging.info(f"Server avviato su {self.host}:{self.port}")
+            
+            # Visualizza banner di avvio con la versione
+            print(f"\n{Fore.CYAN}{'=' * 60}")
+            print(f"{Fore.WHITE}IntraMessenger Server v{SERVER_VERSION}")
+            print(f"{Fore.CYAN}{'=' * 60}{Style.RESET_ALL}\n")
+            
+            print(f"{Fore.GREEN}Server avviato su {self.host}:{self.port}{Style.RESET_ALL}")
+            logging.info(f"Server v{SERVER_VERSION} avviato su {self.host}:{self.port}")
             logging.info("Server avviato con gruppo predefinito 'ALL'")
             
             # Avvia thread per accettare connessioni
@@ -793,9 +809,8 @@ class ChatServer:
                 # Converti il set in lista per poterlo salvare in MongoDB
                 users_list = list(recipients)
                 
-                # Salva il messaggio nel database
-                db = Database()
-                db.save_message(group, msg_text, sender, users_list)
+                # Usa l'istanza di Database già creata all'avvio del server
+                self.db.save_message(group, msg_text, sender, users_list)
                 print(f"DEBUG: Messaggio salvato nel database per il gruppo {group}")
             except Exception as e:
                 print(f"DEBUG: Errore durante il salvataggio del messaggio nel database: {e}")
@@ -993,6 +1008,40 @@ class ChatServer:
             })
             
             client_socket.close()
+
+    def show_version(self, *args):
+        """Mostra informazioni sulla versione del server"""
+        print(f"\n{Fore.CYAN}{'=' * 60}")
+        print(f"{Fore.WHITE}IntraMessenger Server v{SERVER_VERSION}")
+        print(f"{Fore.CYAN}{'=' * 60}{Style.RESET_ALL}")
+        
+        print(f"{Fore.YELLOW}Informazioni server:{Style.RESET_ALL}")
+        print(f"  Host configurato: {self.host}")
+        print(f"  Porta: {self.port}")
+        print(f"  Gruppi attivi: {len(self.groups)}")
+        print(f"  Utenti connessi: {len(self.clients)}")
+        print(f"  Task attivi: {len(self.tasks)}")
+        
+        # Ottieni informazioni sul database
+        db_host = self.db.host if hasattr(self.db, 'host') else "Non disponibile"
+        db_port = self.db.port if hasattr(self.db, 'port') else "Non disponibile"
+        
+        print(f"\n{Fore.YELLOW}Informazioni database:{Style.RESET_ALL}")
+        print(f"  Host: {db_host}")
+        print(f"  Porta: {db_port}")
+        
+        print(f"\n{Fore.YELLOW}Tempo di attività:{Style.RESET_ALL}")
+        # Se il server ha un attributo start_time, calcola il tempo di attività
+        if hasattr(self, 'start_time'):
+            uptime = datetime.now() - self.start_time
+            days = uptime.days
+            hours, remainder = divmod(uptime.seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            print(f"  {days} giorni, {hours} ore, {minutes} minuti, {seconds} secondi")
+        else:
+            print(f"  Non disponibile")
+        
+        print(f"{Fore.CYAN}{'=' * 60}{Style.RESET_ALL}\n")
 
 def main():
     # Controlla se è stato specificato un file di configurazione come argomento
