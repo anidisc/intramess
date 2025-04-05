@@ -13,11 +13,12 @@ Versione mobile web di IntraMess, un'applicazione di messaggistica istantanea pe
 
 1. Clona il repository
 2. Installa le dipendenze:
+
 ```bash
 pip install flask flask-socketio
 ```
 
-3. Assicurati che il file di configurazione `config.json` sia presente nella directory principale del progetto
+1. Assicurati che il file di configurazione `config.json` sia presente nella directory principale del progetto
 
 ## Avvio
 
@@ -35,18 +36,15 @@ L'applicazione sarà accessibile all'indirizzo `http://localhost:5001`
   - Registrazione nuovi utenti
   - Login con username e password
   - Logout
-
 - **Messaggistica**
   - Chat di gruppo
   - Messaggi privati (usando @username)
   - Selezione del gruppo corrente
   - Visualizzazione messaggi in tempo reale
-
 - **Gestione Task**
   - Creazione nuovi task
   - Visualizzazione stato task
   - Filtraggio per gruppo
-
 - **Gestione Utenti**
   - Lista utenti online
   - Visualizzazione gruppo di appartenenza
@@ -78,4 +76,4 @@ L'applicazione è ottimizzata per dispositivi mobili con:
 
 ## Supporto
 
-Per segnalare bug o richiedere nuove funzionalità, apri una issue su GitHub. 
+Per segnalare bug o richiedere nuove funzionalità, apri una issue su GitHub.

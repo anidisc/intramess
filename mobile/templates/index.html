@@ -9,6 +9,13 @@
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 </head>
 <body>
+    <!-- Valori iniziali disponibili per JavaScript -->
+    <script>
+        // I valori vengono convertiti in valori JavaScript nativi usando lo scriptconfig
+        var initialUsername = {% if username %}"{{ username|safe }}"{% else %}""{% endif %};
+        var initialIsLoggedIn = {% if logged_in %}true{% else %}false{% endif %};
+    </script>
+
     <!-- Modal di autenticazione -->
     <div class="modal fade" id="authModal" data-bs-backdrop="static" tabindex="-1">
         <div class="modal-dialog">
@@ -92,14 +99,25 @@
     <!-- Contenitore principale dell'app -->
     <div id="appContainer" class="container-fluid vh-100 d-none">
         <div class="row h-100">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar d-flex flex-column">
+            <!-- Sidebar per desktop -->
+            <div class="col-md-3 col-lg-2 sidebar d-none d-md-flex flex-column">
                 <div class="user-info p-3">
                     <i class="fas fa-user"></i>
                     <span id="currentUser">{{ username if username else '' }}</span>
                     <button id="logoutBtn" class="btn btn-danger btn-sm float-end">
                         <i class="fas fa-sign-out-alt"></i>
                     </button>
+                </div>
+                <div class="current-group p-2 text-center mb-3">
+                    <span class="d-block mb-1">Gruppo attuale:</span>
+                    <select id="desktopGroupSelect" class="form-select form-select-sm">
+                        <option value="ALL">Tutti</option>
+                        {% for group in groups %}
+                            {% if group != 'ALL' %}
+                                <option value="{{ group }}" {% if current_group == group %}selected{% endif %}>{{ group }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
                 </div>
                 <div class="nav flex-column nav-pills flex-grow-1">
                     <a class="nav-link active" data-bs-toggle="pill" href="#chatTab">
@@ -117,22 +135,53 @@
                 </div>
             </div>
 
+            <!-- Navbar mobile -->
+            <div class="mobile-nav d-md-none fixed-bottom">
+                <div class="nav nav-pills nav-fill">
+                    <a class="nav-link active" data-bs-toggle="pill" href="#chatTab">
+                        <i class="fas fa-comments"></i>
+                    </a>
+                    <a class="nav-link" data-bs-toggle="pill" href="#tasksTab">
+                        <i class="fas fa-tasks"></i>
+                    </a>
+                    <a class="nav-link" data-bs-toggle="pill" href="#usersTab">
+                        <i class="fas fa-users"></i>
+                    </a>
+                    <a class="nav-link" id="mobileLogoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
+                </div>
+            </div>
+
             <!-- Contenuto principale -->
-            <div class="col-md-9 col-lg-10 main-content">
+            <div class="col-12 col-md-9 col-lg-10 main-content">
+                <!-- Header mobile -->
+                <div class="mobile-header d-md-none">
+                    <div class="d-flex justify-content-between align-items-center p-2">
+                        <div class="user-info">
+                            <i class="fas fa-user"></i>
+                            <span id="mobileCurrentUser">{{ username if username else '' }}</span>
+                        </div>
+                        <div>
+                            <span id="mobileConnectionStatus" class="badge bg-success">Connesso</span>
+                        </div>
+                    </div>
+                    <div class="mobile-group-selector p-2">
+                        <select id="mobileGroupSelect" class="form-select form-select-sm">
+                            <option value="ALL">Cambia gruppo: Tutti</option>
+                            {% for group in groups %}
+                                {% if group != 'ALL' %}
+                                    <option value="{{ group }}" {% if current_group == group %}selected{% endif %}>Cambia gruppo: {{ group }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
                 <div class="tab-content h-100">
                     <!-- Tab Chat -->
                     <div class="tab-pane fade show active h-100" id="chatTab">
                         <div class="chat-container d-flex flex-column h-100">
-                            <div class="group-selector mb-2 pt-2">
-                                <select id="groupSelect" class="form-select">
-                                    <option value="ALL">Tutti</option>
-                                    {% for group in groups %}
-                                        {% if group != 'ALL' %}
-                                            <option value="{{ group }}">{{ group }}</option>
-                                        {% endif %}
-                                    {% endfor %}
-                                </select>
-                            </div>
                             <div id="messages" class="messages flex-grow-1"></div>
                             <div class="message-input p-2">
                                 <div class="input-group">
@@ -140,6 +189,16 @@
                                     <button id="sendMessage" class="btn btn-primary">
                                         <i class="fas fa-paper-plane"></i>
                                     </button>
+                                </div>
+                                <div class="message-destination mt-2">
+                                    <select id="destinationSelect" class="form-select form-select-sm">
+                                        <option value="ALL">Invia a: Tutti</option>
+                                        {% for group in groups %}
+                                            {% if group != 'ALL' %}
+                                                <option value="{{ group }}">Invia a: {{ group }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -180,8 +239,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Variabili globali
-        let currentUser = "{{ username if username else '' }}";
-        let connected = {{ 'true' if logged_in else 'false' }};
+        let currentUser = initialUsername;
+        let connected = initialIsLoggedIn;
         let currentGroup = "ALL";
         let pollingInterval = null;
         let authModal = null;
@@ -192,10 +251,10 @@
             authModal = new bootstrap.Modal(document.getElementById('authModal'));
             
             // Mostra o nascondi l'interfaccia in base allo stato di login
-            if ({{ 'true' if logged_in else 'false' }}) {
+            if (initialIsLoggedIn) {
                 document.getElementById('appContainer').classList.remove('d-none');
-                currentUser = "{{ username if username else '' }}";
                 document.getElementById('currentUser').textContent = currentUser;
+                document.getElementById('mobileCurrentUser').textContent = currentUser;
                 startPolling();
             } else {
                 authModal.show();
@@ -213,8 +272,11 @@
             // Form di registrazione
             document.getElementById('registerForm').addEventListener('submit', handleRegister);
             
-            // Logout
+            // Logout (desktop)
             document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            
+            // Logout (mobile)
+            document.getElementById('mobileLogoutBtn').addEventListener('click', handleLogout);
             
             // Invio messaggi
             document.getElementById('sendMessage').addEventListener('click', sendMessage);
@@ -225,18 +287,57 @@
                 }
             });
             
-            // Gestione cambio gruppo per i messaggi
-            document.getElementById('groupSelect').addEventListener('change', function(e) {
-                currentGroup = e.target.value;
-                updateMessagesDisplay();
-            });
+            // Gestione cambio gruppo per i messaggi (desktop)
+            document.getElementById('desktopGroupSelect').addEventListener('change', handleGroupChange);
+            
+            // Gestione cambio gruppo per i messaggi (mobile)
+            document.getElementById('mobileGroupSelect').addEventListener('change', handleGroupChange);
+            
+            // Inizializza il selettore di destinazione
+            document.getElementById('destinationSelect').value = currentGroup;
             
             // Gestione task
             document.getElementById('createTaskBtn').addEventListener('click', function() {
+                populateTaskGroupSelect();
                 new bootstrap.Modal(document.getElementById('taskModal')).show();
             });
             document.getElementById('taskForm').addEventListener('submit', createTask);
             document.getElementById('taskFilterSelect').addEventListener('change', updateTasksDisplay);
+        }
+        
+        // Popolamento select dei gruppi per i task
+        function populateTaskGroupSelect() {
+            const select = document.getElementById('taskGroupInput');
+            // Mantieni il valore selezionato
+            const currentValue = select.value;
+            
+            // Ottieni i gruppi attualmente disponibili
+            fetch('/groups')
+                .then(response => response.json())
+                .then(groups => {
+                    // Pulisci le opzioni tranne ALL
+                    while (select.options.length > 1) {
+                        select.remove(1);
+                    }
+                    
+                    // Aggiungi i gruppi
+                    groups.forEach(group => {
+                        if (group !== 'ALL') {
+                            const option = document.createElement('option');
+                            option.value = group;
+                            option.textContent = group;
+                            select.appendChild(option);
+                        }
+                    });
+                    
+                    // Ripristina il valore selezionato se ancora valido
+                    if (groups.includes(currentValue)) {
+                        select.value = currentValue;
+                    }
+                })
+                .catch(error => {
+                    console.error('Errore nel recupero dei gruppi:', error);
+                });
         }
         
         // Gestione login
@@ -260,6 +361,7 @@
                     // Imposta i dati dell'utente
                     currentUser = formData.get('username');
                     document.getElementById('currentUser').textContent = currentUser;
+                    document.getElementById('mobileCurrentUser').textContent = currentUser;
                     
                     // Nascondi il modal e mostra l'app
                     authModal.hide();
@@ -309,6 +411,7 @@
                     // Imposta i dati dell'utente
                     currentUser = formData.get('username');
                     document.getElementById('currentUser').textContent = currentUser;
+                    document.getElementById('mobileCurrentUser').textContent = currentUser;
                     
                     // Nascondi il modal e mostra l'app
                     authModal.hide();
@@ -373,13 +476,16 @@
             
             if (!message) return;
             
+            // Usa il selettore di destinazione invece di currentGroup
+            const destination = document.getElementById('destinationSelect').value;
+            
             try {
                 const response = await fetch('/send_message', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         type: 'group_message',
-                        group: currentGroup,
+                        group: destination,
                         message: message
                     })
                 });
@@ -485,26 +591,32 @@
                 updateTasks(tasks);
                 
                 // Aggiorna le select dei gruppi se necessario
-                if (groups && Array.isArray(groups)) {
+                if (groups && Array.isArray(groups) && groups.length > 1) {
                     updateGroupSelects(groups);
                 }
                 
                 // Aggiorna lo stato della connessione
                 document.getElementById('connectionStatus').className = 'badge bg-success';
                 document.getElementById('connectionStatus').textContent = 'Connesso';
+                document.getElementById('mobileConnectionStatus').className = 'badge bg-success';
+                document.getElementById('mobileConnectionStatus').textContent = 'Connesso';
             } catch (error) {
                 console.error('Errore durante il polling:', error);
                 document.getElementById('connectionStatus').className = 'badge bg-danger';
                 document.getElementById('connectionStatus').textContent = 'Disconnesso';
+                document.getElementById('mobileConnectionStatus').className = 'badge bg-danger';
+                document.getElementById('mobileConnectionStatus').textContent = 'Disconnesso';
             }
         }
         
         // Aggiorna le select dei gruppi disponibili
         function updateGroupSelects(groups) {
             const selects = [
-                document.getElementById('groupSelect'),
+                document.getElementById('desktopGroupSelect'),
+                document.getElementById('mobileGroupSelect'),
                 document.getElementById('taskGroupInput'),
-                document.getElementById('taskFilterSelect')
+                document.getElementById('taskFilterSelect'),
+                document.getElementById('destinationSelect')
             ];
             
             selects.forEach(select => {
@@ -526,7 +638,16 @@
                     if (group !== 'ALL') {
                         const option = document.createElement('option');
                         option.value = group;
-                        option.textContent = group;
+                        
+                        // Adatta il testo in base al tipo di selettore
+                        if (select.id === 'destinationSelect') {
+                            option.textContent = `Invia a: ${group}`;
+                        } else if (select.id === 'mobileGroupSelect') {
+                            option.textContent = `Cambia gruppo: ${group}`;
+                        } else {
+                            option.textContent = group;
+                        }
+                        
                         select.appendChild(option);
                     }
                 });
@@ -688,6 +809,54 @@
                     container.appendChild(taskDiv);
                 }
             });
+        }
+        
+        // Funzione unificata per gestire il cambio di gruppo
+        function handleGroupChange(e) {
+            const selectedGroup = e.target.value;
+            
+            // Aggiorna tutti i selettori di gruppo
+            const groupSelectors = [
+                document.getElementById('desktopGroupSelect'),
+                document.getElementById('mobileGroupSelect')
+            ];
+            
+            groupSelectors.forEach(selector => {
+                if (selector && selector !== e.target) {
+                    selector.value = selectedGroup;
+                }
+            });
+            
+            // Cambia il gruppo corrente per la visualizzazione
+            currentGroup = selectedGroup;
+            updateMessagesDisplay();
+            
+            // Aggiorna anche il selettore di destinazione con lo stesso gruppo
+            document.getElementById('destinationSelect').value = selectedGroup;
+            
+            // Invia richiesta di entrata nel gruppo se non è ALL
+            if (selectedGroup !== 'ALL') {
+                fetch('/send_message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'join_group',
+                        group: selectedGroup
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast(`Sei entrato nel gruppo ${selectedGroup}`, 'success');
+                    } else {
+                        showToast(`Errore nell'entrare nel gruppo ${selectedGroup}`, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Errore durante l\'ingresso nel gruppo:', error);
+                    showToast('Errore di connessione', 'danger');
+                });
+            }
         }
         
         // Funzione per mostrare i toast

@@ -115,16 +115,47 @@ class WebClient:
             self.messages.append(data)
         elif msg_type == 'user_list':
             self.users = data.get('users', {})
+            # Estrai informazioni sui gruppi dalla lista utenti
+            unique_groups = set(['ALL'])
+            for username, user_info in self.users.items():
+                if 'group' in user_info and user_info['group'] != 'ALL':
+                    unique_groups.add(user_info['group'])
+            self.groups = list(unique_groups)
         elif msg_type == 'task_list':
             self.tasks = data.get('tasks', [])
+            # Estrai informazioni sui gruppi dalla lista task
+            if not hasattr(self, 'groups'):
+                self.groups = ['ALL']
+            task_groups = set(self.groups)
+            for task in self.tasks:
+                if 'group' in task and task['group'] != 'ALL':
+                    task_groups.add(task['group'])
+            self.groups = list(task_groups)
         elif msg_type == 'historical_messages':
             for group, msgs in data.get('messages', {}).items():
+                # Aggiungi ogni gruppo trovato nei messaggi storici
+                if group != 'ALL' and (not hasattr(self, 'groups') or group not in self.groups):
+                    if not hasattr(self, 'groups'):
+                        self.groups = ['ALL', group]
+                    else:
+                        self.groups.append(group)
                 for msg in msgs:
                     self.messages.append(msg)
         elif msg_type == 'connection_accepted':
             # Memorizza i gruppi disponibili
             if 'groups' in data:
                 self.groups = data.get('groups', ['ALL'])
+                print(f"DEBUG: Gruppi ricevuti dal server: {self.groups}")
+        elif msg_type == 'join_group_success':
+            # Aggiorna il gruppo corrente dell'utente
+            if 'group' in data:
+                self.current_group = data.get('group')
+                # Assicurati che il gruppo sia nella lista dei gruppi
+                if not hasattr(self, 'groups') or data.get('group') not in self.groups:
+                    if not hasattr(self, 'groups'):
+                        self.groups = ['ALL', data.get('group')]
+                    else:
+                        self.groups.append(data.get('group'))
 
     def send_message(self, message):
         if self.socket and self.running:
@@ -171,10 +202,18 @@ def index():
         # L'utente è già loggato, controlla se il client esiste
         if session['username'] in clients and clients[session['username']].running:
             client = clients[session['username']]
+            groups = getattr(client, 'groups', ['ALL'])
+            # Assicuriamoci che i gruppi siano una lista e non vuoti
+            if not groups or not isinstance(groups, list):
+                groups = ['ALL']
+            # Otteniamo anche il gruppo corrente se disponibile
+            current_group = getattr(client, 'current_group', 'ALL')
+            print(f"DEBUG: Rendering index con gruppi: {groups}, gruppo corrente: {current_group}")
             return render_template('index.html', 
                                   logged_in=True, 
                                   username=session['username'],
-                                  groups=getattr(client, 'groups', ['ALL']))
+                                  groups=groups,
+                                  current_group=current_group)
     
     # Se l'utente non è loggato o il client non esiste/non è connesso
     return render_template('index.html', logged_in=False)
@@ -201,7 +240,16 @@ def login():
         
         # Restituisci anche i gruppi disponibili
         client = clients[username]
+        
+        # Se il server non ha inviato gruppi, richiedi informazioni utenti per estrarre i gruppi
+        if not hasattr(client, 'groups') or not client.groups or len(client.groups) <= 1:
+            client.send_message({'type': 'request_users'})
+            client.send_message({'type': 'request_tasks'})
+            # Imposta un gruppo predefinito per evitare errori
+            client.groups = ['ALL']
+        
         groups = getattr(client, 'groups', ['ALL'])
+        print(f"DEBUG: Gruppi disponibili per {username}: {groups}")
         
         return jsonify({'success': True, 'groups': groups})
     else:
@@ -287,7 +335,22 @@ def get_groups():
     username = session.get('username')
     if username and username in clients:
         client = clients[username]
+        
+        # Se non ci sono gruppi o c'è solo ALL, richiedi le informazioni
+        if not hasattr(client, 'groups') or not client.groups or len(client.groups) <= 1:
+            client.send_message({'type': 'request_users'})
+            client.send_message({'type': 'request_tasks'})
+            
         groups = getattr(client, 'groups', ['ALL'])
+        
+        # Assicuriamoci che groups sia effettivamente una lista
+        if not isinstance(groups, list):
+            groups = ['ALL']
+        elif not groups:
+            groups = ['ALL']
+        
+        # Stampa di debug per verificare cosa stiamo inviando
+        print(f"DEBUG: Inviando gruppi: {groups}")
         return jsonify(groups)
     return jsonify(['ALL'])
 

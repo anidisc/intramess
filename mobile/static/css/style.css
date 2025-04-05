@@ -34,6 +34,24 @@ body {
     margin-bottom: 1rem;
 }
 
+.current-group {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    padding: 8px;
+    font-size: 0.9rem;
+}
+
+.current-group .form-select {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.current-group .form-select:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
 .sidebar .nav-link {
     color: rgba(255, 255, 255, 0.8);
     border-radius: 0;
@@ -59,6 +77,64 @@ body {
 .connection-status {
     margin-top: auto;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Navbar mobile */
+.mobile-nav {
+    background-color: var(--dark-color);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    padding: 10px 0;
+    z-index: 1000;
+}
+
+.mobile-nav .nav-link {
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    padding: 10px 0;
+    border-radius: 0;
+}
+
+.mobile-nav .nav-link i {
+    font-size: 1.2rem;
+}
+
+.mobile-nav .nav-link.active {
+    color: white;
+    background-color: var(--primary-color);
+}
+
+/* Header mobile */
+.mobile-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-header .user-info {
+    font-size: 1rem;
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+.mobile-header .user-info i {
+    margin-right: 5px;
+}
+
+.mobile-group-selector {
+    margin-top: 5px;
+}
+
+.mobile-group-selector .form-select {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-size: 0.9rem;
+}
+
+.mobile-group-selector .form-select:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* Contenuto principale */
@@ -129,11 +205,22 @@ body {
 .message-input {
     margin-top: 10px;
     display: flex;
+    flex-direction: column;
 }
 
 .message-input .form-control {
     border-radius: 20px;
     padding-left: 15px;
+}
+
+.message-destination {
+    margin-top: 5px;
+}
+
+.message-destination .form-select {
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: #666;
 }
 
 /* Task */
@@ -231,7 +318,7 @@ body {
 /* Toast */
 .toast-container {
     position: fixed;
-    bottom: 20px;
+    bottom: 80px;
     right: 20px;
     z-index: 2000;
 }
@@ -243,51 +330,49 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .sidebar {
-        position: fixed;
-        width: 100%;
-        height: auto;
-        bottom: 0;
-        max-height: 60px;
-        overflow: hidden;
-        transition: max-height 0.3s ease;
-    }
-    
-    .sidebar.expanded {
-        max-height: 300px;
-        overflow-y: auto;
-    }
-    
-    .sidebar .nav {
-        flex-direction: row;
-        justify-content: space-around;
-    }
-    
-    .sidebar .nav-link {
-        padding: 10px;
-        text-align: center;
-    }
-    
-    .sidebar .nav-link i {
-        margin-right: 0;
-        font-size: 1.2rem;
-    }
-    
-    .sidebar .nav-link span {
-        display: none;
-    }
-    
-    .user-info {
-        display: none;
-    }
-    
-    .connection-status {
-        display: none;
+    body {
+        padding-bottom: 60px;
     }
     
     .main-content {
-        margin-bottom: 60px;
-        height: calc(100vh - 60px);
+        height: calc(100vh - 110px);
+        padding-top: 50px;
+    }
+    
+    .mobile-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 990;
+    }
+    
+    .mobile-nav {
+        height: 60px;
+    }
+
+    .nav-pills .nav-link {
+        margin: 0;
+        padding: 10px;
+    }
+    
+    .mobile-nav .nav-link.active {
+        border-radius: 0;
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .toast-container {
+        bottom: 70px;
+    }
+    
+    .chat-container,
+    .task-container,
+    .users-container {
+        height: 100%;
+    }
+    
+    .message-input {
+        padding-bottom: 10px;
     }
 }
 
@@ -303,7 +388,7 @@ body {
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -334,31 +419,6 @@ body {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-}
-
-/* Toast Notifications */
-.toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1000;
-}
-
-.toast {
-    background-color: #fff;
-    border-radius: 0.25rem;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    margin-bottom: 0.5rem;
-    min-width: 250px;
-}
-
-.toast-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.toast-body {
-    padding: 0.75rem;
 }
 
 /* Form Controls */
