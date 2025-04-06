@@ -6,6 +6,8 @@ import threading
 import os
 from datetime import timedelta
 from database import Database
+import time
+import random
 
 app = Flask(__name__)
 
@@ -109,9 +111,16 @@ class WebClient:
     def handle_message(self, data):
         msg_type = data.get('type')
         
+        # Generiamo un ID per ogni messaggio ricevuto per la gestione frontend
+        if 'id' not in data:
+            data['id'] = f"server_{msg_type}_{data.get('from', 'unknown')}_{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
+            
+        print(f"DEBUG (WebClient {self.username}): Messaggio ricevuto: {data}")
+        
         if msg_type == 'message':
             self.messages.append(data)
         elif msg_type == 'private':
+            # Assicuriamoci che i messaggi privati ricevuti vengano aggiunti alla lista
             self.messages.append(data)
         elif msg_type == 'user_list':
             self.users = data.get('users', {})
@@ -156,6 +165,7 @@ class WebClient:
                         self.groups = ['ALL', data.get('group')]
                     else:
                         self.groups.append(data.get('group'))
+        # Aggiungere altri tipi di messaggi se necessario (es. task_update, group_deleted)
 
     def send_message(self, message):
         if self.socket and self.running:
@@ -209,6 +219,22 @@ def index():
             # Otteniamo anche il gruppo corrente se disponibile
             current_group = getattr(client, 'current_group', 'ALL')
             print(f"DEBUG: Rendering index con gruppi: {groups}, gruppo corrente: {current_group}")
+            
+            # Aggiungiamo un messaggio di sistema per informare l'utente del suo gruppo attuale
+            if not hasattr(client, 'messages'):
+                client.messages = []
+            
+            # Aggiungiamo un messaggio di sistema solo se è un nuovo login
+            if 'last_login_at' not in session:
+                group_message = {
+                    'type': 'system',
+                    'message': f'Benvenuto! Sei attualmente nel gruppo {current_group}',
+                    'timestamp': int(time.time() * 1000),
+                    'id': f'login_{session["username"]}_{int(time.time() * 1000)}'
+                }
+                client.messages.append(group_message)
+                session['last_login_at'] = int(time.time())
+            
             return render_template('index.html', 
                                   logged_in=True, 
                                   username=session['username'],
@@ -313,7 +339,40 @@ def logout():
 def get_messages():
     username = session.get('username')
     if username and username in clients:
-        return jsonify(clients[username].messages)
+        client = clients[username]
+        
+        # Se non ci sono messaggi, richiedi gli storici
+        if not hasattr(client, 'messages') or not client.messages:
+            client.send_message({'type': 'request_historical_messages'})
+            time.sleep(0.5)  # Attendi un attimo per ricevere i messaggi
+        
+        # Assicurati che ogni messaggio abbia un ID univoco
+        messages = []
+        for i, msg in enumerate(getattr(client, 'messages', [])):
+            # Crea una copia del messaggio per non modificare l'originale
+            msg_copy = dict(msg)
+            
+            # Aggiungi l'ID se non presente (usa un hash dei dati o l'indice + timestamp)
+            if 'id' not in msg_copy:
+                # Crea un ID combinando il tipo, mittente, destinatario, gruppo e testo
+                # per evitare duplicati nell'interfaccia
+                msg_parts = [
+                    msg_copy.get('type', 'unknown'),
+                    msg_copy.get('from', 'unknown'),
+                    msg_copy.get('to', ''),
+                    msg_copy.get('group', ''),
+                    msg_copy.get('message', ''),
+                    str(i)  # Aggiungi l'indice per differenziare messaggi identici
+                ]
+                msg_copy['id'] = '_'.join(filter(None, msg_parts))
+            
+            # Aggiungi il timestamp se non presente
+            if 'timestamp' not in msg_copy:
+                msg_copy['timestamp'] = int(time.time() * 1000)
+            
+            messages.append(msg_copy)
+        
+        return jsonify(messages)
     return jsonify([])
 
 @app.route('/users')
@@ -356,12 +415,66 @@ def get_groups():
 
 @app.route('/send_message', methods=['POST'])
 def send_message():
-    username = session.get('username')
-    if username and username in clients:
-        data = request.get_json()
-        if clients[username].send_message(data):
-            return jsonify({'success': True})
-    return jsonify({'success': False})
+    if 'username' not in session or session['username'] not in clients:
+        return jsonify({'success': False, 'message': 'Non autenticato'})
+    
+    data = request.json
+    client = clients[session['username']]
+    
+    # Gestione dei vari tipi di messaggi
+    if data.get('type') == 'group_message':
+        # Invio messaggio di gruppo
+        client.send_message({
+            'type': 'group_message',
+            'group': data.get('group', 'ALL'),
+            'message': data.get('message', '')
+        })
+        return jsonify({'success': True})
+    
+    elif data.get('type') == 'private_message':
+        # Invio messaggio privato
+        client.send_message({
+            'type': 'private_message',
+            'to': data.get('to', ''),
+            'message': data.get('message', '')
+        })
+        return jsonify({'success': True})
+    
+    elif data.get('type') == 'join_group':
+        # Entrata in un gruppo
+        client.send_message({
+            'type': 'join_group',
+            'group': data.get('group', 'ALL')
+        })
+        return jsonify({'success': True})
+    
+    elif data.get('type') == 'create_task':
+        # Creazione task
+        client.send_message({
+            'type': 'create_task',
+            'group': data.get('group', 'ALL'),
+            'text': data.get('text', '')
+        })
+        return jsonify({'success': True})
+    
+    elif data.get('type') == 'update_task':
+        # Aggiornamento task
+        client.send_message({
+            'type': 'update_task',
+            'task_id': data.get('task_id', ''),
+            'completed': data.get('completed', False)
+        })
+        return jsonify({'success': True})
+    
+    elif data.get('type') == 'delete_task':
+        # Eliminazione task
+        client.send_message({
+            'type': 'delete_task',
+            'task_id': data.get('task_id', '')
+        })
+        return jsonify({'success': True})
+    
+    return jsonify({'success': False, 'message': 'Tipo di messaggio non supportato'})
 
 @app.route('/check_session')
 def check_session_status():

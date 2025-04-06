@@ -165,6 +165,9 @@ body {
     border-radius: 8px;
     display: flex;
     flex-direction: column;
+    will-change: transform;
+    transform: translateZ(0);
+    -webkit-font-smoothing: subpixel-antialiased;
 }
 
 .message {
@@ -175,6 +178,9 @@ body {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     position: relative;
     word-break: break-word;
+    opacity: 1;
+    transform: translateY(0);
+    transition: none;
 }
 
 .message.sent {
@@ -200,6 +206,17 @@ body {
     font-style: italic;
     max-width: 90%;
     text-align: center;
+}
+
+.message.other-group {
+    border-left: 3px solid var(--primary-color);
+    background-color: #f0f0f0 !important;
+    font-style: italic;
+}
+
+.message.sent.other-group {
+    border-left: 3px solid var(--success-color);
+    background-color: #e3fae3 !important;
 }
 
 .message-input {
@@ -249,6 +266,7 @@ body {
     border-radius: 8px;
     padding: 10px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    align-items: center;
 }
 
 .task-item.completed .task-text {
@@ -382,8 +400,14 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-.message {
+/* Applicare l'animazione solo ai nuovi messaggi */
+.message.new-message {
     animation: fadeIn 0.3s ease;
+}
+
+/* Riduzione frequenza di polling */
+.polling-indicator {
+    display: none;
 }
 
 /* Custom Scrollbar */
@@ -452,4 +476,181 @@ body {
     background-color: #f8f9fa;
     border-top: 1px solid #dee2e6;
     border-radius: 0 0 0.5rem 0.5rem;
+}
+
+#mobileGroupIndicator {
+    background-color: rgba(0, 0, 0, 0.2);
+    font-size: 0.9rem;
+    padding: 5px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#mobileGroupIndicator .badge {
+    font-size: 0.85rem;
+    padding: 5px 10px;
+    margin-left: 5px;
+}
+
+/* Mobile */
+.mobile-group-selector {
+    margin-top: 5px;
+}
+
+/* Filtro task attivo */
+.active-filter {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.active-filter .btn-close {
+    font-size: 0.7rem;
+    padding: 0.25rem;
+    margin-left: 0.5rem;
+}
+
+.filter-control {
+    margin-bottom: 0.5rem;
+}
+
+.filter-control label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #666;
+}
+
+/* Migliorare la leggibilità del selettore di gruppo nello spazio principale */
+#destinationSelect {
+    background-color: #f8f9fa;
+    color: #333;
+    border: 1px solid #ccc;
+}
+
+#destinationSelect:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(74, 105, 189, 0.25);
+}
+
+/* Stile opzioni del selettore */
+select.form-select option {
+    background-color: white;
+    color: #333;
+}
+
+/* Stile per il bottone di eliminazione task */
+.delete-task-btn {
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    align-self: center;
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+
+.delete-task-btn:hover {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+/* Stili per il selettore privato e i messaggi privati */
+.message-type-indicator {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.message-type-indicator:hover {
+    opacity: 0.8;
+}
+
+.badge.bg-purple {
+    background-color: #9b59b6 !important;
+}
+
+.dropdown-menu .dropdown-item {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+}
+
+.dropdown-menu .dropdown-item i {
+    color: var(--primary-color);
+}
+
+.dropdown-menu .dropdown-header {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #666;
+}
+
+/* Migliora lo stile dei messaggi privati */
+.message.private {
+    background-color: #e9d8fd;
+    border-left: 3px solid #9b59b6;
+    font-style: normal;
+    color: #4a235a;
+}
+
+.message.private.sent {
+    background-color: #d5b8ff;
+    border-right: 3px solid #9b59b6;
+    border-left: none;
+}
+
+/* Effetto hover sul badge per indicare che è cliccabile */
+#messageTypeIndicator .badge {
+    transition: all 0.2s ease;
+}
+
+#messageTypeIndicator:hover .badge {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transform: translateY(-1px);
+}
+
+/* Miglioramenti per i messaggi privati */
+.message.private-highlight {
+    margin: 10px 0;
+    border: 2px solid #9b59b6;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(155, 89, 182, 0.2);
+    background-color: #f8f0fd !important;
+    z-index: 2;
+    position: relative;
+}
+
+.message.private-highlight.sent {
+    background-color: #eee4f8 !important;
+}
+
+.private-title {
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+    color: #8e44ad;
+    font-weight: 500;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(155, 89, 182, 0.3);
+}
+
+.private-content {
+    font-size: 0.95rem;
+    padding-top: 3px;
+    color: #333;
+}
+
+/* Assicuriamoci che i messaggi privati abbiano sempre massima visibilità */
+.message.private-highlight:before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(to right, #9b59b6, #3498db);
+    border-radius: 3px 3px 0 0;
 } 

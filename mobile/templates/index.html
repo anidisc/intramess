@@ -109,9 +109,9 @@
                     </button>
                 </div>
                 <div class="current-group p-2 text-center mb-3">
-                    <span class="d-block mb-1">Gruppo attuale:</span>
+                    <span class="d-block mb-1">Gruppo attuale: <span class="badge bg-primary">{{ current_group }}</span></span>
                     <select id="desktopGroupSelect" class="form-select form-select-sm">
-                        <option value="ALL">Tutti</option>
+                        <option value="ALL" {% if current_group == 'ALL' %}selected{% endif %}>Tutti</option>
                         {% for group in groups %}
                             {% if group != 'ALL' %}
                                 <option value="{{ group }}" {% if current_group == group %}selected{% endif %}>{{ group }}</option>
@@ -166,9 +166,12 @@
                             <span id="mobileConnectionStatus" class="badge bg-success">Connesso</span>
                         </div>
                     </div>
+                    <div id="mobileGroupIndicator" class="text-center p-1 bg-dark text-white">
+                        <strong>Gruppo:</strong> <span class="badge bg-primary">{{ current_group }}</span>
+                    </div>
                     <div class="mobile-group-selector p-2">
                         <select id="mobileGroupSelect" class="form-select form-select-sm">
-                            <option value="ALL">Cambia gruppo: Tutti</option>
+                            <option value="ALL" {% if current_group == 'ALL' %}selected{% endif %}>Cambia gruppo: Tutti</option>
                             {% for group in groups %}
                                 {% if group != 'ALL' %}
                                     <option value="{{ group }}" {% if current_group == group %}selected{% endif %}>Cambia gruppo: {{ group }}</option>
@@ -186,19 +189,33 @@
                             <div class="message-input p-2">
                                 <div class="input-group">
                                     <input type="text" id="messageInput" class="form-control" placeholder="Scrivi un messaggio...">
+                                    <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-user"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" id="privateMessageDropdown">
+                                        <li><h6 class="dropdown-header">Messaggi privati</h6></li>
+                                        <div id="privateUsersList">
+                                            <li><span class="dropdown-item text-muted">Nessun utente online</span></li>
+                                        </div>
+                                    </ul>
                                     <button id="sendMessage" class="btn btn-primary">
                                         <i class="fas fa-paper-plane"></i>
                                     </button>
                                 </div>
-                                <div class="message-destination mt-2">
-                                    <select id="destinationSelect" class="form-select form-select-sm">
-                                        <option value="ALL">Invia a: Tutti</option>
-                                        {% for group in groups %}
-                                            {% if group != 'ALL' %}
-                                                <option value="{{ group }}">Invia a: {{ group }}</option>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </select>
+                                <div class="d-flex align-items-center mt-2">
+                                    <div class="message-type-indicator me-2" id="messageTypeIndicator">
+                                        <span class="badge bg-primary">Messaggio di gruppo</span>
+                                    </div>
+                                    <div class="message-destination flex-grow-1">
+                                        <select id="destinationSelect" class="form-select form-select-sm">
+                                            <option value="ALL">Invia a: Tutti</option>
+                                            {% for group in groups %}
+                                                {% if group != 'ALL' %}
+                                                    <option value="{{ group }}">Invia a: {{ group }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -211,14 +228,21 @@
                                 <button id="createTaskBtn" class="btn btn-success mb-2">
                                     <i class="fas fa-plus"></i> Nuovo Task
                                 </button>
-                                <select id="taskFilterSelect" class="form-select">
-                                    <option value="ALL">Tutti i gruppi</option>
-                                    {% for group in groups %}
-                                        {% if group != 'ALL' %}
-                                            <option value="{{ group }}">{{ group }}</option>
-                                        {% endif %}
-                                    {% endfor %}
-                                </select>
+                                <div class="filter-control">
+                                    <label for="taskFilterSelect" class="form-label mb-1">Filtra per gruppo:</label>
+                                    <select id="taskFilterSelect" class="form-select">
+                                        <option value="ALL">Tutti i gruppi</option>
+                                        {% for group in groups %}
+                                            {% if group != 'ALL' %}
+                                                <option value="{{ group }}">{{ group }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div id="activeTaskFilter" class="active-filter mt-2 alert alert-info" style="display: none;">
+                                    Filtro attivo: <span id="activeFilterText">Tutti i gruppi</span>
+                                    <button type="button" class="btn-close float-end" aria-label="Close" id="clearTaskFilter"></button>
+                                </div>
                             </div>
                             <div id="tasksList" class="task-list flex-grow-1"></div>
                         </div>
@@ -303,6 +327,19 @@
             });
             document.getElementById('taskForm').addEventListener('submit', createTask);
             document.getElementById('taskFilterSelect').addEventListener('change', updateTasksDisplay);
+            
+            // Gestione cancellazione filtro task
+            document.getElementById('clearTaskFilter').addEventListener('click', function() {
+                document.getElementById('taskFilterSelect').value = 'ALL';
+                updateTasksDisplay();
+            });
+            
+            // Evento al click sul badge tipo messaggio per ripristinare la modalità gruppo
+            document.getElementById('messageTypeIndicator').addEventListener('click', function() {
+                if (privateMessageRecipient) {
+                    resetMessageMode();
+                }
+            });
         }
         
         // Popolamento select dei gruppi per i task
@@ -469,6 +506,78 @@
             }
         }
         
+        // Funzione unificata per gestire il cambio di gruppo
+        function handleGroupChange(e) {
+            const selectedGroup = e.target.value;
+            
+            // Aggiorna tutti i selettori di gruppo
+            const groupSelectors = [
+                document.getElementById('desktopGroupSelect'),
+                document.getElementById('mobileGroupSelect')
+            ];
+            
+            groupSelectors.forEach(selector => {
+                if (selector && selector !== e.target) {
+                    selector.value = selectedGroup;
+                }
+            });
+            
+            // Aggiorna il titolo della pagina per mostrare il gruppo corrente
+            document.title = `IntraMess - ${selectedGroup}`;
+            
+            // Aggiungi un'indicazione visiva del gruppo corrente
+            const groupIndicatorDesktop = document.querySelector('.sidebar .current-group span.d-block');
+            const groupIndicatorMobile = document.createElement('div');
+            
+            if (groupIndicatorDesktop) {
+                groupIndicatorDesktop.innerHTML = `<strong>Gruppo attuale:</strong> <span class="badge bg-primary">${selectedGroup}</span>`;
+            }
+            
+            // Aggiungi indicatore anche nel mobile
+            const mobileHeader = document.querySelector('.mobile-header');
+            const existingIndicator = document.getElementById('mobileGroupIndicator');
+            
+            if (existingIndicator) {
+                existingIndicator.innerHTML = `<strong>Gruppo:</strong> <span class="badge bg-primary">${selectedGroup}</span>`;
+            } else if (mobileHeader) {
+                groupIndicatorMobile.id = 'mobileGroupIndicator';
+                groupIndicatorMobile.className = 'text-center p-1';
+                groupIndicatorMobile.innerHTML = `<strong>Gruppo:</strong> <span class="badge bg-primary">${selectedGroup}</span>`;
+                mobileHeader.appendChild(groupIndicatorMobile);
+            }
+            
+            // Cambia il gruppo corrente per la visualizzazione
+            currentGroup = selectedGroup;
+            updateMessagesDisplay();
+            
+            // Aggiorna anche il selettore di destinazione con lo stesso gruppo
+            document.getElementById('destinationSelect').value = selectedGroup;
+            
+            // Invia richiesta di entrata nel gruppo se non è ALL
+            if (selectedGroup !== 'ALL') {
+                fetch('/send_message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'join_group',
+                        group: selectedGroup
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast(`Sei entrato nel gruppo ${selectedGroup}`, 'success');
+                    } else {
+                        showToast(`Errore nell'entrare nel gruppo ${selectedGroup}`, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Errore durante l\'ingresso nel gruppo:', error);
+                    showToast('Errore di connessione', 'danger');
+                });
+            }
+        }
+        
         // Funzione per l'invio di messaggi
         async function sendMessage() {
             const input = document.getElementById('messageInput');
@@ -476,29 +585,165 @@
             
             if (!message) return;
             
-            // Usa il selettore di destinazione invece di currentGroup
-            const destination = document.getElementById('destinationSelect').value;
+            // Disabilitiamo l'input mentre inviamo per evitare invii multipli
+            input.disabled = true;
+            document.getElementById('sendMessage').disabled = true;
             
             try {
-                const response = await fetch('/send_message', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        type: 'group_message',
-                        group: destination,
-                        message: message
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    input.value = '';
+                // Verifica se siamo in modalità messaggio privato
+                if (privateMessageRecipient) {
+                    // Invia messaggio privato
+                    const response = await fetch('/send_message', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            type: 'private_message',
+                            to: privateMessageRecipient,
+                            message: message
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Mostra subito il messaggio privato nell'interfaccia
+                        const localMsgId = `local_pm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                        
+                        const localMsg = {
+                            type: 'private',
+                            from: currentUser,
+                            to: privateMessageRecipient,
+                            message: message,
+                            timestamp: Date.now(),
+                            id: localMsgId,
+                            _local: true // Marchiamo che è un messaggio locale
+                        };
+                        
+                        displayMessage(localMsg);
+                        
+                        // Salviamo il testo del messaggio per evitare duplicati dal server
+                        if (!window.sentLocalMessages) {
+                            window.sentLocalMessages = new Map();
+                        }
+                        // Memorizza messaggi con timestamp per migliore deduplicazione
+                        window.sentLocalMessages.set(message, Date.now());
+                        
+                        input.value = '';
+                    } else {
+                        showToast('Errore durante l\'invio del messaggio privato', 'danger');
+                    }
                 } else {
-                    showToast('Errore durante l\'invio del messaggio', 'danger');
+                    // Controllo se è un messaggio privato in formato @username
+                    const privateMessageRegex = /^@([a-zA-Z0-9_-]+)\s(.+)$/;
+                    const match = message.match(privateMessageRegex);
+                    
+                    if (match) {
+                        // È un messaggio privato in formato @username
+                        const recipient = match[1];
+                        const privateMessage = match[2];
+                        
+                        // Controlla che il destinatario esista
+                        if (!window.users || !window.users[recipient]) {
+                            showToast(`Utente "${recipient}" non trovato`, 'warning');
+                            input.disabled = false;
+                            document.getElementById('sendMessage').disabled = false;
+                            input.focus();
+                            return;
+                        }
+                        
+                        // Invia messaggio privato
+                        const response = await fetch('/send_message', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                type: 'private_message',
+                                to: recipient,
+                                message: privateMessage
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            // Mostra subito il messaggio privato nell'interfaccia
+                            const localMsgId = `local_pm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                            
+                            const localMsg = {
+                                type: 'private',
+                                from: currentUser,
+                                to: recipient,
+                                message: privateMessage,
+                                timestamp: Date.now(),
+                                id: localMsgId,
+                                _local: true // Marchiamo che è un messaggio locale
+                            };
+                            
+                            displayMessage(localMsg);
+                            
+                            // Salviamo il testo del messaggio per evitare duplicati dal server
+                            if (!window.sentLocalMessages) {
+                                window.sentLocalMessages = new Map();
+                            }
+                            // Memorizza messaggi con timestamp per migliore deduplicazione
+                            window.sentLocalMessages.set(privateMessage, Date.now());
+                            
+                            input.value = '';
+                        } else {
+                            showToast('Errore durante l\'invio del messaggio privato', 'danger');
+                        }
+                    } else {
+                        // Messaggio di gruppo normale
+                        const destination = document.getElementById('destinationSelect').value;
+                        
+                        const response = await fetch('/send_message', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                type: 'group_message',
+                                group: destination,
+                                message: message
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            // Mostra subito il messaggio nell'interfaccia
+                            const localMsgId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                            
+                            const localMsg = {
+                                type: 'message',
+                                from: currentUser,
+                                group: destination,
+                                message: message,
+                                timestamp: Date.now(),
+                                id: localMsgId,
+                                _local: true // Marchiamo che è un messaggio locale
+                            };
+                            
+                            displayMessage(localMsg);
+                            
+                            // Salviamo il testo del messaggio per evitare duplicati dal server
+                            if (!window.sentLocalMessages) {
+                                window.sentLocalMessages = new Map();
+                            }
+                            // Memorizza messaggi con timestamp per migliore deduplicazione
+                            window.sentLocalMessages.set(message, Date.now());
+                            
+                            input.value = '';
+                        } else {
+                            showToast('Errore durante l\'invio del messaggio', 'danger');
+                        }
+                    }
                 }
             } catch (error) {
                 showToast('Errore di connessione', 'danger');
+                console.error('Errore durante l\'invio del messaggio:', error);
+            } finally {
+                // Riabilitiamo l'input
+                input.disabled = false;
+                document.getElementById('sendMessage').disabled = false;
+                input.focus();
             }
         }
         
@@ -544,8 +789,8 @@
             // Esegui subito la prima volta
             pollData();
             
-            // Poi ogni secondo
-            pollingInterval = setInterval(pollData, 1000);
+            // Poi ogni 3 secondi invece di 1
+            pollingInterval = setInterval(pollData, 3000);
         }
         
         // Funzione per fermare il polling
@@ -659,56 +904,240 @@
             });
         }
         
-        // Aggiorna l'elenco messaggi
+        // Aggiorna l'elenco messaggi - Versione migliorata
         function updateMessages(messages) {
-            // Conserva i messaggi nell'array globale
-            window.allMessages = messages;
+            // Se non ci sono messaggi, non fare nulla
+            if (!messages || !messages.length) {
+                return;
+            }
             
-            // Aggiorna la visualizzazione
-            updateMessagesDisplay();
-        }
-        
-        // Aggiorna la visualizzazione dei messaggi in base al gruppo corrente
-        function updateMessagesDisplay() {
+            // Ottieni il contenitore dei messaggi
             const container = document.getElementById('messages');
-            container.innerHTML = '';
             
-            if (!window.allMessages || !Array.isArray(window.allMessages)) return;
+            // Identifica gli ID dei messaggi attualmente visibili nel DOM
+            const visibleMessageIds = new Set();
+            container.querySelectorAll('.message[data-id]').forEach(el => {
+                visibleMessageIds.add(el.getAttribute('data-id'));
+            });
             
-            window.allMessages.forEach(msg => {
-                // Controlla se il messaggio appartiene al gruppo corrente
-                if (currentGroup === 'ALL' || msg.group === currentGroup) {
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = 'message';
-                    
-                    if (msg.from === currentUser) {
-                        messageDiv.classList.add('sent');
-                    } else {
-                        messageDiv.classList.add('received');
+            // Processa i messaggi ricevuti dal server
+            let newMessagesAdded = false;
+            
+            messages.forEach(msg => {
+                // Crea un ID univoco per il messaggio
+                const msgId = createMessageId(msg);
+                
+                // Controlla se è un messaggio inviato localmente che sta ritornando dal server
+                if (msg.from === currentUser && window.sentLocalMessages && window.sentLocalMessages.has(msg.message)) {
+                    // Evita di mostrare di nuovo messaggi che abbiamo già mostrato localmente
+                    // Rimuoviamo dalla mappa solo se sono passati più di 10 secondi
+                    const timestamp = window.sentLocalMessages.get(msg.message);
+                    if (Date.now() - timestamp > 10000) {
+                        window.sentLocalMessages.delete(msg.message);
                     }
-                    
-                    if (msg.type === 'private') {
-                        messageDiv.classList.add('private');
-                        messageDiv.textContent = `PM ${msg.from === currentUser ? 'a ' + msg.to : 'da ' + msg.from}: ${msg.message}`;
-                    } else if (msg.type === 'message') {
-                        messageDiv.textContent = `${msg.from}: ${msg.message}`;
-                    } else if (msg.type === 'system') {
-                        messageDiv.classList.add('system');
-                        messageDiv.textContent = msg.message;
-                    }
-                    
-                    container.appendChild(messageDiv);
+                    return; // Salta questo messaggio
+                }
+                
+                // Controlla se il messaggio dovrebbe essere mostrato e non è già visibile
+                if (shouldShowMessage(msg) && !visibleMessageIds.has(msgId)) {
+                    displayMessage(msg);
+                    newMessagesAdded = true;
                 }
             });
             
-            // Scroll to bottom
-            container.scrollTop = container.scrollHeight;
+            // Scrolla solo se sono stati aggiunti nuovi messaggi
+            if (newMessagesAdded) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+        
+        // Crea un ID veramente univoco per un messaggio
+        function createMessageId(msg) {
+            // Se il server fornisce un ID, lo usiamo
+            if (msg.id) {
+                return msg.id;
+            }
+            
+            // Altrimenti creiamo un hash dai dati del messaggio
+            let idParts = [
+                msg.type || 'unknown',
+                msg.from || 'unknown',
+                msg.to || 'none',
+                msg.group || 'none',
+                msg.message || '',
+                msg.timestamp || Date.now()
+            ];
+            
+            return idParts.join('_');
+        }
+        
+        // Visualizza un singolo messaggio
+        function displayMessage(msg) {
+            const container = document.getElementById('messages');
+            const msgId = createMessageId(msg);
+            
+            // Controlla se esiste già un messaggio con lo stesso ID
+            if (container.querySelector(`.message[data-id="${CSS.escape(msgId)}"]`)) {
+                return; // Non duplicare i messaggi
+            }
+            
+            // Crea l'elemento HTML per il messaggio
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message new-message';
+            messageDiv.setAttribute('data-id', msgId);
+            
+            // Se è un messaggio locale, aggiungi un attributo per identificarlo
+            if (msg._local) {
+                messageDiv.setAttribute('data-local', 'true');
+            }
+            
+            // Se è un messaggio privato, aggiungi classe speciale
+            if (msg.type === 'private') {
+                messageDiv.classList.add('private');
+                messageDiv.classList.add('private-highlight');
+            }
+            
+            // Stile in base al mittente
+            if (msg.from === currentUser) {
+                messageDiv.classList.add('sent');
+            } else {
+                messageDiv.classList.add('received');
+            }
+            
+            // Contenuto in base al tipo di messaggio
+            if (msg.type === 'private') {
+                // Formatta in modo più visibile i messaggi privati
+                const isFromMe = msg.from === currentUser;
+                const otherPerson = isFromMe ? msg.to : msg.from;
+                
+                // Crea elemento per il titolo del messaggio privato
+                const titleSpan = document.createElement('div');
+                titleSpan.className = 'private-title';
+                titleSpan.innerHTML = `<i class="fas fa-lock me-1"></i> Chat privata con <strong>${otherPerson || 'sconosciuto'}</strong>`;
+                messageDiv.appendChild(titleSpan);
+                
+                // Crea elemento per il contenuto del messaggio
+                const contentSpan = document.createElement('div');
+                contentSpan.className = 'private-content';
+                contentSpan.textContent = `${isFromMe ? 'Tu' : (msg.from || 'sconosciuto')}: ${msg.message}`;
+                messageDiv.appendChild(contentSpan);
+            } else if (msg.type === 'message') {
+                // Mostra il gruppo se diverso da quello attuale
+                if (msg.group !== currentGroup && msg.group !== 'ALL') {
+                    messageDiv.classList.add('other-group');
+                    messageDiv.textContent = `${msg.from} [in ${msg.group}]: ${msg.message}`;
+                } else {
+                    messageDiv.textContent = `${msg.from}: ${msg.message}`;
+                }
+            } else if (msg.type === 'system') {
+                messageDiv.classList.add('system');
+                messageDiv.textContent = msg.message;
+            }
+            
+            // Aggiungi il messaggio al contenitore
+            container.appendChild(messageDiv);
+            
+            // Rimuovi la classe new-message dopo l'animazione
+            setTimeout(() => {
+                messageDiv.classList.remove('new-message');
+            }, 1000);
+        }
+        
+        // Determina se un messaggio deve essere mostrato
+        function shouldShowMessage(msg) {
+            // DEBUG: Log all'inizio della funzione
+            // console.log("Checking shouldShowMessage for:", msg, "CurrentUser:", currentUser);
+            
+            // Se è un messaggio esplicitamente marcato come locale già visualizzato
+            if (msg._skipServerCopy) {
+                // console.log("ShouldShow=TRUE (Local skip)");
+                return true;
+            }
+            
+            // PRIORITÀ 1: Messaggi privati
+            if (msg.type === 'private') {
+                // Se proviene da me O (non proviene da me E non ha 'to' -> lo deduco per me)
+                if (msg.from === currentUser || msg.to === currentUser || (msg.from !== currentUser && !msg.hasOwnProperty('to'))) {
+                    // DEBUG: Log se la condizione per i messaggi privati è soddisfatta
+                    // console.log("Private message condition met.");
+                    return true;
+                } else {
+                    // DEBUG: Messaggio privato non per questo utente
+                    // console.log("Private message condition NOT met (not from/to this user)");
+                    return false;
+                }
+            }
+            
+            // Se è un messaggio locale inviato che sta arrivando dal server, non mostrarlo di nuovo
+            if (window.sentLocalMessages && 
+                msg.from === currentUser && 
+                msg.type === 'message' && 
+                window.sentLocalMessages.has(msg.message)) {
+                // Rimuove il messaggio dalla lista dopo averlo identificato
+                window.sentLocalMessages.delete(msg.message);
+                // console.log("ShouldShow=FALSE (Server copy of local message)");
+                return false;
+            }
+            
+            // Caso 1: L'utente ha selezionato il gruppo ALL e il messaggio è destinato al gruppo ALL
+            if (currentGroup === 'ALL' && msg.group === 'ALL') {
+                // console.log("ShouldShow=TRUE (Group ALL match)");
+                return true;
+            }
+            
+            // Caso 2: L'utente ha selezionato un gruppo specifico e il messaggio appartiene a quel gruppo
+            if (currentGroup !== 'ALL' && msg.group === currentGroup) {
+                // console.log("ShouldShow=TRUE (Specific group match)");
+                return true;
+            }
+            
+            // Caso 3: È un messaggio di gruppo inviato dall'utente corrente (potrebbe essere ridondante)
+            if (msg.from === currentUser && msg.type === 'message') {
+                // console.log("ShouldShow=TRUE (Message from current user)");
+                return true;
+            }
+            
+            // DEBUG: Log se nessuna condizione è soddisfatta
+            // console.log("No condition met in shouldShowMessage, returning false.");
+            return false;
+        }
+        
+        // Aggiorna la visualizzazione dei messaggi al cambio di gruppo
+        function updateMessagesDisplay() {
+            // Prendiamo i vecchi messaggi da AJAX
+            fetch('/messages')
+                .then(response => response.json())
+                .then(messages => {
+                    // Ripulisci il contenitore HTML
+                    clearMessagesContainer(); 
+                    
+                    // Resetta il set degli ID (importante al cambio gruppo)
+                    window.processedMessageIds = new Set();
+                    
+                    // Mostra tutti i messaggi rilevanti per il nuovo gruppo
+                    updateMessages(messages); 
+                })
+                .catch(error => {
+                    console.error('Errore durante il recupero dei messaggi:', error);
+                });
+        }
+        
+        // Funzione per ripulire il contenitore (aggiunta per chiarezza)
+        function clearMessagesContainer() {
+            const container = document.getElementById('messages');
+            container.innerHTML = '';
         }
         
         // Aggiorna la lista utenti
         function updateUsers(users) {
             const container = document.getElementById('usersList');
             container.innerHTML = '';
+            
+            // Salviamo la lista degli utenti globalmente per poterla utilizzare per i task
+            window.users = users;
+            
+            // Aggiorna la dropdown per i messaggi privati
+            updatePrivateMessageDropdown(users);
             
             Object.entries(users).forEach(([username, info]) => {
                 const userDiv = document.createElement('div');
@@ -727,7 +1156,8 @@
                 // Avvia chat privata al click
                 userDiv.addEventListener('click', () => {
                     if (username !== currentUser) {
-                        document.getElementById('messageInput').value = `@${username} `;
+                        // Imposta l'indicatore per mostrare che è un messaggio privato
+                        setPrivateMessageMode(username);
                         document.getElementById('messageInput').focus();
                         
                         // Attiva la tab chat
@@ -737,6 +1167,74 @@
                 
                 container.appendChild(userDiv);
             });
+        }
+        
+        // Aggiorna la dropdown per i messaggi privati
+        function updatePrivateMessageDropdown(users) {
+            const container = document.getElementById('privateUsersList');
+            container.innerHTML = '';
+            
+            // Filtra gli utenti escludendo l'utente corrente
+            const otherUsers = Object.entries(users).filter(([username]) => username !== currentUser);
+            
+            if (otherUsers.length === 0) {
+                container.innerHTML = '<li><span class="dropdown-item text-muted">Nessun utente online</span></li>';
+                return;
+            }
+            
+            otherUsers.forEach(([username, info]) => {
+                const userItem = document.createElement('li');
+                userItem.innerHTML = `
+                    <a class="dropdown-item" href="#" data-username="${username}">
+                        <i class="fas fa-user me-2"></i>
+                        ${username}
+                        ${info.group !== 'ALL' ? `<span class="badge bg-secondary float-end">${info.group}</span>` : ''}
+                    </a>
+                `;
+                
+                // Al click sull'utente, imposta la modalità messaggio privato
+                userItem.querySelector('a').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    setPrivateMessageMode(username);
+                });
+                
+                container.appendChild(userItem);
+            });
+        }
+        
+        // Variabile per tenere traccia del destinatario del messaggio privato
+        let privateMessageRecipient = null;
+        
+        // Imposta la modalità messaggio privato
+        function setPrivateMessageMode(username) {
+            // Salva il destinatario
+            privateMessageRecipient = username;
+            
+            // Aggiorna l'indicatore visivo
+            const indicator = document.getElementById('messageTypeIndicator');
+            indicator.innerHTML = `<span class="badge bg-purple">Messaggio privato a ${username}</span>`;
+            
+            // Aggiorna il placeholder dell'input
+            document.getElementById('messageInput').placeholder = `Scrivi a ${username}...`;
+            
+            // Nascondi il selettore di destinazione gruppo
+            document.getElementById('destinationSelect').parentElement.style.display = 'none';
+        }
+        
+        // Ripristina la modalità messaggio di gruppo
+        function resetMessageMode() {
+            // Resetta il destinatario
+            privateMessageRecipient = null;
+            
+            // Aggiorna l'indicatore visivo
+            const indicator = document.getElementById('messageTypeIndicator');
+            indicator.innerHTML = `<span class="badge bg-primary">Messaggio di gruppo</span>`;
+            
+            // Aggiorna il placeholder dell'input
+            document.getElementById('messageInput').placeholder = 'Scrivi un messaggio...';
+            
+            // Mostra il selettore di destinazione gruppo
+            document.getElementById('destinationSelect').parentElement.style.display = 'block';
         }
         
         // Aggiorna la lista task
@@ -750,12 +1248,29 @@
             const container = document.getElementById('tasksList');
             container.innerHTML = '';
             
+            // Ottieni il filtro corrente
             const filter = document.getElementById('taskFilterSelect').value;
+            
+            // Aggiorna l'indicatore di filtro attivo
+            const activeFilter = document.getElementById('activeTaskFilter');
+            const activeFilterText = document.getElementById('activeFilterText');
+            
+            if (filter === 'ALL') {
+                activeFilter.style.display = 'none';
+            } else {
+                activeFilterText.textContent = filter;
+                activeFilter.style.display = 'block';
+            }
             
             if (!window.allTasks || !Array.isArray(window.allTasks)) return;
             
+            // Conta quanti task corrispondono al filtro
+            let matchingTasks = 0;
+            
             window.allTasks.forEach(task => {
                 if (filter === 'ALL' || task.group === filter) {
+                    matchingTasks++;
+                    
                     const taskDiv = document.createElement('div');
                     taskDiv.className = 'task-item';
                     
@@ -763,10 +1278,30 @@
                         taskDiv.classList.add('completed');
                     }
                     
+                    // Determina se l'utente può modificare il task
+                    // Ora permettiamo la modifica anche agli utenti che sono nello stesso gruppo del task
+                    const userInTaskGroup = task.group && 
+                                           task.group !== 'ALL' && 
+                                           currentUser && 
+                                           window.users && 
+                                           window.users[currentUser] && 
+                                           window.users[currentUser].group === task.group;
+                    
+                    const canModifyTask = task.created_by === currentUser || userInTaskGroup;
+                    
+                    // Determina se l'utente può eliminare il task (solo il creatore può farlo)
+                    const canDeleteTask = task.created_by === currentUser;
+                    
+                    // Crea il bottone di eliminazione se l'utente può eliminare il task
+                    const deleteButton = canDeleteTask ? 
+                        `<button class="btn btn-sm btn-danger delete-task-btn" data-task-id="${task.id}" title="Elimina task">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>` : '';
+                    
                     taskDiv.innerHTML = `
                         <div class="task-check">
                             <input type="checkbox" ${task.completed ? 'checked' : ''} 
-                                   ${task.created_by === currentUser ? '' : 'disabled'}>
+                                   ${canModifyTask ? '' : 'disabled'}>
                         </div>
                         <div class="task-content">
                             <div class="task-text">${task.text}</div>
@@ -776,11 +1311,12 @@
                                 <span class="task-date">${task.date || 'N/D'}</span>
                             </div>
                         </div>
+                        ${deleteButton}
                     `;
                     
                     // Gestione cambio stato
                     const checkbox = taskDiv.querySelector('input[type="checkbox"]');
-                    if (checkbox && task.created_by === currentUser) {
+                    if (checkbox && canModifyTask) {
                         checkbox.addEventListener('change', async () => {
                             try {
                                 const response = await fetch('/send_message', {
@@ -806,56 +1342,60 @@
                         });
                     }
                     
+                    // Gestione eliminazione task
+                    const deleteBtn = taskDiv.querySelector('.delete-task-btn');
+                    if (deleteBtn) {
+                        deleteBtn.addEventListener('click', async () => {
+                            if (confirm('Sei sicuro di voler eliminare questo task?')) {
+                                try {
+                                    const response = await fetch('/send_message', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            type: 'delete_task',
+                                            task_id: task.id
+                                        })
+                                    });
+                                    
+                                    const data = await response.json();
+                                    
+                                    if (data.success) {
+                                        showToast('Task eliminato con successo', 'success');
+                                        // Rimuove il task dall'interfaccia
+                                        taskDiv.remove();
+                                        // Decrementa il contatore dei task corrispondenti
+                                        matchingTasks--;
+                                        // Se non ci sono più task, mostra il messaggio
+                                        if (matchingTasks === 0) {
+                                            const emptyMessage = document.createElement('div');
+                                            emptyMessage.className = 'alert alert-secondary text-center';
+                                            emptyMessage.textContent = filter === 'ALL' ? 
+                                                'Non ci sono task disponibili.' : 
+                                                `Non ci sono task nel gruppo "${filter}".`;
+                                            container.appendChild(emptyMessage);
+                                        }
+                                    } else {
+                                        showToast('Errore durante l\'eliminazione del task', 'danger');
+                                    }
+                                } catch (error) {
+                                    showToast('Errore di connessione', 'danger');
+                                }
+                            }
+                        });
+                    }
+                    
                     container.appendChild(taskDiv);
                 }
             });
-        }
-        
-        // Funzione unificata per gestire il cambio di gruppo
-        function handleGroupChange(e) {
-            const selectedGroup = e.target.value;
             
-            // Aggiorna tutti i selettori di gruppo
-            const groupSelectors = [
-                document.getElementById('desktopGroupSelect'),
-                document.getElementById('mobileGroupSelect')
-            ];
-            
-            groupSelectors.forEach(selector => {
-                if (selector && selector !== e.target) {
-                    selector.value = selectedGroup;
-                }
-            });
-            
-            // Cambia il gruppo corrente per la visualizzazione
-            currentGroup = selectedGroup;
-            updateMessagesDisplay();
-            
-            // Aggiorna anche il selettore di destinazione con lo stesso gruppo
-            document.getElementById('destinationSelect').value = selectedGroup;
-            
-            // Invia richiesta di entrata nel gruppo se non è ALL
-            if (selectedGroup !== 'ALL') {
-                fetch('/send_message', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        type: 'join_group',
-                        group: selectedGroup
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showToast(`Sei entrato nel gruppo ${selectedGroup}`, 'success');
-                    } else {
-                        showToast(`Errore nell'entrare nel gruppo ${selectedGroup}`, 'danger');
-                    }
-                })
-                .catch(error => {
-                    console.error('Errore durante l\'ingresso nel gruppo:', error);
-                    showToast('Errore di connessione', 'danger');
-                });
+            // Se non ci sono task che corrispondono al filtro, mostra un messaggio
+            if (matchingTasks === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'alert alert-secondary text-center';
+                emptyMessage.textContent = filter === 'ALL' ? 
+                    'Non ci sono task disponibili.' : 
+                    `Non ci sono task nel gruppo "${filter}".`;
+                container.appendChild(emptyMessage);
             }
         }
         
