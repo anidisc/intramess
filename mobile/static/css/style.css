@@ -107,8 +107,14 @@ body {
 .mobile-header {
     background-color: var(--primary-color);
     color: white;
-    padding: 10px;
+    padding: 12px 15px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 990;
+    height: 60px;
 }
 
 .mobile-header .user-info {
@@ -119,6 +125,54 @@ body {
 
 .mobile-header .user-info i {
     margin-right: 5px;
+}
+
+.mobile-header #mobileCurrentUser {
+    font-weight: 500;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.mobile-header .group-pill {
+    display: inline-flex;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    padding: 1px 8px;
+    margin-left: 5px;
+}
+
+.mobile-header .group-pill .badge {
+    background-color: transparent;
+    padding: 0;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.mobile-header .compact-select {
+    max-width: 110px;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-size: 0.85rem;
+    border-radius: 15px;
+    padding: 2px 8px;
+    height: auto;
+}
+
+.mobile-header .compact-select:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.mobile-header .badge {
+    font-size: 0.75rem;
+    padding: 4px 6px;
 }
 
 .mobile-group-selector {
@@ -187,12 +241,28 @@ body {
     align-self: flex-end;
     background-color: #dcf8c6;
     margin-left: auto;
+    border-radius: 15px 15px 2px 15px;
+    border-right: 3px solid #44bd32;
 }
 
 .message.received {
     align-self: flex-start;
-    background-color: white;
+    background-color: #f0f2f5;
     margin-right: auto;
+    border-radius: 15px 15px 15px 2px;
+    border-left: 3px solid var(--primary-color);
+    position: relative;
+}
+
+/* Nome mittente per messaggi ricevuti */
+.message.received::before {
+    content: attr(data-from);
+    position: absolute;
+    top: -18px;
+    left: 0;
+    font-size: 0.75rem;
+    color: #666;
+    font-weight: 500;
 }
 
 .message.private {
@@ -209,13 +279,14 @@ body {
 }
 
 .message.other-group {
-    border-left: 3px solid var(--primary-color);
+    border-left: 3px solid var(--warning-color);
     background-color: #f0f0f0 !important;
     font-style: italic;
 }
 
 .message.sent.other-group {
-    border-left: 3px solid var(--success-color);
+    border-left: none;
+    border-right: 3px solid var(--success-color);
     background-color: #e3fae3 !important;
 }
 
@@ -353,43 +424,36 @@ body {
     }
     
     .main-content {
-        height: calc(100vh - 110px);
-        padding-top: 50px;
-    }
-    
-    .mobile-header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 990;
-    }
-    
-    .mobile-nav {
-        height: 60px;
-    }
-
-    .nav-pills .nav-link {
-        margin: 0;
-        padding: 10px;
-    }
-    
-    .mobile-nav .nav-link.active {
-        border-radius: 0;
-        background-color: rgba(255, 255, 255, 0.2);
-    }
-    
-    .toast-container {
-        bottom: 70px;
+        height: calc(100vh - 120px);
+        padding-top: 60px; /* Corrisponde all'altezza dell'header */
+        padding-bottom: 0; /* Rimuove il padding inferiore per fare spazio all'input fisso */
     }
     
     .chat-container,
     .task-container,
     .users-container {
         height: 100%;
+        padding-bottom: 0; /* Rimuoviamo il padding inferiore eccessivo */
     }
     
+    /* Input box fisso in fondo */
     .message-input {
+        position: fixed;
+        bottom: 60px; /* 60px è l'altezza della navbar mobile */
+        left: 0;
+        right: 0;
+        background-color: #f8f9fa;
+        padding: 8px 10px;
+        margin: 0;
+        z-index: 980;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Aggiustiamo lo spazio per la chat */
+    .messages {
+        margin-top: 5px;
+        margin-bottom: 65px; /* Lasciamo spazio per l'input box fisso */
         padding-bottom: 10px;
     }
 }
@@ -653,4 +717,153 @@ select.form-select option {
     height: 5px;
     background: linear-gradient(to right, #9b59b6, #3498db);
     border-radius: 3px 3px 0 0;
+}
+
+/* Miglioramenti visivi per i messaggi di gruppo */
+.message-bubble {
+    position: relative;
+    padding: 3px 0;
+}
+
+.message-info {
+    font-size: 0.75rem;
+    color: #666;
+    margin-bottom: 3px;
+    font-weight: 500;
+}
+
+.message-content {
+    font-size: 0.95rem;
+}
+
+/* Tempo trascorso per ogni messaggio */
+.message-time {
+    position: absolute;
+    bottom: 2px;
+    right: 8px;
+    font-size: 0.7rem;
+    color: #999;
+}
+
+/* Effetto hover sui messaggi */
+.message:hover {
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    transition: box-shadow 0.2s ease;
+}
+
+/* Stile per gruppi colorati */
+.group-badge {
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    background-color: var(--primary-color);
+    color: white;
+    margin-left: 5px;
+}
+
+/* Migliorie per la dropdown di messaggi */
+#privateMessageDropdown {
+    padding: 10px 5px;
+    width: 220px;
+}
+
+#privateMessageDropdown .dropdown-header {
+    padding: 5px 10px;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #666;
+    font-size: 0.85rem;
+}
+
+#privateMessageDropdown hr.dropdown-divider {
+    margin: 8px 0;
+}
+
+#privateMessageDropdown #destinationSelect {
+    margin: 5px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    font-size: 0.85rem;
+}
+
+#privateMessageDropdown #destinationSelect:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(74, 105, 189, 0.25);
+}
+
+/* Regola lo spazio sotto il campo input */
+#messageTypeContainer {
+    min-height: 30px;
+}
+
+/* Compatto e più bello il badge del tipo di messaggio */
+.message-type-indicator .badge {
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-weight: 500;
+    font-size: 0.85rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Miglioramento interfaccia mobile */
+@media (max-width: 768px) {
+    .message-input {
+        margin-bottom: 5px;
+    }
+    
+    #messageTypeContainer {
+        min-height: 25px;
+    }
+    
+    .message-type-indicator .badge {
+        font-size: 0.8rem;
+        padding: 4px 10px;
+    }
+    
+    #privateMessageDropdown {
+        width: 200px;
+    }
+}
+
+#messageTypeButton {
+    transition: all 0.2s ease;
+    border-right: none;
+}
+
+#messageTypeButton i {
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+#messageTypeButton.private-mode {
+    background-color: rgba(155, 89, 182, 0.2);
+    border-color: rgba(155, 89, 182, 0.5);
+}
+
+#messageTypeButton.private-mode i {
+    color: #9b59b6;
+}
+
+#messageTypeButton.group-mode {
+    background-color: rgba(74, 105, 189, 0.1);
+    border-color: rgba(74, 105, 189, 0.5);
+}
+
+#messageTypeButton.group-mode i {
+    color: var(--primary-color);
+}
+
+.message-mode-selector {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.message-mode-selector.active {
+    background-color: rgba(74, 105, 189, 0.1);
+    font-weight: 500;
+}
+
+.message-mode-selector.private-active {
+    background-color: rgba(155, 89, 182, 0.1);
+    font-weight: 500;
 } 

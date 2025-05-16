@@ -157,27 +157,25 @@
             <div class="col-12 col-md-9 col-lg-10 main-content">
                 <!-- Header mobile -->
                 <div class="mobile-header d-md-none">
-                    <div class="d-flex justify-content-between align-items-center p-2">
-                        <div class="user-info">
-                            <i class="fas fa-user"></i>
-                            <span id="mobileCurrentUser">{{ username if username else '' }}</span>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-user me-2"></i>
+                            <span id="mobileCurrentUser" class="me-2">{{ username if username else '' }}</span>
+                            <div class="group-pill ms-1">
+                                <span id="mobileGroupBadge" class="badge">{{ current_group }}</span>
+                            </div>
                         </div>
-                        <div>
-                            <span id="mobileConnectionStatus" class="badge bg-success">Connesso</span>
+                        <div class="d-flex align-items-center">
+                            <select id="mobileGroupSelect" class="form-select form-select-sm compact-select me-2">
+                                <option value="ALL" {% if current_group == 'ALL' %}selected{% endif %}>Tutti</option>
+                                {% for group in groups %}
+                                    {% if group != 'ALL' %}
+                                        <option value="{{ group }}" {% if current_group == group %}selected{% endif %}>{{ group }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            <span id="mobileConnectionStatus" class="badge bg-success">OK</span>
                         </div>
-                    </div>
-                    <div id="mobileGroupIndicator" class="text-center p-1 bg-dark text-white">
-                        <strong>Gruppo:</strong> <span class="badge bg-primary">{{ current_group }}</span>
-                    </div>
-                    <div class="mobile-group-selector p-2">
-                        <select id="mobileGroupSelect" class="form-select form-select-sm">
-                            <option value="ALL" {% if current_group == 'ALL' %}selected{% endif %}>Cambia gruppo: Tutti</option>
-                            {% for group in groups %}
-                                {% if group != 'ALL' %}
-                                    <option value="{{ group }}" {% if current_group == group %}selected{% endif %}>Cambia gruppo: {{ group }}</option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
                     </div>
                 </div>
 
@@ -189,33 +187,37 @@
                             <div class="message-input p-2">
                                 <div class="input-group">
                                     <input type="text" id="messageInput" class="form-control" placeholder="Scrivi un messaggio...">
-                                    <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-user"></i>
+                                    <button type="button" id="messageTypeButton" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i id="messageTypeIcon" class="fas fa-users"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end" id="privateMessageDropdown">
+                                        <li><h6 class="dropdown-header">Modalità messaggio</h6></li>
+                                        <li>
+                                            <a class="dropdown-item message-mode-selector active" href="#" data-mode="group">
+                                                <i class="fas fa-users me-2"></i> Messaggio di gruppo
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
                                         <li><h6 class="dropdown-header">Messaggi privati</h6></li>
                                         <div id="privateUsersList">
                                             <li><span class="dropdown-item text-muted">Nessun utente online</span></li>
                                         </div>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><h6 class="dropdown-header">Invia a gruppo</h6></li>
+                                        <li>
+                                            <select id="destinationSelect" class="form-select form-select-sm mx-2" style="min-width: 180px;">
+                                                <option value="ALL">Tutti</option>
+                                                {% for group in groups %}
+                                                    {% if group != 'ALL' %}
+                                                        <option value="{{ group }}">{{ group }}</option>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </select>
+                                        </li>
                                     </ul>
                                     <button id="sendMessage" class="btn btn-primary">
                                         <i class="fas fa-paper-plane"></i>
                                     </button>
-                                </div>
-                                <div class="d-flex align-items-center mt-2">
-                                    <div class="message-type-indicator me-2" id="messageTypeIndicator">
-                                        <span class="badge bg-primary">Messaggio di gruppo</span>
-                                    </div>
-                                    <div class="message-destination flex-grow-1">
-                                        <select id="destinationSelect" class="form-select form-select-sm">
-                                            <option value="ALL">Invia a: Tutti</option>
-                                            {% for group in groups %}
-                                                {% if group != 'ALL' %}
-                                                    <option value="{{ group }}">Invia a: {{ group }}</option>
-                                                {% endif %}
-                                            {% endfor %}
-                                        </select>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -268,9 +270,13 @@
         let currentGroup = "ALL";
         let pollingInterval = null;
         let authModal = null;
+        let cachedGroups = ['ALL']; // Inizializziamo una cache dei gruppi
         
         // Inizializzazione
         document.addEventListener("DOMContentLoaded", function() {
+            // Carica i gruppi dal localStorage
+            loadCachedGroups();
+            
             // Inizializza il modal di autenticazione
             authModal = new bootstrap.Modal(document.getElementById('authModal'));
             
@@ -279,6 +285,10 @@
                 document.getElementById('appContainer').classList.remove('d-none');
                 document.getElementById('currentUser').textContent = currentUser;
                 document.getElementById('mobileCurrentUser').textContent = currentUser;
+                
+                // Aggiorna subito i selettori con i gruppi in cache
+                updateGroupSelects(cachedGroups);
+                
                 startPolling();
             } else {
                 authModal.show();
@@ -286,6 +296,35 @@
             
             // Inizializza gli event listener
             setupEventListeners();
+            
+            // Aggiungi scroll automatico quando l'utente digita un messaggio
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) {
+                messageInput.addEventListener('focus', function() {
+                    const container = document.getElementById('messages');
+                    scrollToBottom(container);
+                });
+                
+                messageInput.addEventListener('input', function() {
+                    const container = document.getElementById('messages');
+                    scrollToBottom(container);
+                });
+            }
+            
+            // Gestore per il selettore di modalità messaggio
+            const groupModeSelector = document.querySelector('.message-mode-selector[data-mode="group"]');
+            if (groupModeSelector) {
+                groupModeSelector.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    resetMessageMode();
+                });
+            }
+            
+            // Imposta la modalità gruppo come predefinita
+            const messageTypeButton = document.getElementById('messageTypeButton');
+            if (messageTypeButton) {
+                messageTypeButton.classList.add('group-mode');
+            }
         });
         
         // Configurazione di tutti gli event listener
@@ -606,22 +645,8 @@
                     const data = await response.json();
                     
                     if (data.success) {
-                        // Mostra subito il messaggio privato nell'interfaccia
-                        const localMsgId = `local_pm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                        
-                        const localMsg = {
-                            type: 'private',
-                            from: currentUser,
-                            to: privateMessageRecipient,
-                            message: message,
-                            timestamp: Date.now(),
-                            id: localMsgId,
-                            _local: true // Marchiamo che è un messaggio locale
-                        };
-                        
-                        displayMessage(localMsg);
-                        
-                        // Salviamo il testo del messaggio per evitare duplicati dal server
+                        // Non mostriamo più il messaggio localmente, arriverà con il polling
+                        // Salviamo solo l'ID del messaggio inviato per deduplicazione
                         if (!window.sentLocalMessages) {
                             window.sentLocalMessages = new Map();
                         }
@@ -665,22 +690,7 @@
                         const data = await response.json();
                         
                         if (data.success) {
-                            // Mostra subito il messaggio privato nell'interfaccia
-                            const localMsgId = `local_pm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                            
-                            const localMsg = {
-                                type: 'private',
-                                from: currentUser,
-                                to: recipient,
-                                message: privateMessage,
-                                timestamp: Date.now(),
-                                id: localMsgId,
-                                _local: true // Marchiamo che è un messaggio locale
-                            };
-                            
-                            displayMessage(localMsg);
-                            
-                            // Salviamo il testo del messaggio per evitare duplicati dal server
+                            // Non mostriamo più il messaggio localmente, arriverà con il polling
                             if (!window.sentLocalMessages) {
                                 window.sentLocalMessages = new Map();
                             }
@@ -708,22 +718,7 @@
                         const data = await response.json();
                         
                         if (data.success) {
-                            // Mostra subito il messaggio nell'interfaccia
-                            const localMsgId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                            
-                            const localMsg = {
-                                type: 'message',
-                                from: currentUser,
-                                group: destination,
-                                message: message,
-                                timestamp: Date.now(),
-                                id: localMsgId,
-                                _local: true // Marchiamo che è un messaggio locale
-                            };
-                            
-                            displayMessage(localMsg);
-                            
-                            // Salviamo il testo del messaggio per evitare duplicati dal server
+                            // Non mostriamo più il messaggio localmente, arriverà con il polling
                             if (!window.sentLocalMessages) {
                                 window.sentLocalMessages = new Map();
                             }
@@ -791,6 +786,9 @@
             
             // Poi ogni 3 secondi invece di 1
             pollingInterval = setInterval(pollData, 3000);
+            
+            // Forza un aggiornamento immediato dei gruppi dalla cache
+            updateGroupSelects(cachedGroups);
         }
         
         // Funzione per fermare il polling
@@ -835,9 +833,37 @@
                 updateUsers(users);
                 updateTasks(tasks);
                 
-                // Aggiorna le select dei gruppi se necessario
-                if (groups && Array.isArray(groups) && groups.length > 1) {
-                    updateGroupSelects(groups);
+                // Controlla se i gruppi ricevuti sono validi
+                if (groups && Array.isArray(groups)) {
+                    // Verifica se ci sono nuovi gruppi nei messaggi che non sono nella lista dei gruppi
+                    if (messages && Array.isArray(messages)) {
+                        const messageGroups = messages
+                            .filter(msg => msg.group && msg.group !== 'ALL')
+                            .map(msg => msg.group);
+                        
+                        // Aggiungi i gruppi trovati nei messaggi alla lista attuale
+                        const uniqueMessageGroups = [...new Set(messageGroups)];
+                        if (uniqueMessageGroups.length > 0) {
+                            const mergedGroups = [...groups];
+                            uniqueMessageGroups.forEach(group => {
+                                if (!mergedGroups.includes(group)) {
+                                    mergedGroups.push(group);
+                                }
+                            });
+                            
+                            // Usa la lista combinata per l'aggiornamento
+                            updateGroupSelects(mergedGroups);
+                        } else {
+                            // Usa solo i gruppi restituiti dal server
+                            updateGroupSelects(groups);
+                        }
+                    } else {
+                        // Nessun messaggio, usa solo i gruppi dal server
+                        updateGroupSelects(groups);
+                    }
+                } else {
+                    // Se i gruppi ricevuti non sono validi, usa la cache
+                    updateGroupSelects(cachedGroups);
                 }
                 
                 // Aggiorna lo stato della connessione
@@ -856,6 +882,15 @@
         
         // Aggiorna le select dei gruppi disponibili
         function updateGroupSelects(groups) {
+            // Se l'array dei gruppi è vuoto o undefined, usa la cache
+            if (!groups || !Array.isArray(groups) || groups.length < 2) {
+                console.log("Gruppi ricevuti incompleti, uso la cache:", cachedGroups);
+                groups = [...cachedGroups]; // Copia l'array dalla cache
+            } else {
+                // Aggiorna la cache con i nuovi gruppi
+                updateCachedGroups(groups);
+            }
+            
             const selects = [
                 document.getElementById('desktopGroupSelect'),
                 document.getElementById('mobileGroupSelect'),
@@ -884,14 +919,9 @@
                         const option = document.createElement('option');
                         option.value = group;
                         
-                        // Adatta il testo in base al tipo di selettore
-                        if (select.id === 'destinationSelect') {
-                            option.textContent = `Invia a: ${group}`;
-                        } else if (select.id === 'mobileGroupSelect') {
-                            option.textContent = `Cambia gruppo: ${group}`;
-                        } else {
-                            option.textContent = group;
-                        }
+                        // Il testo delle opzioni è ora più semplice, non include "Invia a:"
+                        // tranne che per il destinationSelect che ora è nel dropdown
+                        option.textContent = group;
                         
                         select.appendChild(option);
                     }
@@ -900,8 +930,62 @@
                 // Ripristina il valore selezionato se ancora valido
                 if (groups.includes(currentValue)) {
                     select.value = currentValue;
+                } else if (currentValue !== 'ALL') {
+                    // Se il gruppo corrente non è più nella lista, ma è nella cache, mantienilo
+                    if (cachedGroups.includes(currentValue)) {
+                        // Crea un'opzione per il gruppo corrente e aggiungila
+                        const option = document.createElement('option');
+                        option.value = currentValue;
+                        option.textContent = currentValue;
+                        
+                        select.appendChild(option);
+                        select.value = currentValue;
+                    } else {
+                        // Fallback su ALL se il gruppo non è più disponibile
+                        select.value = 'ALL';
+                    }
                 }
             });
+        }
+        
+        // Funzione per aggiornare la cache dei gruppi
+        function updateCachedGroups(groups) {
+            if (!groups || !Array.isArray(groups)) return;
+            
+            // Aggiungi sempre ALL come primo gruppo
+            if (!cachedGroups.includes('ALL')) {
+                cachedGroups.push('ALL');
+            }
+            
+            // Aggiungi i nuovi gruppi alla cache senza duplicati
+            groups.forEach(group => {
+                if (!cachedGroups.includes(group)) {
+                    cachedGroups.push(group);
+                }
+            });
+            
+            // Log della cache aggiornata
+            console.log("Cache gruppi aggiornata:", cachedGroups);
+            
+            // Salva la cache nel localStorage per persistenza tra sessioni
+            try {
+                localStorage.setItem('cachedGroups', JSON.stringify(cachedGroups));
+            } catch (error) {
+                console.error("Errore nel salvare i gruppi nel localStorage:", error);
+            }
+        }
+        
+        // Funzione per caricare i gruppi salvati dal localStorage
+        function loadCachedGroups() {
+            try {
+                const savedGroups = localStorage.getItem('cachedGroups');
+                if (savedGroups) {
+                    cachedGroups = JSON.parse(savedGroups);
+                    console.log("Gruppi caricati dal localStorage:", cachedGroups);
+                }
+            } catch (error) {
+                console.error("Errore nel caricare i gruppi dal localStorage:", error);
+            }
         }
         
         // Aggiorna l'elenco messaggi - Versione migliorata
@@ -913,6 +997,9 @@
             
             // Ottieni il contenitore dei messaggi
             const container = document.getElementById('messages');
+            
+            // Ricorda la posizione di scroll attuale e rileva se eravamo già in fondo
+            const isScrolledToBottom = isAtBottom(container);
             
             // Identifica gli ID dei messaggi attualmente visibili nel DOM
             const visibleMessageIds = new Set();
@@ -927,17 +1014,6 @@
                 // Crea un ID univoco per il messaggio
                 const msgId = createMessageId(msg);
                 
-                // Controlla se è un messaggio inviato localmente che sta ritornando dal server
-                if (msg.from === currentUser && window.sentLocalMessages && window.sentLocalMessages.has(msg.message)) {
-                    // Evita di mostrare di nuovo messaggi che abbiamo già mostrato localmente
-                    // Rimuoviamo dalla mappa solo se sono passati più di 10 secondi
-                    const timestamp = window.sentLocalMessages.get(msg.message);
-                    if (Date.now() - timestamp > 10000) {
-                        window.sentLocalMessages.delete(msg.message);
-                    }
-                    return; // Salta questo messaggio
-                }
-                
                 // Controlla se il messaggio dovrebbe essere mostrato e non è già visibile
                 if (shouldShowMessage(msg) && !visibleMessageIds.has(msgId)) {
                     displayMessage(msg);
@@ -945,9 +1021,11 @@
                 }
             });
             
-            // Scrolla solo se sono stati aggiunti nuovi messaggi
-            if (newMessagesAdded) {
-                container.scrollTop = container.scrollHeight;
+            // Scrolla solo in questi casi:
+            // 1. Sono stati aggiunti nuovi messaggi E 
+            // 2. L'utente era già in fondo alla chat prima dell'aggiunta OPPURE il messaggio è dell'utente corrente
+            if (newMessagesAdded && isScrolledToBottom) {
+                scrollToBottom(container);
             }
         }
         
@@ -986,6 +1064,11 @@
             messageDiv.className = 'message new-message';
             messageDiv.setAttribute('data-id', msgId);
             
+            // Aggiungi attributo data-from per il nome del mittente
+            if (msg.from) {
+                messageDiv.setAttribute('data-from', msg.from);
+            }
+            
             // Se è un messaggio locale, aggiungi un attributo per identificarlo
             if (msg._local) {
                 messageDiv.setAttribute('data-local', 'true');
@@ -1021,14 +1104,57 @@
                 contentSpan.className = 'private-content';
                 contentSpan.textContent = `${isFromMe ? 'Tu' : (msg.from || 'sconosciuto')}: ${msg.message}`;
                 messageDiv.appendChild(contentSpan);
+                
+                // Aggiungi timestamp
+                const timeSpan = document.createElement('div');
+                timeSpan.className = 'message-time';
+                timeSpan.textContent = formatMessageTime(msg.timestamp);
+                messageDiv.appendChild(timeSpan);
             } else if (msg.type === 'message') {
+                // Crea struttura con contenitore per il messaggio
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.className = 'message-bubble';
+                
                 // Mostra il gruppo se diverso da quello attuale
                 if (msg.group !== currentGroup && msg.group !== 'ALL') {
                     messageDiv.classList.add('other-group');
-                    messageDiv.textContent = `${msg.from} [in ${msg.group}]: ${msg.message}`;
+                    
+                    // Aggiungi info sul mittente e gruppo
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'message-info';
+                    infoDiv.innerHTML = `${msg.from} <span class="group-badge">${msg.group}</span>`;
+                    bubbleDiv.appendChild(infoDiv);
+                    
+                    // Aggiungi contenuto del messaggio
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'message-content';
+                    contentDiv.textContent = msg.message;
+                    bubbleDiv.appendChild(contentDiv);
                 } else {
-                    messageDiv.textContent = `${msg.from}: ${msg.message}`;
+                    // Messaggi nel gruppo corrente hanno solo il nome del mittente
+                    // Per i messaggi inviati, non mostriamo il nome
+                    if (msg.from !== currentUser) {
+                        const infoDiv = document.createElement('div');
+                        infoDiv.className = 'message-info';
+                        infoDiv.textContent = msg.from;
+                        bubbleDiv.appendChild(infoDiv);
+                    }
+                    
+                    // Aggiungi contenuto del messaggio
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'message-content';
+                    contentDiv.textContent = msg.message;
+                    bubbleDiv.appendChild(contentDiv);
                 }
+                
+                // Aggiungi timestamp
+                const timeSpan = document.createElement('div');
+                timeSpan.className = 'message-time';
+                timeSpan.textContent = formatMessageTime(msg.timestamp);
+                bubbleDiv.appendChild(timeSpan);
+                
+                // Aggiungi il bubble al messaggio
+                messageDiv.appendChild(bubbleDiv);
             } else if (msg.type === 'system') {
                 messageDiv.classList.add('system');
                 messageDiv.textContent = msg.message;
@@ -1037,10 +1163,39 @@
             // Aggiungi il messaggio al contenitore
             container.appendChild(messageDiv);
             
+            // Verifica se dobbiamo fare lo scroll in fondo
+            // Fai lo scroll automatico se:
+            // 1. Il messaggio è dell'utente corrente OPPURE
+            // 2. L'utente è già in fondo alla chat
+            if (msg.from === currentUser || isAtBottom(container)) {
+                scrollToBottom(container);
+            }
+            
             // Rimuovi la classe new-message dopo l'animazione
             setTimeout(() => {
                 messageDiv.classList.remove('new-message');
             }, 1000);
+        }
+        
+        // Formatta il timestamp del messaggio in un formato leggibile
+        function formatMessageTime(timestamp) {
+            if (!timestamp) return '';
+            
+            const date = new Date(timestamp);
+            const now = new Date();
+            
+            // Se è oggi, mostra solo l'ora
+            if (date.toDateString() === now.toDateString()) {
+                return date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+            }
+            
+            // Altrimenti mostra data e ora
+            return date.toLocaleDateString('it-IT', { 
+                day: '2-digit', 
+                month: '2-digit',
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
         }
         
         // Determina se un messaggio deve essere mostrato
@@ -1196,6 +1351,12 @@
                 userItem.querySelector('a').addEventListener('click', (e) => {
                     e.preventDefault();
                     setPrivateMessageMode(username);
+                    
+                    // Chiudi il dropdown dopo la selezione
+                    const dropdownToggle = document.getElementById('messageTypeButton');
+                    if (dropdownToggle) {
+                        bootstrap.Dropdown.getInstance(dropdownToggle).hide();
+                    }
                 });
                 
                 container.appendChild(userItem);
@@ -1210,15 +1371,45 @@
             // Salva il destinatario
             privateMessageRecipient = username;
             
-            // Aggiorna l'indicatore visivo
-            const indicator = document.getElementById('messageTypeIndicator');
-            indicator.innerHTML = `<span class="badge bg-purple">Messaggio privato a ${username}</span>`;
+            // Aggiorna l'icona e lo stile del pulsante
+            const messageTypeButton = document.getElementById('messageTypeButton');
+            const messageTypeIcon = document.getElementById('messageTypeIcon');
+            
+            messageTypeButton.classList.remove('group-mode');
+            messageTypeButton.classList.add('private-mode');
+            messageTypeIcon.className = 'fas fa-user';
             
             // Aggiorna il placeholder dell'input
             document.getElementById('messageInput').placeholder = `Scrivi a ${username}...`;
             
-            // Nascondi il selettore di destinazione gruppo
-            document.getElementById('destinationSelect').parentElement.style.display = 'none';
+            // Nascondi la sezione del selettore di gruppo nella dropdown
+            const dropdown = document.getElementById('privateMessageDropdown');
+            const destinationSelect = document.getElementById('destinationSelect');
+            if (dropdown && destinationSelect) {
+                // Nascondi l'header del gruppo
+                const groupHeader = Array.from(dropdown.querySelectorAll('.dropdown-header')).find(h => h.textContent.includes('Invia a gruppo'));
+                if (groupHeader) {
+                    groupHeader.style.display = 'none';
+                }
+                
+                // Nascondi il select e il suo parent li
+                const selectParent = destinationSelect.closest('li');
+                if (selectParent) {
+                    selectParent.style.display = 'none';
+                }
+                
+                // Nascondi anche il divider
+                const divider = dropdown.querySelector('hr.dropdown-divider:last-of-type');
+                if (divider) {
+                    divider.style.display = 'none';
+                }
+                
+                // Aggiorna la selezione nella modalità
+                const groupModeSelector = dropdown.querySelector('.message-mode-selector[data-mode="group"]');
+                if (groupModeSelector) {
+                    groupModeSelector.classList.remove('active');
+                }
+            }
         }
         
         // Ripristina la modalità messaggio di gruppo
@@ -1226,15 +1417,45 @@
             // Resetta il destinatario
             privateMessageRecipient = null;
             
-            // Aggiorna l'indicatore visivo
-            const indicator = document.getElementById('messageTypeIndicator');
-            indicator.innerHTML = `<span class="badge bg-primary">Messaggio di gruppo</span>`;
+            // Aggiorna l'icona e lo stile del pulsante
+            const messageTypeButton = document.getElementById('messageTypeButton');
+            const messageTypeIcon = document.getElementById('messageTypeIcon');
+            
+            messageTypeButton.classList.remove('private-mode');
+            messageTypeButton.classList.add('group-mode');
+            messageTypeIcon.className = 'fas fa-users';
             
             // Aggiorna il placeholder dell'input
             document.getElementById('messageInput').placeholder = 'Scrivi un messaggio...';
             
-            // Mostra il selettore di destinazione gruppo
-            document.getElementById('destinationSelect').parentElement.style.display = 'block';
+            // Mostra la sezione del selettore di gruppo nella dropdown
+            const dropdown = document.getElementById('privateMessageDropdown');
+            const destinationSelect = document.getElementById('destinationSelect');
+            if (dropdown && destinationSelect) {
+                // Assicuriamoci che la parte del selettore di gruppo sia visibile
+                const groupHeader = Array.from(dropdown.querySelectorAll('.dropdown-header')).find(h => h.textContent.includes('Invia a gruppo'));
+                if (groupHeader) {
+                    groupHeader.style.display = 'block';
+                }
+                
+                // Mostra il select e il suo parent li
+                const selectParent = destinationSelect.closest('li');
+                if (selectParent) {
+                    selectParent.style.display = 'block';
+                }
+                
+                // Mostra anche il divider
+                const divider = dropdown.querySelector('hr.dropdown-divider:last-of-type');
+                if (divider) {
+                    divider.style.display = 'block';
+                }
+                
+                // Aggiorna la selezione nella modalità
+                const groupModeSelector = dropdown.querySelector('.message-mode-selector[data-mode="group"]');
+                if (groupModeSelector) {
+                    groupModeSelector.classList.add('active');
+                }
+            }
         }
         
         // Aggiorna la lista task
@@ -1427,6 +1648,19 @@
             toast.addEventListener('hidden.bs.toast', () => {
                 toastContainer.remove();
             });
+        }
+        
+        // Verifica se un elemento è scorso fino in fondo
+        function isAtBottom(element) {
+            // Considera un piccolo margine per considerare "in fondo" anche quando mancano pochi pixel
+            const tolerance = 20; 
+            return element.scrollHeight - element.scrollTop - element.clientHeight <= tolerance;
+        }
+        
+        // Funzione per scorrere fino in fondo un elemento
+        function scrollToBottom(element) {
+            if (!element) return;
+            element.scrollTop = element.scrollHeight;
         }
     </script>
 </body>

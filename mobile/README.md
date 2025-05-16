@@ -32,20 +32,20 @@ L'applicazione sarà accessibile all'indirizzo `http://localhost:5001`
 
 ## Funzionalità
 
-- **Autenticazione**
+- **Autenticazione** 
   - Registrazione nuovi utenti
   - Login con username e password
   - Logout
-- **Messaggistica**
+- **Messaggistica** 
   - Chat di gruppo
   - Messaggi privati (usando @username)
   - Selezione del gruppo corrente
   - Visualizzazione messaggi in tempo reale
-- **Gestione Task**
+- **Gestione Task** 
   - Creazione nuovi task
   - Visualizzazione stato task
   - Filtraggio per gruppo
-- **Gestione Utenti**
+- **Gestione Utenti** 
   - Lista utenti online
   - Visualizzazione gruppo di appartenenza
   - Avvio rapido messaggi privati
