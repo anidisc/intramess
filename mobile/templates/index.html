@@ -187,6 +187,9 @@
                             <div class="message-input p-2">
                                 <div class="input-group">
                                     <input type="text" id="messageInput" class="form-control" placeholder="Scrivi un messaggio...">
+                                    <button type="button" id="exitPrivateModeBtn" class="btn btn-warning d-none" title="Torna alla modalità gruppo">
+                                        <i class="fas fa-reply"></i>
+                                    </button>
                                     <button type="button" id="messageTypeButton" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i id="messageTypeIcon" class="fas fa-users"></i>
                                     </button>
@@ -272,6 +275,11 @@
         let authModal = null;
         let cachedGroups = ['ALL']; // Inizializziamo una cache dei gruppi
         
+        // Variabile globale per tenere traccia dei messaggi locali visualizzati
+        if (!window.sentLocalMessagesIds) {
+            window.sentLocalMessagesIds = new Set();
+        }
+        
         // Inizializzazione
         document.addEventListener("DOMContentLoaded", function() {
             // Carica i gruppi dal localStorage
@@ -317,6 +325,15 @@
                 groupModeSelector.addEventListener('click', function(e) {
                     e.preventDefault();
                     resetMessageMode();
+                    
+                    // Chiudi il dropdown dopo la selezione
+                    const dropdownToggle = document.getElementById('messageTypeButton');
+                    if (dropdownToggle) {
+                        const dropdownInstance = bootstrap.Dropdown.getInstance(dropdownToggle);
+                        if (dropdownInstance) {
+                            dropdownInstance.hide();
+                        }
+                    }
                 });
             }
             
@@ -348,6 +365,11 @@
                     e.preventDefault();
                     sendMessage();
                 }
+            });
+            
+            // Pulsante per uscire dalla modalità privata
+            document.getElementById('exitPrivateModeBtn').addEventListener('click', function() {
+                resetMessageMode();
             });
             
             // Gestione cambio gruppo per i messaggi (desktop)
@@ -645,8 +667,21 @@
                     const data = await response.json();
                     
                     if (data.success) {
-                        // Non mostriamo più il messaggio localmente, arriverà con il polling
-                        // Salviamo solo l'ID del messaggio inviato per deduplicazione
+                        // Mostra immediatamente il messaggio inviato nella chat
+                        const localMsg = {
+                            id: Date.now().toString(),
+                            type: 'private',
+                            from: currentUser,
+                            to: privateMessageRecipient,
+                            message: message,
+                            timestamp: Date.now(),
+                            _local: true
+                        };
+                        
+                        // Visualizza il messaggio nella chat
+                        displayMessage(localMsg);
+                        
+                        // Memorizza il messaggio per evitare duplicazioni
                         if (!window.sentLocalMessages) {
                             window.sentLocalMessages = new Map();
                         }
@@ -690,7 +725,21 @@
                         const data = await response.json();
                         
                         if (data.success) {
-                            // Non mostriamo più il messaggio localmente, arriverà con il polling
+                            // Mostra immediatamente il messaggio inviato nella chat
+                            const localMsg = {
+                                id: Date.now().toString(),
+                                type: 'private',
+                                from: currentUser,
+                                to: recipient,
+                                message: privateMessage,
+                                timestamp: Date.now(),
+                                _local: true
+                            };
+                            
+                            // Visualizza il messaggio nella chat
+                            displayMessage(localMsg);
+                            
+                            // Memorizza il messaggio per evitare duplicazioni
                             if (!window.sentLocalMessages) {
                                 window.sentLocalMessages = new Map();
                             }
@@ -718,7 +767,21 @@
                         const data = await response.json();
                         
                         if (data.success) {
-                            // Non mostriamo più il messaggio localmente, arriverà con il polling
+                            // Mostra immediatamente il messaggio inviato nella chat
+                            const localMsg = {
+                                id: Date.now().toString(),
+                                type: 'message',
+                                from: currentUser,
+                                group: destination,
+                                message: message,
+                                timestamp: Date.now(),
+                                _local: true
+                            };
+                            
+                            // Visualizza il messaggio nella chat
+                            displayMessage(localMsg);
+                            
+                            // Memorizza il messaggio per evitare duplicazioni
                             if (!window.sentLocalMessages) {
                                 window.sentLocalMessages = new Map();
                             }
@@ -995,6 +1058,12 @@
                 return;
             }
             
+            // DEBUG: Log per tracciare i messaggi ricevuti dal server
+            const privateReceived = messages.filter(msg => msg.type === 'private' && msg.to === currentUser);
+            if (privateReceived.length > 0) {
+                console.log("Messaggi privati ricevuti:", privateReceived);
+            }
+            
             // Ottieni il contenitore dei messaggi
             const container = document.getElementById('messages');
             
@@ -1009,17 +1078,37 @@
             
             // Processa i messaggi ricevuti dal server
             let newMessagesAdded = false;
+            let privateMessagesProcessed = 0;
             
             messages.forEach(msg => {
                 // Crea un ID univoco per il messaggio
                 const msgId = createMessageId(msg);
                 
+                // DEBUG: Traccia il processo decisionale per i messaggi privati
+                if (msg.type === 'private' && msg.to === currentUser) {
+                    console.log("Valutando messaggio privato:", msg);
+                    console.log("- ID del messaggio:", msgId);
+                    console.log("- Già visualizzato?", visibleMessageIds.has(msgId));
+                    console.log("- shouldShowMessage?", shouldShowMessage(msg));
+                }
+                
                 // Controlla se il messaggio dovrebbe essere mostrato e non è già visibile
                 if (shouldShowMessage(msg) && !visibleMessageIds.has(msgId)) {
                     displayMessage(msg);
                     newMessagesAdded = true;
+                    
+                    // Conteggio e notifica per i messaggi privati ricevuti
+                    if (msg.type === 'private' && msg.to === currentUser && !msg._local) {
+                        privateMessagesProcessed++;
+                    }
                 }
             });
+            
+            // DEBUG: Log per tracciare quanti messaggi privati sono stati processati
+            if (privateMessagesProcessed > 0) {
+                console.log(`${privateMessagesProcessed} messaggi privati ricevuti aggiunti alla chat`);
+                showToast(`${privateMessagesProcessed} nuovi messaggi privati`, 'info');
+            }
             
             // Scrolla solo in questi casi:
             // 1. Sono stati aggiunti nuovi messaggi E 
@@ -1037,16 +1126,25 @@
             }
             
             // Altrimenti creiamo un hash dai dati del messaggio
+            // Ignoriamo i campi _local e _skipServerCopy che sono solo per uso locale
+            // Ignoriamo anche il timestamp perché il server potrebbe assegnarne uno diverso
             let idParts = [
                 msg.type || 'unknown',
                 msg.from || 'unknown',
                 msg.to || 'none',
                 msg.group || 'none',
-                msg.message || '',
-                msg.timestamp || Date.now()
+                msg.message || ''
             ];
             
-            return idParts.join('_');
+            // Per i messaggi privati RICEVUTI aggiungiamo un suffisso speciale
+            // per prevenire collisioni con messaggi inviati
+            let idBase = idParts.join('_');
+            if (msg.type === 'private' && msg.to === currentUser) {
+                return `${idBase}_received`;
+            }
+            
+            // Creiamo una stringa unica concatenando i dati essenziali
+            return idBase;
         }
         
         // Visualizza un singolo messaggio
@@ -1083,6 +1181,11 @@
             // Stile in base al mittente
             if (msg.from === currentUser) {
                 messageDiv.classList.add('sent');
+                
+                // Aggiungi un piccolo indicatore "inviato" per i messaggi locali
+                if (msg._local) {
+                    messageDiv.classList.add('local-message');
+                }
             } else {
                 messageDiv.classList.add('received');
             }
@@ -1200,60 +1303,60 @@
         
         // Determina se un messaggio deve essere mostrato
         function shouldShowMessage(msg) {
-            // DEBUG: Log all'inizio della funzione
-            // console.log("Checking shouldShowMessage for:", msg, "CurrentUser:", currentUser);
-            
-            // Se è un messaggio esplicitamente marcato come locale già visualizzato
-            if (msg._skipServerCopy) {
-                // console.log("ShouldShow=TRUE (Local skip)");
+            // Se è un messaggio esplicitamente marcato come locale, mostralo sempre
+            if (msg._local) {
+                // Salva l'ID del messaggio per evitare duplicazioni quando arriva dal server
+                const msgId = createMessageId(msg);
+                window.sentLocalMessagesIds.add(msgId);
                 return true;
             }
             
-            // PRIORITÀ 1: Messaggi privati
-            if (msg.type === 'private') {
-                // Se proviene da me O (non proviene da me E non ha 'to' -> lo deduco per me)
-                if (msg.from === currentUser || msg.to === currentUser || (msg.from !== currentUser && !msg.hasOwnProperty('to'))) {
-                    // DEBUG: Log se la condizione per i messaggi privati è soddisfatta
-                    // console.log("Private message condition met.");
-                    return true;
-                } else {
-                    // DEBUG: Messaggio privato non per questo utente
-                    // console.log("Private message condition NOT met (not from/to this user)");
-                    return false;
-                }
+            // PRIORITÀ MASSIMA: Messaggi privati RICEVUTI da altri utenti (devono essere sempre mostrati)
+            if (msg.type === 'private' && msg.to === currentUser) {
+                return true;
             }
             
-            // Se è un messaggio locale inviato che sta arrivando dal server, non mostrarlo di nuovo
+            // Se è un messaggio dal server con lo stesso ID di un messaggio locale già visualizzato, non mostrarlo
+            const serverMsgId = createMessageId(msg);
+            if (window.sentLocalMessagesIds.has(serverMsgId)) {
+                return false;
+            }
+            
+            // Se è un messaggio dal server inviato dall'utente che non ha un ID corrispondente a un messaggio locale,
+            // ma ha lo stesso contenuto di un messaggio inviato recentemente, non mostrarlo
             if (window.sentLocalMessages && 
                 msg.from === currentUser && 
-                msg.type === 'message' && 
+                (msg.type === 'message' || msg.type === 'private') && 
                 window.sentLocalMessages.has(msg.message)) {
                 // Rimuove il messaggio dalla lista dopo averlo identificato
                 window.sentLocalMessages.delete(msg.message);
-                // console.log("ShouldShow=FALSE (Server copy of local message)");
                 return false;
+            }
+            
+            // PRIORITÀ 1: Altri messaggi privati (inviati da noi)
+            if (msg.type === 'private') {
+                if (msg.from === currentUser) {
+                    // Per i messaggi privati INVIATI dall'utente, preferiamo la versione locale
+                    return false;
+                }
+                return true;
             }
             
             // Caso 1: L'utente ha selezionato il gruppo ALL e il messaggio è destinato al gruppo ALL
             if (currentGroup === 'ALL' && msg.group === 'ALL') {
-                // console.log("ShouldShow=TRUE (Group ALL match)");
                 return true;
             }
             
             // Caso 2: L'utente ha selezionato un gruppo specifico e il messaggio appartiene a quel gruppo
             if (currentGroup !== 'ALL' && msg.group === currentGroup) {
-                // console.log("ShouldShow=TRUE (Specific group match)");
                 return true;
             }
             
-            // Caso 3: È un messaggio di gruppo inviato dall'utente corrente (potrebbe essere ridondante)
+            // Caso 3: È un messaggio di gruppo inviato dall'utente corrente
             if (msg.from === currentUser && msg.type === 'message') {
-                // console.log("ShouldShow=TRUE (Message from current user)");
-                return true;
+                return false; // Non mostrare messaggi dal server inviati dall'utente, preferiamo i locali
             }
             
-            // DEBUG: Log se nessuna condizione è soddisfatta
-            // console.log("No condition met in shouldShowMessage, returning false.");
             return false;
         }
         
@@ -1355,12 +1458,29 @@
                     // Chiudi il dropdown dopo la selezione
                     const dropdownToggle = document.getElementById('messageTypeButton');
                     if (dropdownToggle) {
-                        bootstrap.Dropdown.getInstance(dropdownToggle).hide();
+                        const dropdownInstance = bootstrap.Dropdown.getInstance(dropdownToggle);
+                        if (dropdownInstance) {
+                            dropdownInstance.hide();
+                        }
                     }
                 });
                 
                 container.appendChild(userItem);
             });
+            
+            // Assicuriamoci che la sezione "Messaggio di gruppo" sia sempre visibile
+            const dropdown = document.getElementById('privateMessageDropdown');
+            if (dropdown) {
+                const groupModeSelector = dropdown.querySelector('.message-mode-selector[data-mode="group"]');
+                if (groupModeSelector) {
+                    groupModeSelector.parentElement.style.display = 'block';
+                    if (!privateMessageRecipient) {
+                        groupModeSelector.classList.add('active');
+                    } else {
+                        groupModeSelector.classList.remove('active');
+                    }
+                }
+            }
         }
         
         // Variabile per tenere traccia del destinatario del messaggio privato
@@ -1378,6 +1498,12 @@
             messageTypeButton.classList.remove('group-mode');
             messageTypeButton.classList.add('private-mode');
             messageTypeIcon.className = 'fas fa-user';
+            
+            // Mostra il pulsante di uscita dalla modalità privata
+            const exitPrivateModeBtn = document.getElementById('exitPrivateModeBtn');
+            if (exitPrivateModeBtn) {
+                exitPrivateModeBtn.classList.remove('d-none');
+            }
             
             // Aggiorna il placeholder dell'input
             document.getElementById('messageInput').placeholder = `Scrivi a ${username}...`;
@@ -1408,6 +1534,9 @@
                 const groupModeSelector = dropdown.querySelector('.message-mode-selector[data-mode="group"]');
                 if (groupModeSelector) {
                     groupModeSelector.classList.remove('active');
+                    
+                    // Assicuriamoci che l'elemento sia sempre visibile e cliccabile
+                    groupModeSelector.parentElement.style.display = 'block';
                 }
             }
         }
@@ -1424,6 +1553,12 @@
             messageTypeButton.classList.remove('private-mode');
             messageTypeButton.classList.add('group-mode');
             messageTypeIcon.className = 'fas fa-users';
+            
+            // Nascondi il pulsante di uscita dalla modalità privata
+            const exitPrivateModeBtn = document.getElementById('exitPrivateModeBtn');
+            if (exitPrivateModeBtn) {
+                exitPrivateModeBtn.classList.add('d-none');
+            }
             
             // Aggiorna il placeholder dell'input
             document.getElementById('messageInput').placeholder = 'Scrivi un messaggio...';

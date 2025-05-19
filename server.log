@@ -1587,3 +1587,25 @@ bene
 2025-04-25 08:02:53,986 - INFO - Server avviato con gruppo predefinito 'ALL'
 2025-04-25 10:08:25,554 - INFO - Server arrestato
 2025-04-25 10:08:25,554 - INFO - Server arrestato
+2025-05-16 06:39:35,593 - INFO - Caricamento gruppi dal database...
+2025-05-16 06:39:35,599 - INFO - Gruppo caricato dal database: LAVORO
+2025-05-16 06:39:35,599 - INFO - Gruppo caricato dal database: CASA3
+2025-05-16 06:39:35,600 - INFO - Gruppo caricato dal database: AUSTRALIA
+2025-05-16 06:39:35,600 - INFO - Gruppo caricato dal database: ASIA
+2025-05-16 06:39:35,600 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'AUSTRALIA', 'ASIA']
+2025-05-16 06:39:35,600 - INFO - Caricamento task dal database...
+2025-05-16 06:39:35,604 - INFO - Caricati 12 task dal database. Prossimo ID: T0025
+2025-05-16 06:39:35,605 - INFO - Server v1.0.0 avviato su localhost:5000
+2025-05-16 06:39:35,606 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-05-19 22:22:46,045 - INFO - Caricamento gruppi dal database...
+2025-05-19 22:22:46,367 - INFO - Gruppo caricato dal database: LAVORO
+2025-05-19 22:22:46,367 - INFO - Gruppo caricato dal database: CASA3
+2025-05-19 22:22:46,368 - INFO - Gruppo caricato dal database: AUSTRALIA
+2025-05-19 22:22:46,368 - INFO - Gruppo caricato dal database: ASIA
+2025-05-19 22:22:46,368 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3', 'AUSTRALIA', 'ASIA']
+2025-05-19 22:22:46,368 - INFO - Caricamento task dal database...
+2025-05-19 22:22:46,433 - INFO - Caricati 13 task dal database. Prossimo ID: T0026
+2025-05-19 22:22:46,435 - INFO - Server v1.0.0 avviato su localhost:5000
+2025-05-19 22:22:46,435 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-05-19 22:23:28,199 - INFO - Gruppo eliminato: ASIA con 3 task associati
+2025-05-19 22:24:08,888 - INFO - Gruppo eliminato: AUSTRALIA con 1 task associati
