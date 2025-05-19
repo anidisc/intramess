@@ -1609,3 +1609,5 @@ bene
 2025-05-19 22:22:46,435 - INFO - Server avviato con gruppo predefinito 'ALL'
 2025-05-19 22:23:28,199 - INFO - Gruppo eliminato: ASIA con 3 task associati
 2025-05-19 22:24:08,888 - INFO - Gruppo eliminato: AUSTRALIA con 1 task associati
+2025-05-20 00:25:53,008 - INFO - Server arrestato
+2025-05-20 00:25:53,009 - INFO - Server arrestato
