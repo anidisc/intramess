@@ -1631,3 +1631,21 @@ bene
 2025-05-20 06:42:14,994 - INFO - Server avviato con gruppo predefinito 'ALL'
 2025-05-20 06:42:20,720 - INFO - Server arrestato
 2025-05-20 06:42:20,720 - INFO - Server arrestato
+2025-05-21 03:42:58,906 - INFO - Caricamento gruppi dal database...
+2025-05-21 03:42:58,909 - INFO - Gruppo caricato dal database: LAVORO
+2025-05-21 03:42:58,910 - INFO - Gruppo caricato dal database: CASA3
+2025-05-21 03:42:58,910 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3']
+2025-05-21 03:42:58,910 - INFO - Caricamento task dal database...
+2025-05-21 03:42:58,913 - INFO - Caricati 10 task dal database. Prossimo ID: T0022
+2025-05-21 03:42:58,914 - INFO - Server v1.0.0 avviato su localhost:5000
+2025-05-21 03:42:58,914 - INFO - Server avviato con gruppo predefinito 'ALL'
+2025-05-21 06:37:00,802 - INFO - Server arrestato
+2025-05-21 06:37:00,803 - INFO - Server arrestato
+2025-05-21 06:37:05,931 - INFO - Caricamento gruppi dal database...
+2025-05-21 06:37:05,932 - INFO - Gruppo caricato dal database: LAVORO
+2025-05-21 06:37:05,933 - INFO - Gruppo caricato dal database: CASA3
+2025-05-21 06:37:05,933 - INFO - Gruppi caricati dal database: ['ALL', 'LAVORO', 'CASA3']
+2025-05-21 06:37:05,933 - INFO - Caricamento task dal database...
+2025-05-21 06:37:05,936 - INFO - Caricati 10 task dal database. Prossimo ID: T0022
+2025-05-21 06:37:05,937 - INFO - Server v1.0.0 avviato su localhost:5000
+2025-05-21 06:37:05,937 - INFO - Server avviato con gruppo predefinito 'ALL'

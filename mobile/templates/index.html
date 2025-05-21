@@ -1355,7 +1355,7 @@
         
         // Determina se un messaggio deve essere mostrato
         function shouldShowMessage(msg) {
-            // Se è un messaggio esplicitamente marcato come locale, mostralo sempre
+            // REGOLA 1: Se è un messaggio esplicitamente marcato come locale, mostralo sempre
             if (msg._local) {
                 // Salva l'ID del messaggio per evitare duplicazioni quando arriva dal server
                 const msgId = createMessageId(msg);
@@ -1363,19 +1363,18 @@
                 return true;
             }
             
-            // PRIORITÀ MASSIMA: Messaggi privati RICEVUTI da altri utenti (devono essere sempre mostrati)
+            // REGOLA 2: Messaggi privati RICEVUTI dall'utente corrente - mostra sempre
             if (msg.type === 'private' && msg.to === currentUser) {
                 return true;
             }
             
-            // Se è un messaggio dal server con lo stesso ID di un messaggio locale già visualizzato, non mostrarlo
+            // REGOLA 3: Se è un messaggio dal server con lo stesso ID di un messaggio locale già visualizzato, non mostrarlo
             const serverMsgId = createMessageId(msg);
             if (window.sentLocalMessagesIds.has(serverMsgId)) {
                 return false;
             }
             
-            // Se è un messaggio dal server inviato dall'utente che non ha un ID corrispondente a un messaggio locale,
-            // ma ha lo stesso contenuto di un messaggio inviato recentemente, non mostrarlo
+            // REGOLA 4: Se è un messaggio dal server inviato dall'utente che corrisponde a un messaggio locale recente, non mostrarlo
             if (window.sentLocalMessages && 
                 msg.from === currentUser && 
                 (msg.type === 'message' || msg.type === 'private') && 
@@ -1385,30 +1384,41 @@
                 return false;
             }
             
-            // PRIORITÀ 1: Altri messaggi privati (inviati da noi)
-            if (msg.type === 'private') {
-                if (msg.from === currentUser) {
-                    // Per i messaggi privati INVIATI dall'utente, preferiamo la versione locale
-                    return false;
+            // REGOLA 5: Messaggi privati dall'utente corrente - usa versione locale
+            if (msg.type === 'private' && msg.from === currentUser) {
+                return false; // Per i messaggi privati INVIATI dall'utente, preferiamo la versione locale
+            }
+            
+            // REGOLA 6: L'utente è nel gruppo ALL
+            if (currentGroup === 'ALL') {
+                // Quando l'utente è nel gruppo ALL, mostra SOLO i messaggi destinati esplicitamente al gruppo ALL
+                return msg.group === 'ALL';
+            }
+            
+            // REGOLA 7: L'utente è in un gruppo specifico
+            if (currentGroup !== 'ALL') {
+                // CASO A: Il messaggio appartiene al gruppo dell'utente
+                if (msg.group === currentGroup) {
+                    return true;
                 }
-                return true;
+                
+                // CASO B: Il mittente è nello stesso gruppo dell'utente corrente (e non in ALL)
+                if (window.users && 
+                    window.users[currentUser] && 
+                    window.users[msg.from] && 
+                    window.users[currentUser].group !== 'ALL' && 
+                    window.users[msg.from].group !== 'ALL' && 
+                    window.users[currentUser].group === window.users[msg.from].group) {
+                    return true;
+                }
             }
             
-            // Caso 1: L'utente ha selezionato il gruppo ALL e il messaggio è destinato al gruppo ALL
-            if (currentGroup === 'ALL' && msg.group === 'ALL') {
-                return true;
-            }
-            
-            // Caso 2: L'utente ha selezionato un gruppo specifico e il messaggio appartiene a quel gruppo
-            if (currentGroup !== 'ALL' && msg.group === currentGroup) {
-                return true;
-            }
-            
-            // Caso 3: È un messaggio di gruppo inviato dall'utente corrente
+            // REGOLA 8: Messaggi di gruppo inviati dall'utente corrente - usa versione locale
             if (msg.from === currentUser && msg.type === 'message') {
-                return false; // Non mostrare messaggi dal server inviati dall'utente, preferiamo i locali
+                return false;
             }
             
+            // In tutti gli altri casi, non mostrare il messaggio
             return false;
         }
         
